@@ -5,11 +5,14 @@
 #include <vector>
 #include <string>
 
+
 #include "tau/scenario.hpp"
 #include "tau/logger.hpp"
 #include "tau/simulator.hpp"
 #include "tau/solver_interface.hpp"
 #include "tau/solver_greedy.hpp"
+#include "tau/solver_random.hpp"
+#include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
 
@@ -109,26 +112,42 @@ int main() {
 
                         tau::DistributedSimulator simulator(scenario, logger);
 
-                        // Factoría de Solvers: Instanciar el solver correcto según el string
+                        // --- NUEVO: Instanciación Distribuida de Solvers ---
+                        // Iteramos sobre todos los robots definidos en el escenario
                         for (const auto& [robotID, robotInfo] : scenario->getRobots()) {
                             std::shared_ptr<tau::ISolver> solver;
                             
                             if (solverName == "greedy") {
-                                solver = std::make_shared<tau::GreedySolver>(robotID);
+                                solver = std::make_shared<tau::GreedySolver>();
+                            } else if (solverName == "random") {
+                                solver = std::make_shared<tau::RandomSolver>();
                             } 
                             // Aquí añadirás otros en el futuro:
-                            // else if (solverName == "cbaa") { solver = std::make_shared<tau::CBAASolver>(robotID); }
+                            // else if (solverName == "cbaa") { 
+                            //     solver = std::make_shared<tau::CBAASolver>(robotID); 
+                            // }
                             else {
                                 throw std::runtime_error("Solver no reconocido: " + solverName);
                             }
                             
+                            // Registramos este cerebro ÚNICO para este robot específico
                             simulator.registerSolver(robotID, solver);
                         }
+                    
+                        // 3. Registrar el Reward
+                        std::shared_ptr<tau::RewardFunction> rewardFunc;
+                        if (rewardName == "reward00") {
+                            rewardFunc = std::make_shared<tau::RewardFunction00>();
+                        } else {
+                            throw std::runtime_error("Reward no reconocido: " + rewardName);
+                        }
 
+                        simulator.registerReward(rewardFunc);
+                        
                         // Ejecutar la simulación para esta réplica
                         simulator.run();
-                        
                         currentSim++;
+                        
                     }
                 }
             }
@@ -143,39 +162,3 @@ int main() {
 
     return 0;
 }
-
-/*
-int main() {
-    try {
-        std::string yamlPath = "../data/scenario.yaml";
-        std::string logPath = "../logs/mi_simulacion_distribuida.log";
-        
-        std::cout << "1. Cargando escenario...\n";
-        auto scenario = tau::Scenario::loadFromYAML(yamlPath);
-
-        std::cout << "2. Inicializando Logger...\n";
-        auto logger = std::make_shared<tau::Logger>(logPath);
-
-        std::cout << "3. Configurando Simulador Distribuido...\n";
-        tau::DistributedSimulator simulator(scenario, logger);
-
-        // Instanciamos y conectamos el cerebro Greedy a cada robot
-        for (const auto& [robotID, robotInfo] : scenario->getRobots()) {
-            auto solver = std::make_shared<tau::GreedySolver>(robotID);
-            simulator.registerSolver(robotID, solver);
-        }
-
-        std::cout << "4. Ejecutando Simulacion de Eventos Discretos...\n";
-        simulator.run();
-        
-        std::cout << "\n¡Simulación finalizada exitosamente!\n";
-        std::cout << "Puedes revisar los resultados en: " << logPath << "\n";
-        
-    } catch (const std::exception& e) {
-        std::cerr << "Error crítico: " << e.what() << "\n";
-        return 1;
-    }
-    
-    return 0;
-}
-*/

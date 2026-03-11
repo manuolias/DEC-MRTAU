@@ -16,7 +16,9 @@ using RobotID = int;
 using StationID = int;
 using Time = double;
 using Distance = double;
-using BatteryLevel = double;
+using BatteryLevel = double; // battery_units
+using BatteryRate = double; // battery_units/s
+using Velocity = double; // m/s
 
 struct Position {
     double x;
@@ -27,6 +29,7 @@ struct Node {
     NodeID id;
     std::string description;
     Position coords;
+    StationID nearestStation;
     // Mapa de vecinos: <ID del vecino, Distancia Euclidiana>
     std::map<NodeID, Distance> neighbors; 
 };
@@ -42,6 +45,8 @@ struct TaskInfo {
     Time stdSuccessTime;
     Time averageFailTime;
     Time stdFailTime;
+    BatteryLevel averageSuccessDemand; // Average battery consumption per worker in case of success
+    BatteryLevel averageFailDemand; // Average battery consumption per worker in case of fail
     int requiredWorkers;
     int maxAttempts = 1; // Por defecto a 1 si no se especifica
 };
@@ -52,9 +57,8 @@ struct RobotInfo {
     std::string description;
     BatteryLevel initialBatteryLevel;
     BatteryLevel batteryCapacity;
-    double navigationVelocity;
-    double batteryRateWhileNavigating;
-    double batteryRateWhileExecuting;
+    Velocity navigationVelocity;
+    BatteryRate batteryRateWhileNavigating;
     std::set<TaskID> capabilities;
 };
 
@@ -62,8 +66,7 @@ struct StationInfo {
     StationID id;
     NodeID node;
     std::string description;
-    // Por ahora vamos a asumir que la carga de un robot es inmediata
-    // Time timePU = 1.0; // Tiempo por unidad de recarga (asumimos 1.0 si no se indica)
+    // Asumimos que la carga es inmediata, como un cambio de batería
 };
 
 class Scenario {

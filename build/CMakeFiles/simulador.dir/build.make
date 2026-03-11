@@ -125,19 +125,19 @@ CMakeFiles/simulador.dir/src/simulator.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/simulador.dir/src/simulator.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/manuel/tfm/distributed/src/simulator.cpp -o CMakeFiles/simulador.dir/src/simulator.cpp.s
 
-CMakeFiles/simulador.dir/src/solver_greedy.cpp.o: CMakeFiles/simulador.dir/flags.make
-CMakeFiles/simulador.dir/src/solver_greedy.cpp.o: /home/manuel/tfm/distributed/src/solver_greedy.cpp
-CMakeFiles/simulador.dir/src/solver_greedy.cpp.o: CMakeFiles/simulador.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/manuel/tfm/distributed/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/simulador.dir/src/solver_greedy.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/simulador.dir/src/solver_greedy.cpp.o -MF CMakeFiles/simulador.dir/src/solver_greedy.cpp.o.d -o CMakeFiles/simulador.dir/src/solver_greedy.cpp.o -c /home/manuel/tfm/distributed/src/solver_greedy.cpp
+CMakeFiles/simulador.dir/src/state.cpp.o: CMakeFiles/simulador.dir/flags.make
+CMakeFiles/simulador.dir/src/state.cpp.o: /home/manuel/tfm/distributed/src/state.cpp
+CMakeFiles/simulador.dir/src/state.cpp.o: CMakeFiles/simulador.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/manuel/tfm/distributed/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/simulador.dir/src/state.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/simulador.dir/src/state.cpp.o -MF CMakeFiles/simulador.dir/src/state.cpp.o.d -o CMakeFiles/simulador.dir/src/state.cpp.o -c /home/manuel/tfm/distributed/src/state.cpp
 
-CMakeFiles/simulador.dir/src/solver_greedy.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/simulador.dir/src/solver_greedy.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/manuel/tfm/distributed/src/solver_greedy.cpp > CMakeFiles/simulador.dir/src/solver_greedy.cpp.i
+CMakeFiles/simulador.dir/src/state.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/simulador.dir/src/state.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/manuel/tfm/distributed/src/state.cpp > CMakeFiles/simulador.dir/src/state.cpp.i
 
-CMakeFiles/simulador.dir/src/solver_greedy.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/simulador.dir/src/solver_greedy.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/manuel/tfm/distributed/src/solver_greedy.cpp -o CMakeFiles/simulador.dir/src/solver_greedy.cpp.s
+CMakeFiles/simulador.dir/src/state.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/simulador.dir/src/state.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/manuel/tfm/distributed/src/state.cpp -o CMakeFiles/simulador.dir/src/state.cpp.s
 
 # Object files for target simulador
 simulador_OBJECTS = \
@@ -145,7 +145,7 @@ simulador_OBJECTS = \
 "CMakeFiles/simulador.dir/src/scenario.cpp.o" \
 "CMakeFiles/simulador.dir/src/logger.cpp.o" \
 "CMakeFiles/simulador.dir/src/simulator.cpp.o" \
-"CMakeFiles/simulador.dir/src/solver_greedy.cpp.o"
+"CMakeFiles/simulador.dir/src/state.cpp.o"
 
 # External object files for target simulador
 simulador_EXTERNAL_OBJECTS =
@@ -154,7 +154,7 @@ simulador: CMakeFiles/simulador.dir/src/main.cpp.o
 simulador: CMakeFiles/simulador.dir/src/scenario.cpp.o
 simulador: CMakeFiles/simulador.dir/src/logger.cpp.o
 simulador: CMakeFiles/simulador.dir/src/simulator.cpp.o
-simulador: CMakeFiles/simulador.dir/src/solver_greedy.cpp.o
+simulador: CMakeFiles/simulador.dir/src/state.cpp.o
 simulador: CMakeFiles/simulador.dir/build.make
 simulador: CMakeFiles/simulador.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/manuel/tfm/distributed/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable simulador"

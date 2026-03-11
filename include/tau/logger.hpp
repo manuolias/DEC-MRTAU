@@ -20,14 +20,20 @@ public:
     std::string getFilename() const { return logFilename; }
     
     void logInfo(const std::string& key, const std::string& value);
+
     void logStationSpawn(Time t, StationID id, const Position& pos);
     void logTaskSpawn(Time t, const TaskInfo& task, const Position& pos);
     void logRobotSpawn(Time t, RobotID id, const Position& pos, BatteryLevel cap, double vel, double navRate);
+
     void logBatteryConsumption(Time t, RobotID id, Time duration, BatteryLevel initLvl, BatteryLevel finalLvl);
     void logNavigation(Time t, RobotID id, Time duration, const Position& src, const Position& dst);
     void logTaskExecution(Time t, TaskID task, RobotID robot, const Position& pos, Time duration);
     void logTaskResolution(Time t, TaskID task, const Position& pos, const std::string& status, int attempt);
     void logRobotFinished(Time t, RobotID id, const Position& pos, BatteryLevel battery);
+    void logRobotFailed(Time t, RobotID id, const Position& pos);
+	void logRobotRecharge(Time t, RobotID robotID, StationID stationID, const Position& pos, BatteryLevel lvl);
+
+    void logMetric(const std::string& key, double value);
 };
 
 } // namespace tau

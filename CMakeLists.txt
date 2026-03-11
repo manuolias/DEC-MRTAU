@@ -20,7 +20,7 @@ add_executable(simulador
     src/scenario.cpp
     src/logger.cpp
     src/simulator.cpp
-    src/solver_greedy.cpp
+    src/state.cpp
 )
 
 # 4. Enlazar (link) la librería yaml-cpp a nuestro ejecutable

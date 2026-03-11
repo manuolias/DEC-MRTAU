@@ -9,5 +9,5 @@ cmake ..
 make
 ```
 ```bash
-.\simulador
+./simulador
 ```

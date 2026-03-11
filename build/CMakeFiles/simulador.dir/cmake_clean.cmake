@@ -7,8 +7,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/simulador.dir/src/scenario.cpp.o.d"
   "CMakeFiles/simulador.dir/src/simulator.cpp.o"
   "CMakeFiles/simulador.dir/src/simulator.cpp.o.d"
-  "CMakeFiles/simulador.dir/src/solver_greedy.cpp.o"
-  "CMakeFiles/simulador.dir/src/solver_greedy.cpp.o.d"
+  "CMakeFiles/simulador.dir/src/state.cpp.o"
+  "CMakeFiles/simulador.dir/src/state.cpp.o.d"
   "simulador"
   "simulador.pdb"
 )

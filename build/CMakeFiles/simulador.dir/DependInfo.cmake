@@ -12,7 +12,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/manuel/tfm/distributed/src/main.cpp" "CMakeFiles/simulador.dir/src/main.cpp.o" "gcc" "CMakeFiles/simulador.dir/src/main.cpp.o.d"
   "/home/manuel/tfm/distributed/src/scenario.cpp" "CMakeFiles/simulador.dir/src/scenario.cpp.o" "gcc" "CMakeFiles/simulador.dir/src/scenario.cpp.o.d"
   "/home/manuel/tfm/distributed/src/simulator.cpp" "CMakeFiles/simulador.dir/src/simulator.cpp.o" "gcc" "CMakeFiles/simulador.dir/src/simulator.cpp.o.d"
-  "/home/manuel/tfm/distributed/src/solver_greedy.cpp" "CMakeFiles/simulador.dir/src/solver_greedy.cpp.o" "gcc" "CMakeFiles/simulador.dir/src/solver_greedy.cpp.o.d"
+  "/home/manuel/tfm/distributed/src/state.cpp" "CMakeFiles/simulador.dir/src/state.cpp.o" "gcc" "CMakeFiles/simulador.dir/src/state.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

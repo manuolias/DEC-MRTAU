@@ -1,8 +1,10 @@
 #include "tau/scenario.hpp"
+#include "tau/definitions.hpp"
 #include <yaml-cpp/yaml.h>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <limits>
 
 namespace tau {
 
@@ -44,16 +46,6 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
             }
         }
 
-        // Segunda pasada: ahora que todos los nodos existen, calculamos la distancia euclidiana
-        for (auto& [nodeID, node] : scenario->nodes) {
-            for (NodeID neighborID : rawNeighbors[nodeID]) {
-                if (scenario->nodes.count(neighborID)) { // Comprueba si el vecino existe
-                    Distance dist = calculateDistance(node.coords, scenario->nodes[neighborID].coords);
-                    node.neighbors[neighborID] = dist; // Guarda la conexión y la distancia física
-                }
-            }
-        }
-
         // 3. Leer Tareas
         for (const auto& yamlTask : config["tasks"]) {
             TaskInfo task;
@@ -68,6 +60,8 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
             task.averageFailTime = yamlTask["fail_time"][0].as<Time>();
             task.stdFailTime = yamlTask["fail_time"][1].as<Time>();
             task.requiredWorkers = yamlTask["required_workers"].as<int>();
+            task.averageSuccessDemand = yamlTask["demand"][0].as<BatteryLevel>();
+            task.averageFailDemand = yamlTask["demand"][1].as<BatteryLevel>();
             
             scenario->tasks[task.id] = task;
         }
@@ -80,9 +74,8 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
             robot.description = yamlRobot["description"].as<std::string>();
             robot.initialBatteryLevel = yamlRobot["initial_battery_level"].as<BatteryLevel>();
             robot.batteryCapacity = yamlRobot["battery_capacity"].as<BatteryLevel>();
-            robot.navigationVelocity = yamlRobot["navigation_velocity"].as<double>();
-            robot.batteryRateWhileNavigating = yamlRobot["battery_rate_while_navigating"].as<double>();
-            robot.batteryRateWhileExecuting = yamlRobot["battery_rate_while_executing"].as<double>();
+            robot.navigationVelocity = yamlRobot["navigation_velocity"].as<Velocity>();
+            robot.batteryRateWhileNavigating = yamlRobot["battery_rate_while_navigating"].as<BatteryRate>();
             
             for (const auto& cap : yamlRobot["capabilities"]) {
                 robot.capabilities.insert(cap.as<TaskID>());
@@ -100,6 +93,30 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
                 station.description = yamlStation["description"].as<std::string>();
                 
                 scenario->stations[station.id] = station;
+            }
+        }
+
+        // Segunda pasada: ahora que todos los nodos existen, calculamos las distancias euclidias 
+        // Tambien almacenaremos para cada nodo su estacion de recarga mas cercana
+        for (auto& [nodeID, node] : scenario->nodes) {
+            node.nearestStation = NULL_ID;
+            Distance minDistanceStation = std::numeric_limits<Distance>::infinity();
+            for (NodeID neighborID : rawNeighbors[nodeID]) {
+                if (scenario->nodes.count(neighborID)) { // Comprueba si el vecino existe
+                    Distance dist = calculateDistance(node.coords, scenario->nodes[neighborID].coords);
+                    node.neighbors[neighborID] = dist; // Guarda la conexión y la distancia física
+
+                    // COMPROBAMOS SI EL NODO CORRESPONDE CON UNA ESTACION DE CARGA
+                    for (const auto& [stationID,station] : scenario->stations) {
+                        if (station.node == neighborID) {
+                            if (dist < minDistanceStation) {
+                                minDistanceStation = dist;
+                                node.nearestStation = stationID;
+                            }   
+                            break;
+                        }
+                    } 
+                }
             }
         }
 

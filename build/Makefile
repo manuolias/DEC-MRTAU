@@ -225,29 +225,29 @@ src/simulator.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/simulator.cpp.s
 .PHONY : src/simulator.cpp.s
 
-src/solver_greedy.o: src/solver_greedy.cpp.o
-.PHONY : src/solver_greedy.o
+src/state.o: src/state.cpp.o
+.PHONY : src/state.o
 
 # target to build an object file
-src/solver_greedy.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/solver_greedy.cpp.o
-.PHONY : src/solver_greedy.cpp.o
+src/state.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/state.cpp.o
+.PHONY : src/state.cpp.o
 
-src/solver_greedy.i: src/solver_greedy.cpp.i
-.PHONY : src/solver_greedy.i
+src/state.i: src/state.cpp.i
+.PHONY : src/state.i
 
 # target to preprocess a source file
-src/solver_greedy.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/solver_greedy.cpp.i
-.PHONY : src/solver_greedy.cpp.i
+src/state.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/state.cpp.i
+.PHONY : src/state.cpp.i
 
-src/solver_greedy.s: src/solver_greedy.cpp.s
-.PHONY : src/solver_greedy.s
+src/state.s: src/state.cpp.s
+.PHONY : src/state.s
 
 # target to generate assembly for a file
-src/solver_greedy.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/solver_greedy.cpp.s
-.PHONY : src/solver_greedy.cpp.s
+src/state.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/simulador.dir/build.make CMakeFiles/simulador.dir/src/state.cpp.s
+.PHONY : src/state.cpp.s
 
 # Help Target
 help:
@@ -270,9 +270,9 @@ help:
 	@echo "... src/simulator.o"
 	@echo "... src/simulator.i"
 	@echo "... src/simulator.s"
-	@echo "... src/solver_greedy.o"
-	@echo "... src/solver_greedy.i"
-	@echo "... src/solver_greedy.s"
+	@echo "... src/state.o"
+	@echo "... src/state.i"
+	@echo "... src/state.s"
 .PHONY : help
 
 

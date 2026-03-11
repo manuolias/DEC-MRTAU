@@ -269,8 +269,22 @@ CMakeFiles/simulador.dir/src/main.cpp.o: \
  /home/manuel/tfm/distributed/include/tau/simulator.hpp \
  /home/manuel/tfm/distributed/include/tau/logger.hpp \
  /home/manuel/tfm/distributed/include/tau/solver_interface.hpp \
+ /home/manuel/tfm/distributed/include/tau/observation.hpp \
+ /home/manuel/tfm/distributed/include/tau/definitions.hpp \
+ /home/manuel/tfm/distributed/include/tau/action.hpp \
+ /home/manuel/tfm/distributed/include/tau/state.hpp \
+ /home/manuel/tfm/distributed/include/tau/reward_interface.hpp \
+ /home/manuel/tfm/distributed/include/tau/utils/svector.hpp \
+ /usr/include/c++/13/numeric /usr/include/c++/13/bits/stl_numeric.h \
+ /usr/include/c++/13/pstl/glue_numeric_defs.h \
+ /usr/include/c++/13/functional /usr/include/c++/13/bits/std_function.h \
  /usr/include/c++/13/queue /usr/include/c++/13/deque \
  /usr/include/c++/13/bits/stl_deque.h /usr/include/c++/13/bits/deque.tcc \
- /usr/include/c++/13/bits/stl_queue.h \
+ /usr/include/c++/13/bits/stl_queue.h /usr/include/c++/13/chrono \
  /home/manuel/tfm/distributed/include/tau/solver_interface.hpp \
- /home/manuel/tfm/distributed/include/tau/solver_greedy.hpp
+ /home/manuel/tfm/distributed/include/tau/solver_greedy.hpp \
+ /home/manuel/tfm/distributed/include/tau/solver_random.hpp \
+ /usr/include/c++/13/random /usr/include/c++/13/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/13/bits/opt_random.h \
+ /usr/include/c++/13/bits/random.tcc \
+ /home/manuel/tfm/distributed/include/tau/reward_00.hpp

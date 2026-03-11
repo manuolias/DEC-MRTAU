@@ -62,4 +62,19 @@ void Logger::logRobotFinished(Time t, RobotID id, const Position& pos, BatteryLe
          << "; pos: (" << pos.x << ", " << pos.y << "); battery: " << battery << "\n";
 }
 
+void Logger::logMetric(const std::string& key, double value) {
+    file << "metric: " << key << "; value: " << value << "\n";
+}
+
+void Logger::logRobotFailed(Time t, RobotID id, const Position& pos) {
+    file << "event: robot_failed; timestamp: " << t <<"; robot: "<< id 
+        <<"; pos: (" << pos.x << ", " << pos.y << ")\n";
+}
+
+void Logger::logRobotRecharge(Time t, RobotID id, StationID stationID, const Position& pos, BatteryLevel lvl) {
+    file << "event: recharge; timestamp: " << t <<"; robot: "<< id 
+        <<"; recharging_station: " << stationID << "; pos: (" << pos.x << ", " << pos.y 
+        << "); level: " << lvl << "\n";
+}
+
 } // namespace tau
