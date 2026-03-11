@@ -43,7 +43,7 @@ Observation DistributedSimulator::generateObservation(RobotID robotID) {
     }
     
     // El robot ve su propio estado interno y el estado público de todas las tareas (totalmente observable)
-    return Observation(robotID, state.getRobot(robotID), state.getTasks(), myMessages);
+    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), myMessages);
 }
 
 // NUEVO: Enrutamiento básico de mensajes
@@ -182,8 +182,14 @@ void DistributedSimulator::run() {
                 break;
             }
 
-            case EventType::TASK_RESOLUTION: {
-                resolveTask(currentEvent.taskID);
+            case EventType::TASK_START: {
+                startTask(currentEvent.taskID);
+                break;
+            }
+            case EventType::TASK_END: {
+                // Leemos el resultado (payload) que programó el TASK_START
+                bool success = (currentEvent.payload == 1);
+                endTask(currentEvent.taskID, success);
                 break;
             }
 
@@ -331,7 +337,7 @@ void DistributedSimulator::simulateTask(RobotID robotID, TaskID taskID) {
         robot.batteryLevel = finalBattery;
         robot.node = nodeEndID;
         Time arrivalTime = globalTime + travelTime;
-        robot.time = arrivalTime;
+        robot.time = taskInfo.latestStart;
         robot.status = RobotStatus::WAITING; 
         robot.onTask = taskID;
 
@@ -350,13 +356,13 @@ void DistributedSimulator::simulateTask(RobotID robotID, TaskID taskID) {
         if (task.assignedWorkers == taskInfo.requiredWorkers) { 
             task.status = TaskStatus::ASSIGNED; // Ya no es PENDING, aunque aún no se ha resuelto
             // La tarea se programa para resolverse exactamente en el initTime calculado
-            eventQueue.push({task.initTime, EventType::TASK_RESOLUTION, NULL_ID, taskID});
+            eventQueue.push({task.initTime, EventType::TASK_START, NULL_ID, taskID});
         }
     }
 }
 
 // Extrae toda la lógica probabilística que tenías en simulateTask
-void DistributedSimulator::resolveTask(TaskID taskID) {
+void DistributedSimulator::startTask(TaskID taskID) {
     auto& task = state.getTask(taskID);
     const auto& taskInfo = scenario->getTasks().at(taskID);
 
@@ -364,7 +370,7 @@ void DistributedSimulator::resolveTask(TaskID taskID) {
     if (task.status == TaskStatus::FAILED || task.status == TaskStatus::COMPLETED) return;
 
     task.attempts++;
-    task.status = TaskStatus::ASSIGNED;
+    task.status = TaskStatus::EXECUTING;
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -386,7 +392,31 @@ void DistributedSimulator::resolveTask(TaskID taskID) {
     
     BatteryLevel consumptionInitial = rate * execTime;
 
+    for (auto& [workerID, _] : state.getRobots()) {
+        auto& w = state.getRobot(workerID);
+        if (w.onTask == taskID) {
+            w.status = RobotStatus::EXECUTING; // El robot pasa a ejecución (aislado del entorno)
+            BatteryLevel fBat = w.batteryLevel - consumptionInitial;
+            if (fBat < 0.0) { 
+                success = false;
+                Time tFail = (rate > 0.0) ? (w.batteryLevel / rate) : 0.0;
+                execTime = (tFail < execTime) ? tFail : execTime;
+            }
+        }
+    }
+
+    // Programamos el evento de finalización, pasando el éxito en el payload
+    Event ev;
+    ev.time = task.initTime + execTime;
+    ev.type = EventType::TASK_END;
+    ev.taskID = taskID;
+    ev.payload = success ? 1 : 0; 
+    eventQueue.push(ev);
+
+    /*
     std::vector<RobotID> workers;
+    
+    
     
     // Calcular quién sobrevive y quién muere por batería
     for (auto& [workerID, w] : state.getRobots()) {
@@ -403,7 +433,7 @@ void DistributedSimulator::resolveTask(TaskID taskID) {
     }
 
     BatteryLevel consumptionFinal = rate * execTime;
-
+    
     // Actualizar robots y reprogramar sus cerebros
     for (RobotID workerID : workers) {
         auto& w = state.getRobot(workerID);
@@ -423,7 +453,7 @@ void DistributedSimulator::resolveTask(TaskID taskID) {
             scheduleRobotDecision(w.time, workerID);
         }
     }
-
+    
     task.finalTime = task.initTime + execTime;
     // UNA VEZ QUE HEMOS COMPROBADO QUE LOS ROBOTS NO SE HAYAN QUEDADO SIN BATERIA PODEMOS DEFINIR EL RESULTADO
     if (success) {
@@ -432,9 +462,56 @@ void DistributedSimulator::resolveTask(TaskID taskID) {
         // AQUI VA EL TEMA DEL NUMERO DE INTENTOS
         task.status = TaskStatus::FAILED;
     }
-
+    
     std::string statusStr = success ? "COMPLETED" : "FAILED";
     logger->logTaskResolution(task.finalTime, taskID, scenario->nodes.at(taskInfo.node).coords, statusStr, 1);
+    */
+}
+
+void DistributedSimulator::endTask(TaskID taskID, bool success) {
+    auto& task = state.getTask(taskID);
+    const auto& taskInfo = scenario->getTasks().at(taskID);
+
+    // Recuperamos el tiempo de ejecución restando el reloj actual menos el inicial
+    Time execTime = std::max(0.0, globalTime - task.initTime);
+
+    BatteryLevel averageDemand = success ? taskInfo.averageSuccessDemand : taskInfo.averageFailDemand;
+    Time averageTime = success ? taskInfo.averageSuccessTime : taskInfo.averageFailTime;
+    BatteryRate rate = 0.0;
+    if (averageTime > 0.0) rate = averageDemand / averageTime;
+    BatteryLevel consumptionFinal = (averageTime > 0.0) ? (rate * execTime) : averageDemand;
+
+    for (auto& [workerID, _] : state.getRobots()) {
+        auto& w = state.getRobot(workerID);
+        if (w.onTask == taskID) {
+            logger->logTaskExecution(task.initTime, taskID, workerID, scenario->nodes.at(taskInfo.node).coords, execTime);
+            logger->logBatteryConsumption(task.initTime, workerID, execTime, w.batteryLevel, w.batteryLevel - consumptionFinal);
+            
+            w.time = globalTime; 
+            w.batteryLevel -= consumptionFinal;
+            
+            if (w.batteryLevel <= 0.0) { 
+                w.batteryLevel = 0.0;
+                logger->logRobotFailed(globalTime, workerID, scenario->getNodes().at(taskInfo.node).coords);
+                w.status = RobotStatus::FAILED; 
+            } else {
+                w.status = RobotStatus::AVAILABLE;
+                w.onTask = NULL_ID;
+                scheduleRobotDecision(globalTime, workerID);
+            }
+        }
+    }
+
+    task.finalTime = globalTime;
+        if (success) {
+        task.status = TaskStatus::COMPLETED;
+    } else {
+        // AQUI VA EL TEMA DEL NUMERO DE INTENTOS
+        task.status = TaskStatus::FAILED;
+    }
+
+    std::string statusStr = success ? "COMPLETED" : "FAILED";
+    logger->logTaskResolution(globalTime, taskID, scenario->nodes.at(taskInfo.node).coords, statusStr, 1);
 }
 
 // Lógica de caducidad

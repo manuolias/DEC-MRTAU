@@ -18,16 +18,18 @@ struct Message {
 
 class Observation {
 private:
+    Time currentTime; // <--- NUEVO
     RobotID myId;
     Robot myState;                                // s^{r_i}: Estado propio
     const std::map<TaskID, Task> knownTasks;            // s^T: Estado de las tareas
     std::vector<Message> inbox;                   // \mathcal{M}_{in}: Mensajes recibidos
 
 public:
-    Observation(RobotID id, Robot& self, const std::map<TaskID, Task>& tasks, const std::vector<Message>& messages)
+    Observation(Time time, RobotID id, Robot& self, const std::map<TaskID, Task>& tasks, const std::vector<Message>& messages)
         : myId(id), myState(self), knownTasks(tasks), inbox(messages) {}
 
     // Getters de solo lectura para el Solver
+    Time getCurrentTime() const { return currentTime; }
     RobotID getId() const { return myId; }
     const Robot& getMyState() const { return myState; }
     const std::map<TaskID, Task>& getKnownTasks() const { return knownTasks; }

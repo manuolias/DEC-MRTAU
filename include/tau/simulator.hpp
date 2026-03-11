@@ -19,9 +19,11 @@ namespace tau {
 // Le asignamos valores enteros explícitos para definir la prioridad.
 // En nuestra priority_queue (greater), los valores más pequeños salen PRIMERO.
 enum class EventType {
-    TASK_RESOLUTION = 0,  // Prioridad 1: Siempre primero en caso de empate temporal
-    TASK_EXPIRATION = 1,  // Prioridad 2
-    ROBOT_DECISION = 2    // Prioridad 3: Los robots actúan viendo el estado finalizado
+    TASK_END = 0,  // Prioridad 1: Siempre primero en caso de empate temporal
+    TASK_START = 1,      // Prioridad 2: Si quieres modelar el tiempo de ejecución explícitamente
+    TASK_EXPIRATION = 2,  // Prioridad 3
+    ROBOT_DECISION = 3    // Prioridad 4: Los robots actúan viendo el estado finalizado
+    
 };
 
 struct Event {
@@ -30,6 +32,7 @@ struct Event {
     RobotID robotID = NULL_ID;
     TaskID taskID = NULL_ID;
     int randomTieBreaker = 0; // NUEVO: Para desempatar decisiones simultáneas
+    int payload = 0;          // NUEVO: Para pasar datos ocultos (ej. success = 1, fail = 0) entre eventos
 
     bool operator>(const Event& other) const {
         // 1. Desempate por tiempo (el menor tiempo va primero)
@@ -86,7 +89,8 @@ private:
     void simulateFinish(RobotID robotID);
     void simulateRecharge(RobotID robotID);
     void simulateTask(RobotID robotID, TaskID taskID);
-    void resolveTask(TaskID taskID); // Extraído de simulateTask
+    void startTask(TaskID taskID); 
+    void endTask(TaskID taskID, bool success); // Extraído de simulateTask
     void expireTask(TaskID taskID);  // Nuevo evento
 
     void scheduleRobotDecision(Time t, RobotID id);

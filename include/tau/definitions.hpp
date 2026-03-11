@@ -14,12 +14,14 @@ enum class RobotStatus {
     AVAILABLE,
     FINISHED,
     WAITING,
+    EXECUTING,
     FAILED
 };
 
 enum class TaskStatus {
     PENDING,
     ASSIGNED,
+    EXECUTING,
     COMPLETED,
     FAILED
 };
