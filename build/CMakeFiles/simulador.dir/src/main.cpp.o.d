@@ -287,4 +287,7 @@ CMakeFiles/simulador.dir/src/main.cpp.o: \
  /usr/include/c++/13/random /usr/include/c++/13/bits/random.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/opt_random.h \
  /usr/include/c++/13/bits/random.tcc \
+ /home/manuel/tfm/distributed/include/tau/solver_CBAA.hpp \
+ /home/manuel/tfm/distributed/include/tau/utils/estimation.hpp \
+ /home/manuel/tfm/distributed/include/tau/utils/../scenario.hpp \
  /home/manuel/tfm/distributed/include/tau/reward_00.hpp

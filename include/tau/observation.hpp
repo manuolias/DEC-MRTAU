@@ -8,12 +8,20 @@
 
 namespace tau {
 
+enum MessageType {
+    BID_REQUEST,
+    BID_REPLY,
+    // Otros tipos de mensajes que puedas necesitar
+};
+
 // Estructura básica para la comunicación entre robots (\mathcal{M}_{in})
 struct Message {
     RobotID sender;
     RobotID receiver; // Puede ser un ID específico o un broadcast (-1)
-    std::string type; // ej. "BID", "PLAN_DISTRIBUTION"
-    // Aquí en el futuro puedes añadir un payload (datos binarios, JSON, etc.)
+    MessageType type;
+    TaskID targetTask = NULL_ID;
+    double value = 0.0;           // Servirá para la puja (bid)
+    // std::vector<double> data;  // <-- Puedes descomentar esto cuando hagas CBBA
 };
 
 class Observation {
@@ -22,18 +30,18 @@ private:
     RobotID myId;
     Robot myState;                                // s^{r_i}: Estado propio
     const std::map<TaskID, Task> knownTasks;            // s^T: Estado de las tareas
-    std::vector<Message> inbox;                   // \mathcal{M}_{in}: Mensajes recibidos
+    const std::map<RobotID, Robot> knownRobots;          // s^R: Estado de los robots (opcional, dependiendo de tu diseño)
 
 public:
-    Observation(Time time, RobotID id, Robot& self, const std::map<TaskID, Task>& tasks, const std::vector<Message>& messages)
-        : myId(id), myState(self), knownTasks(tasks), inbox(messages) {}
+    Observation(Time time, RobotID id, Robot& self, const std::map<TaskID, Task>& tasks, const std::map<RobotID, Robot>& robots)
+        : currentTime(time), myId(id), myState(self), knownTasks(tasks), knownRobots(robots) {}
 
     // Getters de solo lectura para el Solver
     Time getCurrentTime() const { return currentTime; }
     RobotID getId() const { return myId; }
     const Robot& getMyState() const { return myState; }
     const std::map<TaskID, Task>& getKnownTasks() const { return knownTasks; }
-    const std::vector<Message>& getInbox() const { return inbox; }
+    const std::map<RobotID, Robot>& getKnownRobots() const { return knownRobots; }
 };
 
 } // namespace tau

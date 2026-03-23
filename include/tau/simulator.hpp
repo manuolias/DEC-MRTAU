@@ -58,8 +58,6 @@ private:
     // NUEVO: Un cerebro (solver) independiente para cada robot físico
     std::map<RobotID, std::shared_ptr<ISolver>> solvers;
     
-    // NUEVO: Gestor/Buzón central de mensajes en tránsito
-    std::vector<Message> messageBus;
 
     // std::priority_queue<Event, std::vector<Event>, std::greater<Event>> eventQueue;
     tau::State state;
@@ -82,8 +80,6 @@ private:
     // NUEVO: Función clave que "filtra" la realidad para crear la Observación
     Observation generateObservation(RobotID robotID);
     
-    // NUEVO: Fase de enrutamiento de comunicaciones
-    void routeMessages();
 
     void applyAction(RobotID robotID, const Action& action);
     void simulateFinish(RobotID robotID);

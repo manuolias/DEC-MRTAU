@@ -32,20 +32,11 @@ BatteryLevel DistributedSimulator::calculateBatteryConsumption(RobotID robotID, 
 }
 
 // NUEVO: Implementación del filtro de observación
-Observation DistributedSimulator::generateObservation(RobotID robotID) {
-    std::vector<Message> myMessages;
-    
-    // Filtramos los mensajes: solo cogemos los dirigidos a este robot, o broadcasts (NULL_ID)
-    for (const auto& msg : messageBus) {
-        if (msg.receiver == robotID || msg.receiver == NULL_ID) {
-            myMessages.push_back(msg);
-        }
-    }
-    
+Observation DistributedSimulator::generateObservation(RobotID robotID) {    
     // El robot ve su propio estado interno y el estado público de todas las tareas (totalmente observable)
-    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), myMessages);
+    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), state.getRobots());
 }
-
+/*
 // NUEVO: Enrutamiento básico de mensajes
 void DistributedSimulator::routeMessages() {
     // Si quisieras procesar latencia o pérdida de paquetes (incertidumbre en comunicaciones), 
@@ -56,6 +47,7 @@ void DistributedSimulator::routeMessages() {
     // por ahora lo dejamos como base).
 }
 
+*/
 void DistributedSimulator::initLogging() {
     /*
     info: filename; value: mi_simulacion_distribuida.log
@@ -171,12 +163,12 @@ void DistributedSimulator::run() {
                 // Si el robot falló o ya terminó, ignoramos este evento
                 if (robot.status != RobotStatus::AVAILABLE) break; 
 
-                routeMessages();
+                
                 Observation obs = generateObservation(currentEvent.robotID);
                 Action action = solvers.at(currentEvent.robotID)->decideNextAction(obs, scenario);
                 
-                std::vector<Message> outgoing = solvers.at(currentEvent.robotID)->getOutbox();
-                messageBus.insert(messageBus.end(), outgoing.begin(), outgoing.end());
+                // std::vector<Message> outgoing = solvers.at(currentEvent.robotID)->getOutbox();
+                // messageBus.insert(messageBus.end(), outgoing.begin(), outgoing.end());
 
                 applyAction(currentEvent.robotID, action);
                 break;
