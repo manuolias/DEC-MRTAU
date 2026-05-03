@@ -5,19 +5,24 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cmath> // Para std::abs
 
 namespace tau {
 
 class CBAASolver : public ISolver {
 private:
     RobotID myId;
-    std::vector<Message> outbox;
 
-    // Lógica interna del robot para calcular su propia puja
+    // Lógica interna del robot para calcular su propia puja (y emular la de los demás)
     double calculateBid(const Robot& robot, RobotID rId, TaskID tId, 
                         const std::shared_ptr<const Scenario>& scenario, 
                         const std::map<TaskID, Task>& tasks, Time currentTime) {
         
+        // Si el robot está roto o ya terminó, su puja es 0
+        if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
+            return 0.0;
+        }
+
         NodeID robotNode = robot.node;
         NodeID taskNode = scenario->getTasks().at(tId).node;
         
@@ -37,33 +42,10 @@ private:
         return 10000.0 / (1.0 + estimatedArrival);
     }
 
-    // Emula la recepción de la petición por parte del vecino y su respuesta instantánea (Abstracción de red)
-    Message generateNeighborReply(RobotID neighborId, const Robot& neighborState, TaskID requestedTask, 
-                                  const std::shared_ptr<const Scenario>& scenario, 
-                                  const std::map<TaskID, Task>& tasks, Time currentTime) {
-        
-        Message reply;
-        reply.sender = neighborId;
-        reply.receiver = myId;
-        reply.type = BID_REPLY;
-        reply.targetTask = requestedTask;
-        
-        // Si el vecino está roto, responde con puja 0
-        if (neighborState.status == RobotStatus::FAILED) {
-            reply.value = 0.0;
-            return reply;
-        }
-
-        // El vecino evalúa cuánto tardaría él
-        reply.value = calculateBid(neighborState, neighborId, requestedTask, scenario, tasks, currentTime);
-        return reply;
-    }
-
 public:
     CBAASolver(RobotID id) : myId(id) {}
 
     Action decideNextAction(const Observation& obs, const std::shared_ptr<const Scenario>& scenario) override {
-        outbox.clear();
         bool pendingTasksExist = false;
         bool unreachableTasksExist = false;
         
@@ -103,37 +85,24 @@ public:
             return a.second > b.second;
         });
 
-        // 3. Negociación con los vecinos
+        // 3. Negociación "Virtual" con los vecinos (Consultando el estado público)
         for (const auto& [tId, myBid] : myBids) {
             
-            // a) Emitimos mensaje conceptual (Request)
-            Message requestMsg;
-            requestMsg.sender = myId;
-            requestMsg.receiver = NULL_ID; // Broadcast
-            requestMsg.type = BID_REQUEST;
-            requestMsg.targetTask = tId;
-            outbox.push_back(requestMsg); // Lo dejamos registrado en el log de comunicaciones
-
-            // b) Recopilamos las respuestas (Replies)
-            std::vector<Message> replies;
+            int betterBidsCount = 0;
+            
+            // Recopilamos las pujas de los competidores
             for (const auto& [otherId, otherRobot] : obs.getKnownRobots()) {
                 if (otherId == myId) continue;
-                if (otherRobot.status == RobotStatus::FAILED || otherRobot.status == RobotStatus::FINISHED) continue; // Rotos no compiten
+                if (otherRobot.status == RobotStatus::FAILED || otherRobot.status == RobotStatus::FINISHED) continue;
                 
-                // ¡LA CORRECCIÓN CLAVE! 
-                // Si este vecino YA está en la tarea, ya tiene su plaza. 
-                // No compite por las plazas restantes, así que no le pedimos puja.
+                // Si este vecino YA está en la tarea, ya tiene su plaza, no compite
                 if (otherRobot.onTask == tId) continue;
-                // Los vecinos evalúan y comunican su puja de vuelta
-                Message reply = generateNeighborReply(otherId, otherRobot, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime());
-                replies.push_back(reply);
-            }
 
-            // c) Ordenamos y determinamos si hay hueco (Consenso)
-            int betterBidsCount = 0;
-            for (const auto& reply : replies) {
-                // Si la puja del vecino es mayor
-                if (reply.value > myBid) {
+                // Emulamos la puja del vecino al instante usando la información de la Observación
+                double theirBid = calculateBid(otherRobot, otherId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime());
+                
+                // Si la puja del vecino es mayor (o en caso de empate, su ID es menor)
+                if (theirBid > myBid || (std::abs(theirBid - myBid) < 1e-9 && otherId < myId)) {
                     betterBidsCount++;
                 }
             }
@@ -144,11 +113,11 @@ public:
             int availableSlots = required - assigned;
             
             // ¿Entramos en el Top N?
-            if (betterBidsCount < availableSlots) {
+            if (availableSlots > 0 && betterBidsCount < availableSlots) {
                 return Action(Action::Type::EXECUTE_TASK, tId);
             }
             
-            // Si nos rechazan (betterBidsCount >= required), pasamos a la siguiente tarea del bucle.
+            // Si nos rechazan, pasamos a la siguiente tarea del bucle.
         }
 
         // Si se agota el diccionario sin éxito, recargamos o terminamos
@@ -158,9 +127,6 @@ public:
         
         return Action(Action::Type::FINISH);
     }
-
-    void receiveMessage(const Message& msg) override {}
-    std::vector<Message> getOutbox() override { return {}; }
 };
 
 } // namespace tau

@@ -13,6 +13,7 @@
 #include "tau/solver_greedy.hpp"
 #include "tau/solver_random.hpp"
 #include "tau/solver_CBAA.hpp"
+#include "tau/solver_CBBA.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -124,6 +125,8 @@ int main() {
                                 solver = std::make_shared<tau::RandomSolver>();
                             } else if (solverName == "cbaa") {
                                 solver = std::make_shared<tau::CBAASolver>(robotID);
+                            } else if (solverName == "cbba") { 
+                                solver = std::make_shared<tau::CBBASolver>(robotID); 
                             }
                             // Aquí añadirás otros en el futuro:
                             // else if (solverName == "cbaa") { 

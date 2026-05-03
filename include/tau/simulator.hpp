@@ -19,11 +19,11 @@ namespace tau {
 // Le asignamos valores enteros explícitos para definir la prioridad.
 // En nuestra priority_queue (greater), los valores más pequeños salen PRIMERO.
 enum class EventType {
-    TASK_END = 0,  // Prioridad 1: Siempre primero en caso de empate temporal
-    TASK_START = 1,      // Prioridad 2: Si quieres modelar el tiempo de ejecución explícitamente
-    TASK_EXPIRATION = 2,  // Prioridad 3
-    ROBOT_DECISION = 3    // Prioridad 4: Los robots actúan viendo el estado finalizado
-    
+    TASK_END = 0,        // Prioridad 1: Siempre primero en caso de empate temporal
+    TASK_START = 1,      // Prioridad 2: Inicio de ejecución
+    TASK_EXPIRATION = 2, // Prioridad 3: Caducidad de tareas
+    ROBOT_DECISION = 3,  // Prioridad 4: Decisiones físicas 
+    PLANNING_UPDATE = 4  // Prioridad 5 (NUEVO): Pensamiento en segundo plano    
 };
 
 struct Event {
@@ -31,8 +31,8 @@ struct Event {
     EventType type;
     RobotID robotID = NULL_ID;
     TaskID taskID = NULL_ID;
-    int randomTieBreaker = 0; // NUEVO: Para desempatar decisiones simultáneas
-    int payload = 0;          // NUEVO: Para pasar datos ocultos (ej. success = 1, fail = 0) entre eventos
+    int randomTieBreaker = 0; // Para desempatar decisiones simultáneas
+    int payload = 0;          // Para pasar datos ocultos (ej. success = 1, fail = 0) entre eventos
 
     bool operator>(const Event& other) const {
         // 1. Desempate por tiempo (el menor tiempo va primero)
@@ -55,13 +55,17 @@ private:
     std::shared_ptr<Logger> logger;
     std::shared_ptr<RewardFunction> reward;
 
-    // NUEVO: Un cerebro (solver) independiente para cada robot físico
+    // Un cerebro (solver) independiente para cada robot físico
     std::map<RobotID, std::shared_ptr<ISolver>> solvers;
     
+    // La "Pizarra Pública" donde se guardan las distribuciones del Dec-MCTS
+    std::map<RobotID, Distribution> globalDistributions;
 
     // std::priority_queue<Event, std::vector<Event>, std::greater<Event>> eventQueue;
     tau::State state;
     Time globalTime;
+
+    std::priority_queue<Event, std::vector<Event>, std::greater<Event>> eventQueue; // Cola de eventos
 
 public:
     DistributedSimulator(std::shared_ptr<const Scenario> scen, std::shared_ptr<Logger> log);
@@ -72,14 +76,11 @@ public:
     const State& getGlobalState() const { return state; }
 
 private:
-    std::priority_queue<Event, std::vector<Event>, std::greater<Event>> eventQueue; // Cola de eventos
-
     void initLogging();
     void finalLogging(double reward, double computingTime);
 
-    // NUEVO: Función clave que "filtra" la realidad para crear la Observación
+    // Genera la observación que puede ver un robot
     Observation generateObservation(RobotID robotID);
-    
 
     void applyAction(RobotID robotID, const Action& action);
     void simulateFinish(RobotID robotID);
@@ -90,7 +91,8 @@ private:
     void expireTask(TaskID taskID);  // Nuevo evento
 
     void scheduleRobotDecision(Time t, RobotID id);
-    
+    void schedulePlanningUpdate(Time t, RobotID id); // Encola eventos de pensamiento (Para DEC-MCTS)
+
     Time calculateTravelTime(RobotID robotID, NodeID src, NodeID dst);
     BatteryLevel calculateBatteryConsumption(RobotID robotID, Time duration, BatteryRate rate);
 };

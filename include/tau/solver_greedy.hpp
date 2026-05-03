@@ -61,9 +61,6 @@ public:
 
         return Action(Action::Type::EXECUTE_TASK, bestTask);
     }
-
-    void receiveMessage(const Message& msg) override {}
-    std::vector<Message> getOutbox() override { return {}; }
 };
 
 } // namespace tau

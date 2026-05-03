@@ -46,7 +46,7 @@ bool State::isFinal() const {
     return true;
 }
 
-
+/*
 
 RobotID State::getNextRobotID() const {
     std::vector<RobotID> candidates;
@@ -90,5 +90,6 @@ RobotID State::getNextRobotID() const {
     std::size_t indice_aleatorio = distribucion(generador);
     return candidates[indice_aleatorio];
 }
+*/
 
 }
