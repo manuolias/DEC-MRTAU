@@ -17,7 +17,12 @@ public:
     // El algoritmo decide basándose ÚNICAMENTE en su observación local y pública
     virtual Action decideNextAction(const Observation& obs, const std::shared_ptr<const Scenario>& scenario) = 0;
     
-    // <--- NUEVO: Método para algoritmos Anytime (como Dec-MCTS)
+    // El simulador preguntará esto antes de encolar eventos
+    virtual bool requiresContinuousPlanning() const { 
+        return false; 
+    }
+
+    // Método para algoritmos Anytime (como Dec-MCTS)
     // Permite al robot computar en segundo plano y devolver su nueva distribución de creencias.
     // Por defecto devuelve std::nullopt (útil para que CBAA/CBBA no tengan que implementarla obligatoriamente).
     virtual std::optional<Distribution> performBackgroundPlanning(const Observation& obs, const std::shared_ptr<const Scenario>& scenario) {

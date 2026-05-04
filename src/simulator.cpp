@@ -6,6 +6,9 @@
 
 namespace tau {
 
+// Frecuencia de actualización del pensamiento en segundo plano (0.5 segundos virtuales)
+constexpr Time PLANNING_INTERVAL = 0.5;
+
 DistributedSimulator::DistributedSimulator(std::shared_ptr<const Scenario> scen, std::shared_ptr<Logger> log) 
     : scenario(scen), logger(log), state(scen), globalTime(scen->initialTime) {} 
 
@@ -31,23 +34,12 @@ BatteryLevel DistributedSimulator::calculateBatteryConsumption(RobotID robotID, 
     return finalLvl;
 }
 
-// NUEVO: Implementación del filtro de observación
+// Ahora inyectamos la pizarra global en la observación
 Observation DistributedSimulator::generateObservation(RobotID robotID) {    
-    // El robot ve su propio estado interno y el estado público de todas las tareas (totalmente observable)
-    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), state.getRobots());
-}
-/*
-// NUEVO: Enrutamiento básico de mensajes
-void DistributedSimulator::routeMessages() {
-    // Si quisieras procesar latencia o pérdida de paquetes (incertidumbre en comunicaciones), 
-    // este sería el lugar perfecto. Por ahora, asumimos comunicación instantánea.
-    
-    // Limpiamos el bus después de que todos los mensajes hayan sido entregados
-    // (Esto dependerá de cómo gestiones el ciclo de turnos de tu simulador, 
-    // por ahora lo dejamos como base).
+    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), state.getRobots(), globalDistributions);
 }
 
-*/
+
 void DistributedSimulator::initLogging() {
     /*
     info: filename; value: mi_simulacion_distribuida.log
@@ -138,6 +130,22 @@ void DistributedSimulator::run() {
     // Añadimos la primera decisión para todos los robots disponibles
     for (const auto& [id, robot] : state.getRobots()) {
         scheduleRobotDecision(scenario->initialTime, id);
+
+        // Warm-up del planificador en segundo plano
+        // Hacemos que todos calculen su distribución inicial antes de empezar a moverse
+        // Solo hacemos warm-up y encolamos latidos si el algoritmo es Anytime (Dec-MCTS)
+        if (solvers.at(id)->requiresContinuousPlanning()) {
+            Observation obs = generateObservation(id);
+            auto initialDist = solvers.at(id)->performBackgroundPlanning(obs, scenario);
+            if (initialDist.has_value()) {
+                globalDistributions[id] = initialDist.value();
+            }
+            // Programamos el primer latido
+            schedulePlanningUpdate(scenario->initialTime + PLANNING_INTERVAL, id);
+        }
+        
+        // Programamos el primer latido de pensamiento
+        schedulePlanningUpdate(scenario->initialTime + PLANNING_INTERVAL, id);
     }
     // Añadimos el evento de caducidad para todas las tareas
     for (const auto& [id, task] : scenario->getTasks()) {
@@ -163,14 +171,30 @@ void DistributedSimulator::run() {
                 // Si el robot falló o ya terminó, ignoramos este evento
                 if (robot.status != RobotStatus::AVAILABLE) break; 
 
-                
                 Observation obs = generateObservation(currentEvent.robotID);
                 Action action = solvers.at(currentEvent.robotID)->decideNextAction(obs, scenario);
                 
-                // std::vector<Message> outgoing = solvers.at(currentEvent.robotID)->getOutbox();
-                // messageBus.insert(messageBus.end(), outgoing.begin(), outgoing.end());
-
                 applyAction(currentEvent.robotID, action);
+                break;
+            }
+
+            // Motor de pensamiento continuo para Dec-MCTS
+            case EventType::PLANNING_UPDATE: {
+                auto& robot = state.getRobot(currentEvent.robotID);
+                
+                // Si el robot está roto o ha terminado su misión, deja de procesar
+                if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) break;
+                
+                Observation obs = generateObservation(currentEvent.robotID);
+                auto newDist = solvers.at(currentEvent.robotID)->performBackgroundPlanning(obs, scenario);
+                
+                // Si el solver calculó una distribución (Dec-MCTS), la publicamos
+                if (newDist.has_value()) {
+                    globalDistributions[currentEvent.robotID] = newDist.value();
+                }
+                
+                // El robot vuelve a encolar otro pensamiento para el futuro
+                schedulePlanningUpdate(globalTime + PLANNING_INTERVAL, currentEvent.robotID);
                 break;
             }
 
@@ -404,60 +428,6 @@ void DistributedSimulator::startTask(TaskID taskID) {
     ev.taskID = taskID;
     ev.payload = success ? 1 : 0; 
     eventQueue.push(ev);
-
-    /*
-    std::vector<RobotID> workers;
-    
-    
-    
-    // Calcular quién sobrevive y quién muere por batería
-    for (auto& [workerID, w] : state.getRobots()) {
-        if (w.onTask == taskID) {
-            workers.emplace_back(workerID);
-            BatteryLevel fBat = w.batteryLevel - consumptionInitial;
-            if (fBat < 0.0) { 
-                success = false;
-                Time tFail = w.batteryLevel / rate;
-                execTime = (tFail < execTime) ? tFail : execTime;
-            }
-            logger->logTaskExecution(task.initTime, taskID, workerID, scenario->nodes.at(taskInfo.node).coords, execTime);
-        }
-    }
-
-    BatteryLevel consumptionFinal = rate * execTime;
-    
-    // Actualizar robots y reprogramar sus cerebros
-    for (RobotID workerID : workers) {
-        auto& w = state.getRobot(workerID);
-        logger->logBatteryConsumption(task.initTime, workerID, execTime, w.batteryLevel, w.batteryLevel - consumptionFinal);
-        
-        w.time = task.initTime + execTime; // Momento en que quedan libres
-        w.batteryLevel -= consumptionFinal;
-        
-        if (w.batteryLevel <= 0.0) { 
-            w.batteryLevel = 0.0;
-            logger->logRobotFailed(task.initTime, workerID, scenario->getNodes().at(taskInfo.node).coords);
-            w.status = RobotStatus::FAILED; 
-        } else {
-            w.status = RobotStatus::AVAILABLE;
-            w.onTask = NULL_ID;
-            // NUEVO: ¡El robot está libre! Programamos su próxima decisión
-            scheduleRobotDecision(w.time, workerID);
-        }
-    }
-    
-    task.finalTime = task.initTime + execTime;
-    // UNA VEZ QUE HEMOS COMPROBADO QUE LOS ROBOTS NO SE HAYAN QUEDADO SIN BATERIA PODEMOS DEFINIR EL RESULTADO
-    if (success) {
-        task.status = TaskStatus::COMPLETED;
-    } else {
-        // AQUI VA EL TEMA DEL NUMERO DE INTENTOS
-        task.status = TaskStatus::FAILED;
-    }
-    
-    std::string statusStr = success ? "COMPLETED" : "FAILED";
-    logger->logTaskResolution(task.finalTime, taskID, scenario->nodes.at(taskInfo.node).coords, statusStr, 1);
-    */
 }
 
 void DistributedSimulator::endTask(TaskID taskID, bool success) {
@@ -541,6 +511,21 @@ void DistributedSimulator::scheduleRobotDecision(Time t, RobotID id) {
     ev.taskID = NULL_ID;
     ev.randomTieBreaker = distribucion(generador); // Magia: desempate automático al encolar
 
+    eventQueue.push(ev);
+}
+
+// Función auxiliar para encolar el pensamiento de fondo
+void DistributedSimulator::schedulePlanningUpdate(Time t, RobotID id) {
+    static thread_local std::mt19937 generador(std::random_device{}());
+    // Un rango amplio para garantizar que las colisiones de empate sean casi imposibles
+    std::uniform_int_distribution<int> distribucion(0, 10000000); 
+    
+    Event ev;
+    ev.time = t;
+    ev.type = EventType::PLANNING_UPDATE;
+    ev.robotID = id;
+    ev.taskID = NULL_ID;
+    ev.randomTieBreaker = distribucion(generador);
     eventQueue.push(ev);
 }
 

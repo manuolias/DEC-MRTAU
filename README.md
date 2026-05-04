@@ -17,3 +17,10 @@ make
 ```bash
 ./simulador
 ```
+
+
+---
+Para obtener las métricas correspondientes, hacer:
+```
+mrtau metrics -i logs/ -o prueba.csv
+```
