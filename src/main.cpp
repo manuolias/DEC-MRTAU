@@ -14,6 +14,7 @@
 #include "tau/solver_random.hpp"
 #include "tau/solver_CBAA.hpp"
 #include "tau/solver_CBBA.hpp"
+#include "tau/solver_decmcts.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -116,7 +117,7 @@ int main() {
 
                         // --- NUEVO: Instanciación Distribuida de Solvers ---
                         // Iteramos sobre todos los robots definidos en el escenario
-                        for (const auto& [robotID, robotInfo] : scenario->getRobots()) {
+                        for (const auto& [robotID, _] : scenario->getRobots()) {
                             std::shared_ptr<tau::ISolver> solver;
                             
                             if (solverName == "greedy") {
@@ -127,6 +128,8 @@ int main() {
                                 solver = std::make_shared<tau::CBAASolver>(robotID);
                             } else if (solverName == "cbba") { 
                                 solver = std::make_shared<tau::CBBASolver>(robotID); 
+                            } else if (solverName == "dec-mcts") { 
+                                solver = std::make_shared<tau::DecMCTSSolver>(robotID); 
                             }
                             // Aquí añadirás otros en el futuro:
                             // else if (solverName == "cbaa") { 

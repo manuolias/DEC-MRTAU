@@ -240,6 +240,9 @@ void DistributedSimulator::applyAction(RobotID robotID, const Action& action) {
             simulateFinish(robotID);
             break;
         }
+        case Action::Type::START: {
+            throw std::runtime_error("Error Fatal: El simulador ha recibido una acción START. Esto solo debería existir en la mente del solver.");
+        }
     }
 }
 

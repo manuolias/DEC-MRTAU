@@ -22,5 +22,10 @@ make
 ---
 Para obtener las métricas correspondientes, hacer:
 ```
-mrtau metrics -i logs/ -o prueba.csv
+mrtau metrics -i logs/ -o results.csv
+```
+
+Para generar un video, hacer:
+```
+mrtau video -i test.log -o simulacion.mp4
 ```

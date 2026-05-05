@@ -25,8 +25,6 @@ public:
     Robot& getRobot(RobotID id) { return robots.at(id); }
     Task& getTask(TaskID id) { return tasks.at(id); }
 
-    // Siguiente robot a actuar
-    // RobotID getNextRobotID() const;
 
     // Condición de finalización global
     bool isFinal() const;

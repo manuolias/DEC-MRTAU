@@ -292,4 +292,6 @@ CMakeFiles/simulador.dir/src/main.cpp.o: \
  /home/manuel/tfm/distributed/include/tau/utils/estimation.hpp \
  /home/manuel/tfm/distributed/include/tau/utils/../scenario.hpp \
  /home/manuel/tfm/distributed/include/tau/solver_CBBA.hpp \
+ /home/manuel/tfm/distributed/include/tau/solver_decmcts.hpp \
+ /home/manuel/tfm/distributed/include/tau/mcts_node.hpp \
  /home/manuel/tfm/distributed/include/tau/reward_00.hpp

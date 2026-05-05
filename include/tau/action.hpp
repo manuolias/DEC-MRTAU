@@ -11,15 +11,17 @@ public:
         // OBSERVE_OUTCOME, // Se puede usar para indicar que el robot está esperando a que acabe una tarea
         RECHARGE,
         EXECUTE_TASK,
+        START
         // IDLE // Añadimos IDLE para cuando un robot no puede hacer nada
     };
 
     Action(Type type) : type(type), target(NULL_ID) {}
     Action(Type type, TaskID target) : type(type), target(target) {}
-
+    
     Type getType() const { return type; }
     TaskID getTarget() const { return target; }
-
+    
+    /*
     friend std::ostream& operator<<(std::ostream& os, const Action& action) {
         switch(action.type) {
             case Action::Type::FINISH: return os << "Finish";
@@ -30,6 +32,7 @@ public:
         }
         return os;
     }
+    */
 
 private:
     Type type;
