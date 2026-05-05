@@ -270,7 +270,7 @@ private:
                 double probOfComing = 0.0;
                 // NOTA: Asumo que distribution se puede iterar devolviendo pares <SecuenciaTareas, Probabilidad>
                 // Si tu clase Distribution tiene otra interfaz, ajústalo aquí.
-                for (const auto& [bundle, prob] : distribution.getProbabilities()) {
+                for (const auto& [bundle, prob] : distribution) {
                     // Si el vecino tiene esta tarea en su paquete, sumamos la probabilidad
                     if (std::find(bundle.begin(), bundle.end(), tId) != bundle.end()) {
                         probOfComing += prob;
