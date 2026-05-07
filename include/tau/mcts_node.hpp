@@ -52,6 +52,7 @@ public:
     }
 
     std::shared_ptr<MCTSNode> getParent() const { return parent.lock(); }
+    void detachFromParent() { parent.reset(); }
     const std::vector<std::shared_ptr<MCTSNode>>& getChildren() const { return children; }
     const Action& getAction() const { return actionToGetHere; }
     

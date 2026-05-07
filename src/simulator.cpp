@@ -6,8 +6,10 @@
 
 namespace tau {
 
-// Frecuencia de actualización del pensamiento en segundo plano (0.5 segundos virtuales)
-constexpr Time PLANNING_INTERVAL = 0.5;
+// Frecuencia de actualización del pensamiento en segundo plano (0.1 segundos virtuales)
+constexpr Time PLANNING_INTERVAL = 0.1;
+constexpr Time WARMUP_VIRTUAL_TIME = 40.0;
+constexpr int WARMUP_ROUNDS = static_cast<int>(std::ceil(WARMUP_VIRTUAL_TIME / PLANNING_INTERVAL));
 
 DistributedSimulator::DistributedSimulator(std::shared_ptr<const Scenario> scen, std::shared_ptr<Logger> log) 
     : scenario(scen), logger(log), state(scen), globalTime(scen->initialTime) {} 
@@ -22,7 +24,7 @@ void DistributedSimulator::registerReward(std::shared_ptr<RewardFunction> reward
 
 Time DistributedSimulator::calculateTravelTime(RobotID robotID, NodeID src, NodeID dst) {
     if (src == dst) return 0.0;
-    Distance dist = scenario->nodes.at(src).neighbors.at(dst);
+    Distance dist = scenario->distanceBetween(src, dst);
     return dist / scenario->robots.at(robotID).navigationVelocity;
 }
 
@@ -126,26 +128,37 @@ void DistributedSimulator::run() {
                         
     initLogging();
 
+    // ====================================================================
+    // FASE 0: WARM-UP DEL PLANIFICADOR (Basado en Tiempo Virtual)
+    // ====================================================================
+    
+    // Warm-up previo al arranque del simulador para solvers anytime.
+    // Repetimos varias rondas de pensamiento compartido antes de encolar la primera decisión física.
+    for (int round = 0; round < WARMUP_ROUNDS; ++round) {
+        for (const auto& [id, robot] : state.getRobots()) {
+            if (!solvers.at(id)->requiresContinuousPlanning()) {
+                continue;
+            }
+
+            Observation obs = generateObservation(id);
+            auto warmupDist = solvers.at(id)->performBackgroundPlanning(obs, scenario);
+            if (warmupDist.has_value()) {
+                globalDistributions[id] = warmupDist.value();
+            }
+        }
+    }
+
     // 1. INICIALIZACIÓN DE LA COLA DE EVENTOS
     // Añadimos la primera decisión para todos los robots disponibles
     for (const auto& [id, robot] : state.getRobots()) {
         scheduleRobotDecision(scenario->initialTime, id);
 
-        // Warm-up del planificador en segundo plano
-        // Hacemos que todos calculen su distribución inicial antes de empezar a moverse
-        // Solo hacemos warm-up y encolamos latidos si el algoritmo es Anytime (Dec-MCTS)
+        // Encolamos latidos solo si el algoritmo es Anytime (Dec-MCTS)
         if (solvers.at(id)->requiresContinuousPlanning()) {
-            Observation obs = generateObservation(id);
-            auto initialDist = solvers.at(id)->performBackgroundPlanning(obs, scenario);
-            if (initialDist.has_value()) {
-                globalDistributions[id] = initialDist.value();
-            }
             // Programamos el primer latido
             schedulePlanningUpdate(scenario->initialTime + PLANNING_INTERVAL, id);
         }
         
-        // Programamos el primer latido de pensamiento
-        schedulePlanningUpdate(scenario->initialTime + PLANNING_INTERVAL, id);
     }
     // Añadimos el evento de caducidad para todas las tareas
     for (const auto& [id, task] : scenario->getTasks()) {
@@ -269,7 +282,7 @@ void DistributedSimulator::simulateFinish(RobotID robotID) {
                                     scenario->getNodes().at(nodeStartID).coords, 
                                     scenario->getNodes().at(nodeEndID).coords);
         }
-        Distance dist = (nodeStartID == nodeEndID) ? 0.0 : scenario->getNodes().at(nodeStartID).neighbors.at(nodeEndID);
+        Distance dist = scenario->distanceBetween(nodeStartID, nodeEndID);
         robot.travelDistance += dist; // <--- Acumulamos la distancia recorrida
 
         robot.batteryLevel = finalBattery;
@@ -306,7 +319,7 @@ void DistributedSimulator::simulateRecharge(RobotID robotID) {
                                     scenario->getNodes().at(nodeStartID).coords, 
                                     scenario->getNodes().at(nodeEndID).coords);
         }
-        Distance dist = (nodeStartID == nodeEndID) ? 0.0 : scenario->getNodes().at(nodeStartID).neighbors.at(nodeEndID);
+        Distance dist = scenario->distanceBetween(nodeStartID, nodeEndID);
         robot.travelDistance += dist; // <--- Acumulamos la distancia recorrida
 
         robot.node = nodeEndID;
@@ -330,6 +343,22 @@ void DistributedSimulator::simulateTask(RobotID robotID, TaskID taskID) {
     auto& task = state.getTask(taskID);
     const auto& taskInfo = scenario->getTasks().at(taskID);
 
+    // --- BARRERA DE DEFENSA FÍSICA DEL SIMULADOR ---
+    // Si la tarea ya no está PENDING o ya tiene todo el personal necesario,
+    // es físicamente imposible asignarse a ella.
+    if (task.status != TaskStatus::PENDING || task.assignedWorkers >= taskInfo.requiredWorkers) {
+        
+        // Acción correctiva: El robot se da cuenta de que la tarea está cogida.
+        // Se queda quieto un instante (ej. 1 segundo virtual) y vuelve a tomar una decisión.
+        robot.time = globalTime + 1.0; 
+        
+        // Lo volvemos a encolar para que su solver tenga que leer la Observation actualizada
+        scheduleRobotDecision(robot.time, robotID);
+        
+        // Abortamos la simulación de esta tarea
+        return; 
+    }
+
     // 1. NAVEGACION
     NodeID nodeStartID = robot.node;
     NodeID nodeEndID = taskInfo.node;
@@ -350,7 +379,7 @@ void DistributedSimulator::simulateTask(RobotID robotID, TaskID taskID) {
                                     scenario->getNodes().at(nodeStartID).coords, 
                                     scenario->getNodes().at(nodeEndID).coords);
         }                        
-        Distance dist = (nodeStartID == nodeEndID) ? 0.0 : scenario->getNodes().at(nodeStartID).neighbors.at(nodeEndID);
+        Distance dist = scenario->distanceBetween(nodeStartID, nodeEndID);
         robot.travelDistance += dist; // <--- Acumulamos la distancia recorrida
         
         robot.batteryLevel = finalBattery;

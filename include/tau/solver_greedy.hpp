@@ -26,7 +26,7 @@ public:
                 pendingTasksExist = true;
 
                 NodeID taskNode = scenario->getTasks().at(tId).node;
-                Distance dist = (myNode == taskNode) ? 0.0 : scenario->getNodes().at(myNode).neighbors.at(taskNode);
+                Distance dist = scenario->distanceBetween(myNode, taskNode);
                 Time travelTime = dist / vel;
                 BatteryLevel cost = travelTime * rate;
 
@@ -51,7 +51,7 @@ public:
 
         for (TaskID tId : reachableTasks) {
             NodeID taskNode = scenario->getTasks().at(tId).node;
-            Distance d = (myNode == taskNode) ? 0.0 : scenario->getNodes().at(myNode).neighbors.at(taskNode);
+            Distance d = scenario->distanceBetween(myNode, taskNode);
 
             if (d < minDistance) {
                 minDistance = d;

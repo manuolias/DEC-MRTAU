@@ -15,32 +15,62 @@ private:
 
     // Lógica interna del robot para calcular su propia puja (y emular la de los demás)
     double calculateBid(const Robot& robot, RobotID rId, TaskID tId, 
-                        const std::shared_ptr<const Scenario>& scenario, 
-                        const std::map<TaskID, Task>& tasks, Time currentTime) {
+                    const std::shared_ptr<const Scenario>& scenario, 
+                    const std::map<TaskID, Task>& tasks, Time currentTime) {
         
-        // Si el robot está roto o ya terminó, su puja es 0
-        if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
-            return 0.0;
-        }
-
-        NodeID robotNode = robot.node;
-        NodeID taskNode = scenario->getTasks().at(tId).node;
-        
-        Distance dist = (robotNode == taskNode) ? 0.0 : scenario->getNodes().at(robotNode).neighbors.at(taskNode);
-        Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
-        
-        // Estimamos cuándo estará libre (si está ocupado)
-        Time freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
-        Time estimatedArrival = freeTime + travelTime;
-        
-        // Si no llega a tiempo antes de que caduque, puja 0
-        if (estimatedArrival > scenario->getTasks().at(tId).latestStart) {
-            return 0.0;
-        }
-
-        // Fomentamos tareas rápidas y cercanas
-        return 10000.0 / (1.0 + estimatedArrival);
+    // 1. Descarte inicial de robots inactivos
+    if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
+        return 0.0;
     }
+
+    const auto& taskInfo = scenario->getTasks().at(tId);
+    NodeID robotNode = robot.node;
+    NodeID taskNode = taskInfo.node;
+    
+    // Cálculo de ruta y tiempos
+    Distance dist = scenario->distanceBetween(robotNode, taskNode);
+    Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
+    
+    Time freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
+    Time estimatedArrival = freeTime + travelTime;
+    
+    // 2. Ventana de Ejecución: Límite superior
+    if (estimatedArrival > taskInfo.latestStart) {
+        return 0.0; // Imposible llegar a tiempo
+    }
+
+    // 3. Ventana de Ejecución: Límite inferior (Penalización por espera)
+    Time startTime = std::max(estimatedArrival, taskInfo.earliestStart);
+    Time waitTime = startTime - estimatedArrival; // Tiempo que el robot estará parado esperando
+
+    // 4. Tiempos y Probabilidades Esperadas
+    double p = taskInfo.successProb;
+    Time expectedExecTime = (p * taskInfo.averageSuccessTime) + ((1.0 - p) * taskInfo.averageFailTime);
+    
+    // 5. Cálculo del Valor Base
+    // Multiplicamos por la probabilidad (tareas seguras valen más).
+    // Dividimos por el tiempo TOTAL invertido (viaje + espera + ejecución).
+    double totalTimeInvestment = travelTime + waitTime + expectedExecTime;
+    double baseBid = (p * 10000.0) / (1.0 + totalTimeInvestment);
+
+    // 6. Factor de Cooperación (Tu Efecto Bola de Nieve)
+    int currentWorkers = 0;
+    auto taskIt = tasks.find(tId);
+    if (taskIt != tasks.end()) {
+        currentWorkers = taskIt->second.assignedWorkers;
+    }
+
+    double myContribution = currentWorkers + 1.0;
+    double coopRatio = myContribution / static_cast<double>(taskInfo.requiredWorkers);
+    
+    // Si la tarea requiere 3 y ya tiene 3, el ratio es > 1.0. 
+    // Lo capamos a 1.0 para que un exceso de trabajadores no infle la puja artificialmente.
+    if (coopRatio > 1.0) {
+        coopRatio = 1.0; 
+    }
+
+    return baseBid * coopRatio;
+}
 
 public:
     CBAASolver(RobotID id) : myId(id) {}
@@ -62,7 +92,7 @@ public:
                 pendingTasksExist = true;
 
                 NodeID taskNode = scenario->getTasks().at(tId).node;
-                Distance dist = (myState.node == taskNode) ? 0.0 : scenario->getNodes().at(myState.node).neighbors.at(taskNode);
+                Distance dist = scenario->distanceBetween(myState.node, taskNode);
                 BatteryLevel cost = (dist / vel) * rate;
 
                 // Si la batería es suficiente, calculamos puja

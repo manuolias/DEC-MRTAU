@@ -91,6 +91,9 @@ public:
     const std::map<TaskID, TaskInfo>& getTasks() const { return tasks; }
     const std::map<RobotID, RobotInfo>& getRobots() const { return robots; }
     const std::map<StationID, StationInfo>& getStations() const { return stations; }
+    // Devuelve la distancia entre dos nodos. Si existe una arista registrada, usa esa distancia;
+    // en caso contrario calcula la distancia euclidiana entre las coordenadas de los nodos.
+    Distance distanceBetween(NodeID a, NodeID b) const;
 };
 
 } // namespace tau

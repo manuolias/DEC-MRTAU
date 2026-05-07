@@ -87,9 +87,12 @@ int main() {
         int currentSim = 1;
 
         for (const std::string& scenarioFile : scenarioFiles) {
+
+            // std::cout << "Escenarios encontrados: " << scenarioFile << "\n";
+
             auto baseScenario = tau::Scenario::loadFromYAML(scenarioFile);
             std::string scenarioName = baseScenario->name; // Asumiendo que has puesto "name" en el yaml del escenario
-
+            
             for (const std::string& solverName : config.solvers) {
                 for (const std::string& rewardName : config.reward_functions) {
                     for (int rep = 1; rep <= config.replicas; ++rep) {

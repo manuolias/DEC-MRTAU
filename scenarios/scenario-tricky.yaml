@@ -1,0 +1,269 @@
+# filename: test_001_3r_16t_b3ff0e2f.yaml
+# VRPTW_file_name: test_001.txt
+# config:
+#   nrobots: 3
+#   tasks: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+#   success_probs: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+#   success_time_sigma_factor: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+#   required_workers: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3]
+#   max_attempts: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+#   average_fail_time: [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+#   std_fail_time: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+#   demand_on_failure: [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+# config_hash: 0xb3ff0e2f
+
+name: "test_001_3r_16t_b3ff0e2f"
+ntasks: 16
+nrobots: 3
+height: 48
+width: 48
+initial_time: 0
+
+graph:
+  - node: 0
+    description: "Depot"
+    coords: [0,0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 1
+    description: "Customer 1"
+    coords: [-15,2.5]
+    neighbors: [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 2
+    description: "Customer 2"
+    coords: [-15,-2.5]
+    neighbors: [0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 3
+    description: "Customer 3"
+    coords: [-20,2.5]
+    neighbors: [0,1,2,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 4
+    description: "Customer 4"
+    coords: [-20,-2.5]
+    neighbors: [0,1,2,3,5,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 5
+    description: "Customer 5"
+    coords: [15,2.5]
+    neighbors: [0,1,2,3,4,6,7,8,9,10,11,12,13,14,15,16]
+  - node: 6
+    description: "Customer 6"
+    coords: [15,-2.5]
+    neighbors: [0,1,2,3,4,5,7,8,9,10,11,12,13,14,15,16]
+  - node: 7
+    description: "Customer 7"
+    coords: [20,2.5]
+    neighbors: [0,1,2,3,4,5,6,8,9,10,11,12,13,14,15,16]
+  - node: 8
+    description: "Customer 8"
+    coords: [20,-2.5]
+    neighbors: [0,1,2,3,4,5,6,7,9,10,11,12,13,14,15,16]
+  - node: 9
+    description: "Customer 9"
+    coords: [-2.5,-15]
+    neighbors: [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16]
+  - node: 10
+    description: "Customer 10"
+    coords: [-2.5,-20]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,11,12,13,14,15,16]
+  - node: 11
+    description: "Customer 11"
+    coords: [2.5,-15]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,12,13,14,15,16]
+  - node: 12
+    description: "Customer 12"
+    coords: [2.5,-20]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,11,13,14,15,16]
+  - node: 13
+    description: "Customer 13"
+    coords: [-2.5,15]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16]
+  - node: 14
+    description: "Customer 14"
+    coords: [-2.5,20]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,15,16]
+  - node: 15
+    description: "Customer 15"
+    coords: [2.5,15]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16]
+  - node: 16
+    description: "Customer 16"
+    coords: [2.5,20]
+    neighbors: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+
+tasks:
+  - id: 1
+    node: 1 # Node where the task is located.
+    description: "Customer 1"
+    time_window: [0,65] # Earliest and latest times at which the task can be started.
+    success_prob: 1
+    success_time: [10,1] # Mean and standard deviation of the execution time in case of success.
+    fail_time: [10,1] # Mean and standard deviation of the execution time in case of failure.
+    demand: [10,10] # Average battery consumption per robot in case of success and failure.
+                    # Battery consumption is linear with execution time.
+                    # These values correspond to the mean execution time.
+    required_workers: 1
+  - id: 2
+    node: 2
+    description: "Customer 2"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 3
+    node: 3
+    description: "Customer 3"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 4
+    node: 4
+    description: "Customer 4"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 5
+    node: 5
+    description: "Customer 5"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 6
+    node: 6
+    description: "Customer 6"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 7
+    node: 7
+    description: "Customer 7"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 8
+    node: 8
+    description: "Customer 8"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 9
+    node: 9
+    description: "Customer 9"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 10
+    node: 10
+    description: "Customer 10"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 11
+    node: 11
+    description: "Customer 11"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 12
+    node: 12
+    description: "Customer 12"
+    time_window: [0,65]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 1
+  - id: 13
+    node: 13
+    description: "Customer 13"
+    time_window: [0,140]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 3
+  - id: 14
+    node: 14
+    description: "Customer 14"
+    time_window: [0,140]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 3
+  - id: 15
+    node: 15
+    description: "Customer 15"
+    time_window: [0,140]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 3
+  - id: 16
+    node: 16
+    description: "Customer 16"
+    time_window: [0,140]
+    success_prob: 1
+    success_time: [10,1]
+    fail_time: [10,1]
+    demand: [10,10]
+    required_workers: 3
+
+robots:
+  - id: 1
+    initial_node: 0
+    description: "Robot 1"
+    initial_battery_level: 45
+    battery_capacity: 45
+    navigation_velocity: 1
+    battery_rate_while_navigating: 0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - id: 2
+    initial_node: 0
+    description: "Robot 2"
+    initial_battery_level: 45
+    battery_capacity: 45
+    navigation_velocity: 1
+    battery_rate_while_navigating: 0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+  - id: 3
+    initial_node: 0
+    description: "Robot 3"
+    initial_battery_level: 45
+    battery_capacity: 45
+    navigation_velocity: 1
+    battery_rate_while_navigating: 0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+
+recharging_stations:
+  - id: 1
+    node: 0
+    description: "Station 1"

@@ -105,17 +105,17 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
                 if (scenario->nodes.count(neighborID)) { // Comprueba si el vecino existe
                     Distance dist = calculateDistance(node.coords, scenario->nodes[neighborID].coords);
                     node.neighbors[neighborID] = dist; // Guarda la conexión y la distancia física
+                }
+            }
 
-                    // COMPROBAMOS SI EL NODO CORRESPONDE CON UNA ESTACION DE CARGA
-                    for (const auto& [stationID,station] : scenario->stations) {
-                        if (station.node == neighborID) {
-                            if (dist < minDistanceStation) {
-                                minDistanceStation = dist;
-                                node.nearestStation = stationID;
-                            }   
-                            break;
-                        }
-                    } 
+            // Calculamos la estación de recarga más cercana entre todas las estaciones
+            for (const auto& [stationID, station] : scenario->stations) {
+                if (scenario->nodes.count(station.node)) {
+                    Distance d = calculateDistance(node.coords, scenario->nodes[station.node].coords);
+                    if (d < minDistanceStation) {
+                        minDistanceStation = d;
+                        node.nearestStation = stationID;
+                    }
                 }
             }
         }
@@ -126,6 +126,20 @@ std::shared_ptr<Scenario> Scenario::loadFromYAML(const std::string& filepath) {
     }
 
     return scenario;
+}
+
+Distance Scenario::distanceBetween(NodeID a, NodeID b) const {
+    if (a == b) return 0.0;
+    auto itA = nodes.find(a);
+    auto itB = nodes.find(b);
+    if (itA == nodes.end() || itB == nodes.end()) {
+        throw std::out_of_range("Scenario::distanceBetween: node id not found");
+    }
+    const auto& neigh = itA->second.neighbors;
+    auto nit = neigh.find(b);
+    if (nit != neigh.end()) return nit->second;
+    // Fallback: distancia euclidiana directa entre coordenadas
+    return calculateDistance(itA->second.coords, itB->second.coords);
 }
 
 } // namespace tau

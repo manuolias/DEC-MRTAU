@@ -13,22 +13,53 @@ namespace tau {
 class CBBASolver : public ISolver {
 private:
     RobotID myId;
-    const int MAX_BUNDLE_SIZE = 3; // Límite de tareas en el paquete
+    const int MAX_BUNDLE_SIZE = 4; // Límite de tareas en el paquete
 
     // Función auxiliar: Calcula la puja marginal de una sola tarea
     double calculateMarginalBid(NodeID virtualNode, Time virtualTime, TaskID tId, 
-                                const std::shared_ptr<const Scenario>& scenario, RobotID rId) {
-        
-        NodeID taskNode = scenario->getTasks().at(tId).node;
-        Distance dist = (virtualNode == taskNode) ? 0.0 : scenario->getNodes().at(virtualNode).neighbors.at(taskNode);
-        Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
-        Time estimatedArrival = virtualTime + travelTime;
-        
-        if (estimatedArrival > scenario->getTasks().at(tId).latestStart) {
-            return 0.0;
-        }
-        return 10000.0 / (1.0 + estimatedArrival);
+                            const std::shared_ptr<const Scenario>& scenario, 
+                            const std::map<TaskID, Task>& tasks, // <-- ¡NUEVO PARÁMETRO!
+                            RobotID rId) {
+    
+    const auto& taskInfo = scenario->getTasks().at(tId);
+    NodeID taskNode = taskInfo.node;
+    
+    Distance dist = scenario->distanceBetween(virtualNode, taskNode);
+    Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
+    Time estimatedArrival = virtualTime + travelTime;
+    
+    // Ventana de Ejecución
+    if (estimatedArrival > taskInfo.latestStart) {
+        return 0.0;
     }
+
+    Time startTime = std::max(estimatedArrival, taskInfo.earliestStart);
+    Time waitTime = startTime - estimatedArrival;
+
+    // Tiempos y Probabilidad
+    double p = taskInfo.successProb;
+    Time expectedExecTime = (p * taskInfo.averageSuccessTime) + ((1.0 - p) * taskInfo.averageFailTime);
+    
+    // Inversión de Tiempo
+    double totalTimeInvestment = travelTime + waitTime + expectedExecTime;
+    double baseBid = (p * 10000.0) / (1.0 + totalTimeInvestment);
+
+    // Factor de Cooperación
+    int currentWorkers = 0;
+    auto taskIt = tasks.find(tId);
+    if (taskIt != tasks.end()) {
+        currentWorkers = taskIt->second.assignedWorkers;
+    }
+
+    double myContribution = currentWorkers + 1.0;
+    double coopRatio = myContribution / static_cast<double>(taskInfo.requiredWorkers);
+    
+    if (coopRatio > 1.0) {
+        coopRatio = 1.0;
+    }
+
+    return baseBid * coopRatio;
+}
 
     // Retorna el bundle y un mapa con la puja marginal de cada tarea en el bundle
     std::pair<std::vector<TaskID>, std::map<TaskID, double>> buildBestBundle(
@@ -64,11 +95,11 @@ private:
                 if (step == 0 && blacklist.count(tId)) continue;
 
                 NodeID taskNode = scenario->getTasks().at(tId).node;
-                Distance dist = (vNode == taskNode) ? 0.0 : scenario->getNodes().at(vNode).neighbors.at(taskNode);
+                Distance dist = scenario->distanceBetween(vNode, taskNode);
                 BatteryLevel cost = (dist / vel) * rate;
 
                 if (cost <= vBattery) {
-                    double bid = calculateMarginalBid(vNode, vTime, tId, scenario, rId);
+                    double bid = calculateMarginalBid(vNode, vTime, tId, scenario, tasks, rId);
                     if (bid > bestMarginal) {
                         bestMarginal = bid;
                         bestTask = tId;
@@ -123,7 +154,7 @@ public:
                 pendingTasksExist = true;
 
                 NodeID taskNode = scenario->getTasks().at(tId).node;
-                Distance dist = (myState.node == taskNode) ? 0.0 : scenario->getNodes().at(myState.node).neighbors.at(taskNode);
+                Distance dist = scenario->distanceBetween(myState.node, taskNode);
                 BatteryLevel cost = (dist / vel) * rate;
 
                 // Si hay al menos una tarea a la que no llego por batería, levanto la bandera
