@@ -16,7 +16,8 @@ private:
     // Lógica interna del robot para calcular su propia puja (y emular la de los demás)
     double calculateBid(const Robot& robot, RobotID rId, TaskID tId, 
                     const std::shared_ptr<const Scenario>& scenario, 
-                    const std::map<TaskID, Task>& tasks, Time currentTime) {
+                    const std::map<TaskID, Task>& tasks, Time currentTime,
+                    const Observation& obs) {
         
     // 1. Descarte inicial de robots inactivos
     if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
@@ -31,7 +32,15 @@ private:
     Distance dist = scenario->distanceBetween(robotNode, taskNode);
     Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
     
-    Time freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
+    // Intentamos leer la estimación ya calculada en la Observation
+    Time freeTime;
+    const auto& nextMap = obs.getNextDecisionInfo();
+    auto it = nextMap.find(rId);
+    if (it != nextMap.end()) {
+        freeTime = it->second.first;
+    } else {
+        freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
+    }
     Time estimatedArrival = freeTime + travelTime;
     
     // 2. Ventana de Ejecución: Límite superior
@@ -97,7 +106,7 @@ public:
 
                 // Si la batería es suficiente, calculamos puja
                 if (cost <= currentBattery) {
-                    double bid = calculateBid(myState, myId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime());
+                    double bid = calculateBid(myState, myId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
                     if (bid > 0.0) {
                         myBids.push_back({tId, bid});
                     }
@@ -129,7 +138,7 @@ public:
                 if (otherRobot.onTask == tId) continue;
 
                 // Emulamos la puja del vecino al instante usando la información de la Observación
-                double theirBid = calculateBid(otherRobot, otherId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime());
+                double theirBid = calculateBid(otherRobot, otherId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
                 
                 // Si la puja del vecino es mayor (o en caso de empate, su ID es menor)
                 if (theirBid > myBid || (std::abs(theirBid - myBid) < 1e-9 && otherId < myId)) {

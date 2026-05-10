@@ -15,6 +15,9 @@ using Bundle = std::vector<TaskID>;
 using Distribution = std::map<Bundle, double>; 
 // ----------------------------------------------------------------
 
+// Información sobre el próximo instante de decisión de un robot: <time, node>
+using NextDecisionInfo = std::pair<Time, NodeID>;
+
 class Observation {
 private:
     Time currentTime;
@@ -25,19 +28,23 @@ private:
     
     // <--- NUEVO: La "pizarra" con las creencias públicas actuales de todos los robots
     const std::map<RobotID, Distribution> knownDistributions; 
+    // Mapa con el tiempo estimado en que cada robot quedará libre y el nodo
+    const std::map<RobotID, NextDecisionInfo> nextDecisionInfo;
 
 public:
     // Constructor actualizado para recibir la pizarra de distribuciones
-    Observation(Time time, RobotID id, const Robot& self, 
-                const std::map<TaskID, Task>& tasks, 
-                const std::map<RobotID, Robot>& robots,
-                const std::map<RobotID, Distribution>& distributions)
-        : currentTime(time), 
-          myId(id), 
-          myState(self), 
-          knownTasks(tasks), 
-          knownRobots(robots), 
-          knownDistributions(distributions) {}
+        Observation(Time time, RobotID id, const Robot& self, 
+                                const std::map<TaskID, Task>& tasks, 
+                                const std::map<RobotID, Robot>& robots,
+                                const std::map<RobotID, Distribution>& distributions,
+                                const std::map<RobotID, NextDecisionInfo>& nextDecisions)
+                : currentTime(time), 
+                    myId(id), 
+                    myState(self), 
+                    knownTasks(tasks), 
+                    knownRobots(robots), 
+                    knownDistributions(distributions),
+                    nextDecisionInfo(nextDecisions) {}
 
     // Getters de solo lectura para los Solvers
     Time getCurrentTime() const { return currentTime; }
@@ -48,6 +55,9 @@ public:
     
     // <--- NUEVO: Getter para el Dec-MCTS
     const std::map<RobotID, Distribution>& getKnownDistributions() const { return knownDistributions; }
+
+    // <--- NUEVO: Getter para el tiempo y nodo de la siguiente decisión de cada robot
+    const std::map<RobotID, NextDecisionInfo>& getNextDecisionInfo() const { return nextDecisionInfo; }
 };
 
 } // namespace tau

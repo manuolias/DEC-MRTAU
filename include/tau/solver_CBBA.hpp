@@ -65,7 +65,8 @@ private:
     std::pair<std::vector<TaskID>, std::map<TaskID, double>> buildBestBundle(
         RobotID rId, const Robot& startState, const std::set<TaskID>& blacklist,
         const std::shared_ptr<const Scenario>& scenario, 
-        const std::map<TaskID, Task>& tasks, Time currentTime) {
+        const std::map<TaskID, Task>& tasks, Time currentTime,
+        const Observation& obs) {
 
         std::vector<TaskID> bundle;
         std::map<TaskID, double> taskBids;
@@ -76,7 +77,10 @@ private:
 
         // Estado virtual que irá avanzando
         NodeID vNode = startState.node;
-        Time vTime = utils::estimateNextDecisionTime(startState, scenario->getTasks(), tasks, currentTime);
+        // Preferimos la estimación precalculada en la Observation
+        const auto& nextMap = obs.getNextDecisionInfo();
+        auto it = nextMap.find(rId);
+        Time vTime = (it != nextMap.end()) ? it->second.first : utils::estimateNextDecisionTime(startState, scenario->getTasks(), tasks, currentTime);
         BatteryLevel vBattery = startState.batteryLevel;
         Velocity vel = scenario->robots.at(rId).navigationVelocity;
         BatteryRate rate = scenario->robots.at(rId).batteryRateWhileNavigating;
@@ -175,7 +179,7 @@ public:
         while (true) {
 
             // 1. Calculamos nuestro Bundle, excluyendo las tareas que ya nos han rechazado
-            auto [myBundle, myBids] = buildBestBundle(myId, myState, rejectedFirstTasks, scenario, obs.getKnownTasks(), obs.getCurrentTime());
+            auto [myBundle, myBids] = buildBestBundle(myId, myState, rejectedFirstTasks, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
 
             // Si el bundle está vacío, (CASO 1 o CASO 2).
             if (myBundle.empty()) {
@@ -202,7 +206,7 @@ public:
                 if (otherRobot.status == RobotStatus::FAILED || otherRobot.status == RobotStatus::FINISHED) continue;
 
                 // El vecino nos responde con su mejor bundle
-                auto [theirBundle, theirBids] = buildBestBundle(otherId, otherRobot, {}, scenario, obs.getKnownTasks(), obs.getCurrentTime());
+                auto [theirBundle, theirBids] = buildBestBundle(otherId, otherRobot, {}, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
                 
                 // CONDICIÓN DEL USUARIO: ¿Nos supera y compite por la MISMA primera tarea?
                 if (theirBids.find(targetTask) != theirBids.end()) {

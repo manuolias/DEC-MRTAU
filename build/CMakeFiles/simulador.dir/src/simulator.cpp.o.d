@@ -236,6 +236,8 @@ CMakeFiles/simulador.dir/src/simulator.cpp.o: \
  /usr/include/c++/13/chrono /usr/include/c++/13/bits/chrono.h \
  /usr/include/c++/13/ratio /usr/include/c++/13/cstdint \
  /usr/include/c++/13/ctime /usr/include/c++/13/bits/parse_numbers.h \
+ /home/manuel/tfm/distributed/include/tau/utils/estimation.hpp \
+ /home/manuel/tfm/distributed/include/tau/utils/../scenario.hpp \
  /usr/include/c++/13/iostream /usr/include/c++/13/random \
  /usr/include/c++/13/bits/random.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/opt_random.h \

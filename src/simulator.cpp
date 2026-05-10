@@ -1,4 +1,5 @@
 #include "tau/simulator.hpp"
+#include "tau/utils/estimation.hpp"
 #include <iostream>
 #include <cmath>
 #include <random>
@@ -8,7 +9,7 @@ namespace tau {
 
 // Frecuencia de actualización del pensamiento en segundo plano (0.1 segundos virtuales)
 constexpr Time PLANNING_INTERVAL = 0.1;
-constexpr Time WARMUP_VIRTUAL_TIME = 40.0;
+constexpr Time WARMUP_VIRTUAL_TIME = 30.0;
 constexpr int WARMUP_ROUNDS = static_cast<int>(std::ceil(WARMUP_VIRTUAL_TIME / PLANNING_INTERVAL));
 
 DistributedSimulator::DistributedSimulator(std::shared_ptr<const Scenario> scen, std::shared_ptr<Logger> log) 
@@ -38,7 +39,15 @@ BatteryLevel DistributedSimulator::calculateBatteryConsumption(RobotID robotID, 
 
 // Ahora inyectamos la pizarra global en la observación
 Observation DistributedSimulator::generateObservation(RobotID robotID) {    
-    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), state.getRobots(), globalDistributions);
+    // Construimos el mapa <RobotID, <nextFreeTime, node>> usando la estimación existente
+    std::map<RobotID, NextDecisionInfo> nextInfo;
+    for (const auto& [id, robot] : state.getRobots()) {
+        Time freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), state.getTasks(), globalTime);
+        NodeID nodeAtDecision = robot.node; // Según la especificación del usuario
+        nextInfo[id] = std::make_pair(freeTime, nodeAtDecision);
+    }
+
+    return Observation(globalTime, robotID, state.getRobot(robotID), state.getTasks(), state.getRobots(), globalDistributions, nextInfo);
 }
 
 
@@ -86,7 +95,7 @@ void DistributedSimulator::finalLogging(double reward, double computingTime) {
     logger->logMetric("pending_tasks",tau::getNumberOfTasks(tasks,TaskStatus::PENDING));
     logger->logMetric("failed_tasks",tau::getNumberOfTasks(tasks,TaskStatus::FAILED));
 
-    utils::SVector makespans;
+    ::utils::SVector makespans;
     for (const auto& [id, robot] : robots) {
         makespans.push_back(std::max(0.0, robot.time - scenario.initialTime));
     }
@@ -96,7 +105,7 @@ void DistributedSimulator::finalLogging(double reward, double computingTime) {
     logger->logMetric("max_robot_makespan",makespans.max());
     logger->logMetric("min_robot_makespan",makespans.min());
 
-    utils::SVector distances;
+    ::utils::SVector distances;
     for (const auto& [id, robot] : robots) {
         distances.push_back(robot.travelDistance);
     }
@@ -107,7 +116,7 @@ void DistributedSimulator::finalLogging(double reward, double computingTime) {
     logger->logMetric("min_robot_travel_distance",distances.min());
     logger->logMetric("sum_robot_travel_distance",distances.sum());
 
-    utils::SVector completed;
+    ::utils::SVector completed;
     for (const auto& [id, robot] : robots) {
         completed.push_back(static_cast<double>(robot.completedTasks));
     }
