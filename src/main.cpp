@@ -14,7 +14,7 @@
 #include "tau/solver_random.hpp"
 #include "tau/solver_CBAA.hpp"
 #include "tau/solver_CBBA.hpp"
-#include "tau/solver_decmcts.hpp"
+#include "tau/solver_DecMCTS.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -129,16 +129,13 @@ int main() {
                                 solver = std::make_shared<tau::RandomSolver>();
                             } else if (solverName == "cbaa") {
                                 solver = std::make_shared<tau::CBAASolver>(robotID);
-                            } else if (solverName == "cbba") { 
-                                solver = std::make_shared<tau::CBBASolver>(robotID); 
-                            } else if (solverName == "dec-mcts") { 
-                                solver = std::make_shared<tau::DecMCTSSolver>(robotID); 
-                            }
-                            // Aquí añadirás otros en el futuro:
-                            // else if (solverName == "cbaa") { 
-                            //     solver = std::make_shared<tau::CBAASolver>(robotID); 
-                            // }
-                            else {
+                            } else if (solverName == "cbba") {
+                                solver = std::make_shared<tau::CBBASolver>(robotID);
+                            } else if (solverName == "dec-mcts-v1") {
+                                solver = std::make_shared<tau::DecMCTSSolverV1>(robotID);
+                            } else if (solverName == "dec-mcts-v2") {
+                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID);
+                            } else {
                                 throw std::runtime_error("Solver no reconocido: " + solverName);
                             }
                             

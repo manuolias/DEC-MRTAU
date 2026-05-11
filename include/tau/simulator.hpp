@@ -23,7 +23,7 @@ enum class EventType {
     TASK_START = 1,      // Prioridad 2: Inicio de ejecución
     TASK_EXPIRATION = 2, // Prioridad 3: Caducidad de tareas
     ROBOT_DECISION = 3,  // Prioridad 4: Decisiones físicas 
-    PLANNING_UPDATE = 4  // Prioridad 5 (NUEVO): Pensamiento en segundo plano    
+    PLANNING_UPDATE = 4  // Prioridad 5: Pensamiento en segundo plano    
 };
 
 struct Event {

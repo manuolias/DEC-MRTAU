@@ -138,7 +138,7 @@ void DistributedSimulator::run() {
     initLogging();
 
     // ====================================================================
-    // FASE 0: WARM-UP DEL PLANIFICADOR (Basado en Tiempo Virtual)
+    // FASE 0: WARM-UP DEL PLANIFICADOR PARA DEC-MCTS (Basado en Tiempo Virtual)
     // ====================================================================
     
     // Warm-up previo al arranque del simulador para solvers anytime.
@@ -522,7 +522,8 @@ void DistributedSimulator::expireTask(TaskID taskID) {
     auto& task = state.getTask(taskID);
     
     // Si la tarea ya se resolvió o se está resolviendo, ignoramos el evento
-    if (task.status == TaskStatus::COMPLETED || task.status == TaskStatus::FAILED || task.status == TaskStatus::ASSIGNED) return;
+    if (task.status == TaskStatus::COMPLETED || task.status == TaskStatus::FAILED ||
+        task.status == TaskStatus::ASSIGNED   || task.status == TaskStatus::EXECUTING) return;
 
     // Si llegamos aquí, la tarea caducó sin suficientes workers
     task.status = TaskStatus::FAILED;
