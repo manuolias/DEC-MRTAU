@@ -87,7 +87,7 @@ private:
 
         for (int step = 0; step < MAX_BUNDLE_SIZE; ++step) {
             TaskID bestTask = NULL_ID;
-            double bestMarginal = -1.0;
+            double bestMarginal = 0.0;
             Time bestArrival = 0.0;
             BatteryLevel bestCost = 0.0;
 

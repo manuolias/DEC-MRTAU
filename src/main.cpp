@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <filesystem>
 #include <yaml-cpp/yaml.h>
@@ -104,7 +105,27 @@ int main() {
                                     << "_" << rewardName 
                                     << "_" << std::setw(3) << std::setfill('0') << rep << ".log";
 
-                        std::cout << "[" << currentSim << "/" << totalSimulations << "] Ejecutando: " 
+                        // Saltar si el log ya existe y está completo
+                        bool alreadyDone = false;
+                        if (fs::exists(logFilename.str())) {
+                            std::ifstream logCheck(logFilename.str());
+                            std::string lastLine, line;
+                            while (std::getline(logCheck, line)) {
+                                if (!line.empty()) lastLine = line;
+                            }
+                            if (lastLine.find("metric: computing_time;") != std::string::npos) {
+                                alreadyDone = true;
+                            }
+                        }
+
+                        if (alreadyDone) {
+                            std::cout << "[" << currentSim << "/" << totalSimulations << "] Saltando (ya completado): "
+                                      << scenarioName << " | " << solverName << " | " << rewardName << " | Rep: " << rep << "\n";
+                            currentSim++;
+                            continue;
+                        }
+
+                        std::cout << "[" << currentSim << "/" << totalSimulations << "] Ejecutando: "
                                   << scenarioName << " | " << solverName << " | " << rewardName << " | Rep: " << rep << "...\n";
 
                         // Recargar el escenario para cada réplica (así restauramos baterías, tiempos, etc.)

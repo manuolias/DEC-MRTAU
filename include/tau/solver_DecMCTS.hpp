@@ -23,8 +23,8 @@ class DecMCTSSolver : public ISolver {
     // Constantes de configuración
     // =========================================================================
     static constexpr double C_EXPLORE          = 1.414;   // sqrt(2)
-    static constexpr int    ITERATIONS_PER_CALL = 20;      // iteraciones por latido de fondo
-    static constexpr int    EMERGENCY_ITERS     = 200;     // iteraciones extra si no hay árbol
+    static constexpr int    ITERATIONS_PER_CALL = 50;      // iteraciones por latido de fondo
+    static constexpr int    EMERGENCY_ITERS     = 400;     // iteraciones extra si no hay árbol
     static constexpr int    MAX_ROLLOUT_EVENTS  = 200000; // guardia anti-bucle
 
     // =========================================================================

@@ -19,67 +19,67 @@ private:
                     const std::map<TaskID, Task>& tasks, Time currentTime,
                     const Observation& obs) {
         
-    // 1. Descarte inicial de robots inactivos
-    if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
-        return 0.0;
+        // 1. Descarte inicial de robots inactivos
+        if (robot.status == RobotStatus::FAILED || robot.status == RobotStatus::FINISHED) {
+            return 0.0;
+        }
+
+        const auto& taskInfo = scenario->getTasks().at(tId);
+        NodeID robotNode = robot.node;
+        NodeID taskNode = taskInfo.node;
+        
+        // Cálculo de ruta y tiempos
+        Distance dist = scenario->distanceBetween(robotNode, taskNode);
+        Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
+        
+        // Intentamos leer la estimación ya calculada en la Observation
+        Time freeTime;
+        const auto& nextMap = obs.getNextDecisionInfo();
+        auto it = nextMap.find(rId);
+        if (it != nextMap.end()) {
+            freeTime = it->second.first;
+        } else {
+            freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
+        }
+        Time estimatedArrival = freeTime + travelTime;
+        
+        // 2. Ventana de Ejecución: Límite superior
+        if (estimatedArrival > taskInfo.latestStart) {
+            return 0.0; // Imposible llegar a tiempo
+        }
+
+        // 3. Ventana de Ejecución: Límite inferior (Penalización por espera)
+        Time startTime = std::max(estimatedArrival, taskInfo.earliestStart);
+        Time waitTime = startTime - estimatedArrival; // Tiempo que el robot estará parado esperando
+
+        // 4. Tiempos y Probabilidades Esperadas
+        double p = taskInfo.successProb;
+        Time expectedExecTime = (p * taskInfo.averageSuccessTime) + ((1.0 - p) * taskInfo.averageFailTime);
+        
+        // 5. Cálculo del Valor Base
+        // Multiplicamos por la probabilidad (tareas seguras valen más).
+        // Dividimos por el tiempo TOTAL invertido (viaje + espera + ejecución).
+        double totalTimeInvestment = travelTime + waitTime + expectedExecTime;
+        double baseBid = (p * 10000.0) / (1.0 + totalTimeInvestment);
+
+        // 6. Factor de Cooperación (Tu Efecto Bola de Nieve)
+        int currentWorkers = 0;
+        auto taskIt = tasks.find(tId);
+        if (taskIt != tasks.end()) {
+            currentWorkers = taskIt->second.assignedWorkers;
+        }
+
+        double myContribution = currentWorkers + 1.0;
+        double coopRatio = myContribution / static_cast<double>(taskInfo.requiredWorkers);
+        
+        // Si la tarea requiere 3 y ya tiene 3, el ratio es > 1.0. 
+        // Lo capamos a 1.0 para que un exceso de trabajadores no infle la puja artificialmente.
+        if (coopRatio > 1.0) {
+            coopRatio = 1.0; 
+        }
+
+        return baseBid * coopRatio;
     }
-
-    const auto& taskInfo = scenario->getTasks().at(tId);
-    NodeID robotNode = robot.node;
-    NodeID taskNode = taskInfo.node;
-    
-    // Cálculo de ruta y tiempos
-    Distance dist = scenario->distanceBetween(robotNode, taskNode);
-    Time travelTime = dist / scenario->robots.at(rId).navigationVelocity;
-    
-    // Intentamos leer la estimación ya calculada en la Observation
-    Time freeTime;
-    const auto& nextMap = obs.getNextDecisionInfo();
-    auto it = nextMap.find(rId);
-    if (it != nextMap.end()) {
-        freeTime = it->second.first;
-    } else {
-        freeTime = utils::estimateNextDecisionTime(robot, scenario->getTasks(), tasks, currentTime);
-    }
-    Time estimatedArrival = freeTime + travelTime;
-    
-    // 2. Ventana de Ejecución: Límite superior
-    if (estimatedArrival > taskInfo.latestStart) {
-        return 0.0; // Imposible llegar a tiempo
-    }
-
-    // 3. Ventana de Ejecución: Límite inferior (Penalización por espera)
-    Time startTime = std::max(estimatedArrival, taskInfo.earliestStart);
-    Time waitTime = startTime - estimatedArrival; // Tiempo que el robot estará parado esperando
-
-    // 4. Tiempos y Probabilidades Esperadas
-    double p = taskInfo.successProb;
-    Time expectedExecTime = (p * taskInfo.averageSuccessTime) + ((1.0 - p) * taskInfo.averageFailTime);
-    
-    // 5. Cálculo del Valor Base
-    // Multiplicamos por la probabilidad (tareas seguras valen más).
-    // Dividimos por el tiempo TOTAL invertido (viaje + espera + ejecución).
-    double totalTimeInvestment = travelTime + waitTime + expectedExecTime;
-    double baseBid = (p * 10000.0) / (1.0 + totalTimeInvestment);
-
-    // 6. Factor de Cooperación (Tu Efecto Bola de Nieve)
-    int currentWorkers = 0;
-    auto taskIt = tasks.find(tId);
-    if (taskIt != tasks.end()) {
-        currentWorkers = taskIt->second.assignedWorkers;
-    }
-
-    double myContribution = currentWorkers + 1.0;
-    double coopRatio = myContribution / static_cast<double>(taskInfo.requiredWorkers);
-    
-    // Si la tarea requiere 3 y ya tiene 3, el ratio es > 1.0. 
-    // Lo capamos a 1.0 para que un exceso de trabajadores no infle la puja artificialmente.
-    if (coopRatio > 1.0) {
-        coopRatio = 1.0; 
-    }
-
-    return baseBid * coopRatio;
-}
 
 public:
     CBAASolver(RobotID id) : myId(id) {}
@@ -117,7 +117,10 @@ public:
         }
 
         if (!pendingTasksExist) return Action(Action::Type::FINISH);
-        if (myBids.empty()) return Action(Action::Type::RECHARGE);
+        if (myBids.empty()) {
+            if (unreachableTasksExist) return Action(Action::Type::RECHARGE);
+            return Action(Action::Type::FINISH);
+        }
 
         // Ordenamos las pujas de mayor a menor (Preferencias)
         std::sort(myBids.begin(), myBids.end(), [](const auto& a, const auto& b) {
@@ -140,8 +143,8 @@ public:
                 // Emulamos la puja del vecino al instante usando la información de la Observación
                 double theirBid = calculateBid(otherRobot, otherId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
                 
-                // Si la puja del vecino es mayor (o en caso de empate, su ID es menor)
-                if (theirBid > myBid || (std::abs(theirBid - myBid) < 1e-9 && otherId < myId)) {
+                // Si la puja del vecino es mayor
+                if (theirBid > myBid) {
                     betterBidsCount++;
                 }
             }

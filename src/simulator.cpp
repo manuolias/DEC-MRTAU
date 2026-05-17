@@ -7,7 +7,7 @@
 
 namespace tau {
 
-// Frecuencia de actualización del pensamiento en segundo plano (0.1 segundos virtuales)
+// Frecuencia de actualización del pensamiento en segundo fondo (0.2 segundos virtuales)
 constexpr Time PLANNING_INTERVAL = 0.1;
 constexpr Time WARMUP_VIRTUAL_TIME = 30.0;
 constexpr int WARMUP_ROUNDS = static_cast<int>(std::ceil(WARMUP_VIRTUAL_TIME / PLANNING_INTERVAL));
