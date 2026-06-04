@@ -7,7 +7,7 @@
 
 namespace tau {
 
-// --- NUEVO: Tipos de datos preparados para el solver Dec-MCTS ---
+// --- Tipos de datos preparados para el solver Dec-MCTS ---
 // Un Bundle representa una secuencia de tareas planificada.
 using Bundle = std::vector<TaskID>; 
 

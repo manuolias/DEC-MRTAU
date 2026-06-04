@@ -98,11 +98,14 @@ private:
                  // La "lista negra" SOLO aplica a la primera tarea del paquete (step == 0)
                 if (step == 0 && blacklist.count(tId)) continue;
 
-                NodeID taskNode = scenario->getTasks().at(tId).node;
+                const auto& tInfoBat = scenario->getTasks().at(tId);
+                NodeID taskNode = tInfoBat.node;
                 Distance dist = scenario->distanceBetween(vNode, taskNode);
                 BatteryLevel cost = (dist / vel) * rate;
+                double pBat = tInfoBat.successProb;
+                BatteryLevel execDemand = (pBat * tInfoBat.averageSuccessDemand) + ((1.0 - pBat) * tInfoBat.averageFailDemand);
 
-                if (cost <= vBattery) {
+                if (cost + execDemand <= vBattery) {
                     double bid = calculateMarginalBid(vNode, vTime, tId, scenario, tasks, rId);
                     if (bid > bestMarginal) {
                         bestMarginal = bid;

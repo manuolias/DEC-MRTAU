@@ -104,8 +104,11 @@ public:
                 Distance dist = scenario->distanceBetween(myState.node, taskNode);
                 BatteryLevel cost = (dist / vel) * rate;
 
-                // Si la batería es suficiente, calculamos puja
-                if (cost <= currentBattery) {
+                // Si la batería es suficiente para navegar Y ejecutar, calculamos puja
+                const auto& tInfo = scenario->getTasks().at(tId);
+                double p = tInfo.successProb;
+                BatteryLevel execDemand = (p * tInfo.averageSuccessDemand) + ((1.0 - p) * tInfo.averageFailDemand);
+                if (cost + execDemand <= currentBattery) {
                     double bid = calculateBid(myState, myId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);
                     if (bid > 0.0) {
                         myBids.push_back({tId, bid});
@@ -139,6 +142,18 @@ public:
                 
                 // Si este vecino YA está en la tarea, ya tiene su plaza, no compite
                 if (otherRobot.onTask == tId) continue;
+
+                // Filtramos si el vecino no tiene batería para navegar Y ejecutar la tarea
+                {
+                    Velocity theirVel = scenario->robots.at(otherId).navigationVelocity;
+                    BatteryRate theirRate = scenario->robots.at(otherId).batteryRateWhileNavigating;
+                    Distance theirDist = scenario->distanceBetween(otherRobot.node, scenario->getTasks().at(tId).node);
+                    BatteryLevel theirNavCost = (theirDist / theirVel) * theirRate;
+                    const auto& tInfo = scenario->getTasks().at(tId);
+                    double p = tInfo.successProb;
+                    BatteryLevel theirExecDemand = (p * tInfo.averageSuccessDemand) + ((1.0 - p) * tInfo.averageFailDemand);
+                    if (theirNavCost + theirExecDemand > otherRobot.batteryLevel) continue;
+                }
 
                 // Emulamos la puja del vecino al instante usando la información de la Observación
                 double theirBid = calculateBid(otherRobot, otherId, tId, scenario, obs.getKnownTasks(), obs.getCurrentTime(), obs);

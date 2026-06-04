@@ -15,7 +15,9 @@
 #include "tau/solver_random.hpp"
 #include "tau/solver_CBAA.hpp"
 #include "tau/solver_CBBA.hpp"
-#include "tau/solver_DecMCTS.hpp"
+#include "tau/solver_DecMCTS_v1.hpp"
+#include "tau/solver_DecMCTS_v2.hpp"
+#include "tau/solver_DecMCTS_v3.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -63,8 +65,8 @@ int main() {
     try {
         // Rutas de entrada y salida (Puedes cambiarlas según tu estructura)
         std::string configPath = "../data/experiment_config.yaml";
-        std::string scenariosPath = "../data/"; // Puede ser carpeta o archivo (ej. "../data/scenario_12_06_01.yaml")
-        std::string logsDir = "../logs/prueba";       // Carpeta de destino para los logs
+        std::string scenariosPath = "../data/";
+        std::string logsDir = "../logs/prueba-salomon";     // Carpeta de destino para los logs
 
         // Asegurarnos de que el directorio de logs existe
         if (!fs::exists(logsDir)) {
@@ -155,7 +157,19 @@ int main() {
                             } else if (solverName == "dec-mcts-v1") {
                                 solver = std::make_shared<tau::DecMCTSSolverV1>(robotID);
                             } else if (solverName == "dec-mcts-v2") {
-                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID);
+                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID); // gamma=0.999, useDiffReward=false
+                            } else if (solverName == "dec-mcts-nodiff") {
+                                // Ablación H1: sin doble rollout (usa reward_with directo)
+                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID, 0.999, false);
+                            } else if (solverName == "dec-mcts-gamma99") {
+                                // Ablación H4: GAMMA=0.99 (descuento más agresivo)
+                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID, 0.99, true);
+                            } else if (solverName == "dec-mcts-v3") {
+                                // V3: chance nodes + estadística doble n_disc/n_avail_disc
+                                solver = std::make_shared<tau::DecMCTSSolverV3>(robotID);
+                            } else if (solverName == "dec-mcts-v3.2") {
+                                // V3: chance nodes + estadística doble n_disc/n_avail_disc
+                                solver = std::make_shared<tau::DecMCTSSolverV3>(robotID, 0.999, true);
                             } else {
                                 throw std::runtime_error("Solver no reconocido: " + solverName);
                             }
