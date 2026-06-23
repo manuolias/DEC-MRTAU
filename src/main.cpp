@@ -5,6 +5,7 @@
 #include <yaml-cpp/yaml.h>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 
 #include "tau/scenario.hpp"
@@ -18,6 +19,7 @@
 #include "tau/solver_DecMCTS_v1.hpp"
 #include "tau/solver_DecMCTS_v2.hpp"
 #include "tau/solver_DecMCTS_v3.hpp"
+#include "tau/solver_DecMCTS_v4.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -61,12 +63,13 @@ std::vector<std::string> getScenarioFiles(const std::string& path) {
     return files;
 }
 
-int main() {
+int main(int argc, char** argv) {
     try {
-        // Rutas de entrada y salida (Puedes cambiarlas según tu estructura)
-        std::string configPath = "../data/experiment_config.yaml";
-        std::string scenariosPath = "../data/";
-        std::string logsDir = "../logs/prueba-salomon";     // Carpeta de destino para los logs
+        // Rutas de entrada y salida. Pueden pasarse por argumentos para no
+        // recompilar entre tandas:  ./simulador <scenariosPath> <logsDir> [configPath]
+        std::string configPath    = (argc > 3) ? argv[3] : "../data/experiment_config.yaml";
+        std::string scenariosPath = (argc > 1) ? argv[1] : "../data/";
+        std::string logsDir       = (argc > 2) ? argv[2] : "../logs/fixed_sim";
 
         // Asegurarnos de que el directorio de logs existe
         if (!fs::exists(logsDir)) {
@@ -170,6 +173,25 @@ int main() {
                             } else if (solverName == "dec-mcts-v3.2") {
                                 // V3: chance nodes + estadística doble n_disc/n_avail_disc
                                 solver = std::make_shared<tau::DecMCTSSolverV3>(robotID, 0.999, true);
+                            } else if (solverName == "dec-mcts-v4") {
+                                // V4: rollout consciente de ventanas (urgencia), widening progresivo
+                                // + expansión ordenada por heurística, selección filtrada por
+                                // factibilidad, poda de hijos stale y tie-break de earliness
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID);
+                            } else if (solverName == "dec-mcts-v4-c035") {
+                                // Ablación V4: exploración más explotadora (C=0.35)
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.999, false, 0.35);
+                            } else if (solverName == "dec-mcts-v4-g9999") {
+                                // Ablación V4: descuento más lento (gamma=0.9999, más memoria)
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false);
+                            } else if (solverName == "dec-mcts-v4-g9999-hc") {
+                                // V4 g9999 con ALTO CÓMPUTO. iteraciones por latido y de
+                                // emergencia configurables vía env DECMCTS_ITERS / DECMCTS_EMERG
+                                // (por defecto 1200 / 12000) para calibrar ~5 min/run.
+                                int iters = 1200, emerg = 12000;
+                                if (const char* e = std::getenv("DECMCTS_ITERS"))  iters = std::atoi(e);
+                                if (const char* e = std::getenv("DECMCTS_EMERG")) emerg = std::atoi(e);
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false, 0.7, iters, emerg);
                             } else {
                                 throw std::runtime_error("Solver no reconocido: " + solverName);
                             }

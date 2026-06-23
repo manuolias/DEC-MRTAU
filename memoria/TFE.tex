@@ -1,0 +1,216 @@
+\documentclass[a4paper,oneside,12pt]{book}
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2212}{-}
+\pdfoutput=1
+
+% Page layout (margins, line spacing)
+\addtolength{\oddsidemargin}{-0.4in}
+\addtolength{\evensidemargin}{-0.4in}
+\addtolength{\textwidth}{0.8in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1in}
+
+% Language
+\usepackage[spanish]{babel}
+\usepackage{lipsum}
+
+% Font
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext}
+
+% Graphics
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{framed}
+\graphicspath{{figures/}}
+
+% Math
+\usepackage{amssymb}
+\usepackage{amsmath} % Required for some math elements
+\usepackage{mathrsfs}
+
+% Other
+\usepackage[numbers]{natbib}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{array}
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\usepackage{dblfloatfix}
+\usepackage{enumitem}
+\usepackage{placeins}
+\usepackage{pbox}
+\usepackage{titlesec}
+\usepackage{indentfirst}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{xhfill}
+\usepackage{lettrine}
+
+% AÑADIDOS POR MI (MANUEL) --------------
+\usepackage{amsthm}
+\usepackage{mathtools}
+% \usepackage{tabularx}
+
+% Definición de comandos para escribir a color fácilmente
+\newcommand{\red}[1]{{\color{red}#1}}
+\newcommand{\blue}[1]{{\color{blue}#1}}
+\newcommand{\green}[1]{{\color{green!60!black}#1}} 
+% Nota: Usé 'green!60!black' porque el verde puro de LaTeX es muy brillante y cuesta leerlo en papel o pantalla. Este es un verde más oscuro y elegante. Si prefieres el chillón, pon solo {red}, {blue} y {green}.
+
+%  Definición de entornos de teorema, p. ej.:
+\theoremstyle{definition}
+\newtheorem{definicion}{Definición}[chapter]
+\newtheorem{propiedad}{Propiedad}[chapter]
+
+\renewcommand{\algorithmicrequire}{\textbf{Entrada:}}
+\renewcommand{\algorithmicensure}{\textbf{Salida:}}
+\algrenewcommand\algorithmicif{\textbf{if}}
+\algrenewcommand\algorithmicthen{\textbf{then}}
+\algrenewcommand\algorithmicelse{\textbf{else if}}
+\algrenewcommand\algorithmicfor{\textbf{for each}}
+\algrenewcommand\algorithmicdo{\textbf{do}}
+\algrenewcommand\algorithmicwhile{\textbf{while}}
+\algrenewcommand\algorithmicreturn{\textbf{return}}
+\algrenewcommand\algorithmicfunction{\textbf{function}}
+\algrenewcommand\algorithmicend{\textbf{end}}
+\floatname{algorithm}{Algoritmo}
+
+
+% --------------------------------------
+
+% General page style
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\leftmark}
+\rhead{\nouppercase{\rightmark}}
+\cfoot{$\sim$~\thepage~$\sim$}
+\renewcommand{\headrulewidth}{2pt}
+\renewcommand{\footrulewidth}{1pt}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter. #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{#1}}
+
+% Style for the first page of a chapter
+\fancypagestyle{plain}{
+	\fancyhf{}
+	\cfoot{$\sim$~\thepage~$\sim$}
+	\renewcommand{\headrulewidth}{0pt}
+}
+
+% Chapter heading format
+\titlespacing*{\chapter}{0pt}{-50pt}{40pt}
+\titleformat
+{\chapter} % command
+[display] % shape
+{\filcenter} % format
+%{\mbox{}\xrfill[0.4ex]{3pt}\textsc{\large\enspace\chaptername \thechapter}\enspace\xrfill[0.4ex]{3pt}\mbox{}} % label
+{\large\enspace\textsc{\chaptername~\thechapter}}
+{0.3ex} % sep
+%{{\titlerule[1pt]}\vskip3ex\huge\bfseries} % before-code
+{{\titlerule[2pt]}\vskip1ex\huge\bfseries} % before-code
+[\medskip{\titlerule[2pt]}] % after-code
+
+% Other format
+\titlelabel{\thetitle.\hspace{0.5em}}
+\newcommand\chapterwithsubtitle[2]{\chapter[#1]{#1\\[1ex]\large#2}}
+\newcommand\captionwithsubtitle[2]{\caption[#1]{#1. \small#2}}
+
+\hbadness=1280
+\setlist[itemize]{noitemsep}
+\setstretch{1.4}
+
+\setlength{\headheight}{14.5pt}
+\setlength{\DefaultNindent}{0pt}
+\setlength{\DefaultFindent}{1pt}
+
+%----------------------------------------------------------------------------------------
+%	MAIN PART
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+\frontmatter
+\title{Título de tu trabajo}
+\author{Tu nombre}
+
+\begin{titlepage}
+\begin{singlespace}
+\centering
+
+\huge{\sc Universidad de Sevilla} \\ [10pt]
+\large{\sc Escuela Técnica Superior de Ingeniería Informática} \\ [10pt]
+\large{Departamento de Ciencias de la Computación e Inteligencia Artificial} \\ [20pt]
+\includegraphics[width=7cm]{us.png} \\ [10pt]
+\hrulefill \\ [10pt]
+\large{\textit{Máster Universitario en Lógica, Computación e Inteligencia Artificial}} \\ [20pt]
+\Large{\textbf{\textsc{Trabajo de Fin de Máster}}} \\ [15pt]
+\huge{
+	Título de tu trabajo
+} \\ [5pt]
+\hrulefill \\ [10pt]
+
+\begin{minipage}[t]{7cm}
+	\large{\sc Dirigido por:} \\
+	\large{
+		Ignacio Pérez\\ Hurtado de Mendoza 
+	}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{8cm}
+	\raggedleft
+	\large{\sc Realizado por:} \\
+	\large{
+		Manuel \\ Olías López
+	}
+\end{minipage} \\ [90pt]
+\normalsize{Presentado el XX de YY de 20ZZ} \\ [5pt]
+
+\end{singlespace}
+\end{titlepage}
+
+%----------------------------------------------------------------------------------------
+%	Abstract
+%----------------------------------------------------------------------------------------
+\chapter{Resumen}
+\begin{small}
+Un resumen (abstract) en castellano y luego en inglés de tu trabajo, no se incluyen referencias. Contexto, que se ha hecho, que se consigue.
+
+\end{small}
+\chapter{Agradecimientos}
+Menciona a las personas a las que quieras dedicar un agradecimiento,
+ya sea por su apoyo personal (familiares, amigos) como académico 
+(tu tutor, profesores, gente que te haya orientado...) Puedes dar un
+tono personal.
+
+\begin{singlespace}
+\tableofcontents
+%\listoffigures
+%\listoftables
+\end{singlespace}
+
+%----------------------------------------------------------------------------------------
+%	Main Part
+%----------------------------------------------------------------------------------------
+\mainmatter
+    
+    \input{sections/01_introducción}
+    \input{sections/02_marco_teórico}
+    \input{sections/03_estado_del_arte}
+    \input{sections/04_materiales_y_metodos}
+    \input{sections/05_casos_de_estudio}
+    \input{sections/06_experimentación_pruebas}
+    \input{sections/07_conclusiones_trabajo_futuro}
+
+\backmatter
+
+%----------------------------------------------------------------------------------------
+%	Bibliography
+%----------------------------------------------------------------------------------------
+\begin{singlespace}
+\bibliographystyle{plain}
+\setlength{\bibsep}{0pt}
+\footnotesize{ \bibliography{TFE}{} }
+\end{singlespace}
+
+\end{document}

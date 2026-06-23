@@ -303,4 +303,5 @@ CMakeFiles/simulador.dir/src/main.cpp.o: \
  /usr/include/c++/13/cassert /usr/include/assert.h \
  /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v2.hpp \
  /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v3.hpp \
+ /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v4.hpp \
  /home/manuel/tfm/distributed/include/tau/reward_00.hpp

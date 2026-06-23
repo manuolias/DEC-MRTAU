@@ -252,6 +252,7 @@ CMakeFiles/simulador.dir/src/main.cpp.o: /home/manuel/tfm/distributed/src/main.c
   /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v1.hpp \
   /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v2.hpp \
   /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v3.hpp \
+  /home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v4.hpp \
   /home/manuel/tfm/distributed/include/tau/solver_greedy.hpp \
   /home/manuel/tfm/distributed/include/tau/solver_interface.hpp \
   /home/manuel/tfm/distributed/include/tau/solver_random.hpp \
@@ -1676,6 +1677,8 @@ CMakeFiles/simulador.dir/src/state.cpp.o: /home/manuel/tfm/distributed/src/state
 
 /usr/include/c++/13/atomic:
 
+/usr/include/c++/13/array:
+
 /usr/include/c++/13/compare:
 
 /usr/include/c++/13/system_error:
@@ -1969,6 +1972,8 @@ CMakeFiles/simulador.dir/src/state.cpp.o: /home/manuel/tfm/distributed/src/state
 /usr/include/c++/13/bits/concept_check.h:
 
 /usr/include/c++/13/bits/alloc_traits.h:
+
+/home/manuel/tfm/distributed/include/tau/solver_DecMCTS_v4.hpp:
 
 /usr/include/c++/13/type_traits:
 
@@ -2283,5 +2288,3 @@ CMakeFiles/simulador.dir/src/state.cpp.o: /home/manuel/tfm/distributed/src/state
 /usr/include/assert.h:
 
 /usr/include/c++/13/algorithm:
-
-/usr/include/c++/13/array:

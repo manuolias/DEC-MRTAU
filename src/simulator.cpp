@@ -4,13 +4,21 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include <cstdlib>
 
 namespace tau {
 
-// Frecuencia de actualización del pensamiento en segundo fondo (0.2 segundos virtuales)
-constexpr Time PLANNING_INTERVAL = 0.1;
-constexpr Time WARMUP_VIRTUAL_TIME = 30.0;
-constexpr int WARMUP_ROUNDS = static_cast<int>(std::ceil(WARMUP_VIRTUAL_TIME / PLANNING_INTERVAL));
+// Parámetros de la fase de pensamiento/comunicación en segundo plano (Dec-MCTS).
+// Configurables por entorno para estudiar el efecto de las RONDAS DE COMUNICACIÓN
+// independientemente del cómputo por ronda:
+//   TAU_PLANNING_INTERVAL  (def 0.1)  intervalo virtual entre latidos de planificación
+//   TAU_WARMUP_TIME        (def 30.0) tiempo virtual de warmup -> nº de rondas = tiempo/intervalo
+// Cada ronda un robot lee la pizarra, planifica y publica su distribución: más rondas
+// = más ciclos de co-adaptación entre robots (de-conflicción), a igual cómputo por ronda.
+static Time getEnvTime(const char* name, Time def) {
+    if (const char* e = std::getenv(name)) return std::atof(e);
+    return def;
+}
 
 DistributedSimulator::DistributedSimulator(std::shared_ptr<const Scenario> scen, std::shared_ptr<Logger> log) 
     : scenario(scen), logger(log), state(scen), globalTime(scen->initialTime) {} 
@@ -134,7 +142,12 @@ void DistributedSimulator::finalLogging(double reward, double computingTime) {
 void DistributedSimulator::run() {
 
     auto start_time = std::chrono::high_resolution_clock::now();
-                        
+
+    // Rondas de comunicación / cadencia de planificación (configurables por entorno).
+    const Time PLANNING_INTERVAL   = getEnvTime("TAU_PLANNING_INTERVAL", 0.1);
+    const Time WARMUP_VIRTUAL_TIME = getEnvTime("TAU_WARMUP_TIME", 30.0);
+    const int  WARMUP_ROUNDS = static_cast<int>(std::ceil(WARMUP_VIRTUAL_TIME / PLANNING_INTERVAL));
+
     initLogging();
 
     // ====================================================================
@@ -520,10 +533,17 @@ void DistributedSimulator::endTask(TaskID taskID, bool success) {
 // Lógica de caducidad
 void DistributedSimulator::expireTask(TaskID taskID) {
     auto& task = state.getTask(taskID);
-    
-    // Si la tarea ya se resolvió o se está resolviendo, ignoramos el evento
+
+    // Si la tarea ya se resolvió o su ejecución ya ha comenzado, ignoramos el evento.
+    // CORRECCIÓN: una tarea ASSIGNED también debe caducar. Si en el instante de la
+    // expiración (latestStart) la tarea sigue en ASSIGNED, su TASK_START está
+    // programado para initTime > latestStart (de lo contrario ya habría disparado,
+    // porque TASK_START tiene mayor prioridad a igual timestamp y initTime <= latestStart
+    // implicaría que el evento ya se procesó). Es decir, la tarea empezaría FUERA de su
+    // ventana temporal. Antes, el compromiso de los robots (ASSIGNED) la protegía de
+    // expirar, permitiendo completar tareas iniciadas después de latestStart.
     if (task.status == TaskStatus::COMPLETED || task.status == TaskStatus::FAILED ||
-        task.status == TaskStatus::ASSIGNED   || task.status == TaskStatus::EXECUTING) return;
+        task.status == TaskStatus::EXECUTING) return;
 
     // Si llegamos aquí, la tarea caducó sin suficientes workers
     task.status = TaskStatus::FAILED;
