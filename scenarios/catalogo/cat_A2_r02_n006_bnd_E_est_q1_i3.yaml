@@ -1,0 +1,113 @@
+name: "cat_A2_r02_n006_bnd_E_est_q1_i3"
+height: 15
+width: 15
+initial_time: 0
+
+graph:
+  - node: 1
+    description: "Node 1"
+    coords: [0,0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 2
+    description: "Node 2"
+    coords: [0.0,5.0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 3
+    description: "Node 3"
+    coords: [0.0,3.0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 4
+    description: "Node 4"
+    coords: [4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 5
+    description: "Node 5"
+    coords: [4.0,-1.0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 6
+    description: "Node 6"
+    coords: [0.0,-3.0]
+    neighbors: [1,2,3,4,5,6,7]
+  - node: 7
+    description: "Node 7"
+    coords: [-4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7]
+
+tasks:
+  - id: 1
+    node: 2
+    description: "Task 1"
+    time_window: [12.0,19.68]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 2
+    node: 3
+    description: "Task 2"
+    time_window: [24.0,36.11]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 3
+    node: 4
+    description: "Task 3"
+    time_window: [29.0,39.31]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 4
+    node: 5
+    description: "Task 4"
+    time_window: [14.0,24.85]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 5
+    node: 6
+    description: "Task 5"
+    time_window: [11.0,21.45]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 6
+    node: 7
+    description: "Task 6"
+    time_window: [7.0,15.27]
+    success_prob: 0.75
+    success_time: [10,10.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+
+robots:
+  - id: 1
+    initial_node: 1
+    description: "Robot 1"
+    initial_battery_level: 100.0
+    battery_capacity: 100.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6]
+  - id: 2
+    initial_node: 1
+    description: "Robot 2"
+    initial_battery_level: 100.0
+    battery_capacity: 100.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6]
+
+recharging_stations:
+  - id: 1
+    node: 1
+    description: "Station 1"

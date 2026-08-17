@@ -374,7 +374,9 @@ class DecMCTSSolverV1 : public ISolver {
 
         task.assignedWorkers++;
         task.initTime = std::max({task.initTime, arrival, tInfo.earliestStart});
-        robot.time = task.initTime; // estimación conservadora de cuándo quedará libre
+        // Fidelidad con simulator.cpp::simulateTask: el robot se da por ocupado
+        // hasta el cierre de la ventana mientras espera a su coalición.
+        robot.time = tInfo.latestStart;
 
         if (task.assignedWorkers == tInfo.requiredWorkers) {
             task.status = TaskStatus::ASSIGNED;
@@ -488,8 +490,10 @@ class DecMCTSSolverV1 : public ISolver {
         Time execTime  = std::max(0.0, s.globalTime - task.initTime);
         BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
         Time          avgTime  = success ? tInfo.averageSuccessTime   : tInfo.averageFailTime;
-        BatteryRate   rate     = (avgTime > 0.0) ? (avgDemand / avgTime) : 0.0;
-        BatteryLevel  consumption = rate * execTime;
+        // Fidelidad con simulator.cpp::endTask: si la duración media de este
+        // desenlace es 0 (fail_time=[0,0]), el consumo es la demanda completa.
+        BatteryLevel  consumption = (avgTime > 0.0) ? (avgDemand / avgTime) * execTime
+                                                    : avgDemand;
 
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
@@ -676,6 +680,33 @@ class DecMCTSSolverV1 : public ISolver {
         return dist;
     }
 
+    // =========================================================================
+    // Política de explotación final, filtrada por factibilidad
+    // =========================================================================
+    // `mostVisitedChild` compara visitas en bruto, y las visitas NO son
+    // comparables entre hermanos cuando el conjunto de acciones disponibles
+    // varía de un rollout a otro: una acción que solo aparece cuando es la
+    // única posible (típicamente FINISH) acumula todas las visitas de esos
+    // rollouts, mientras las demás se reparten las restantes. Sin filtrar, el
+    // robot podía retirarse quedando tareas alcanzables. El filtro es NO
+    // destructivo: no borra subárboles que volverán a ser útiles.
+    MCTSNode* mostVisitedFeasibleChild(const Observation& obs,
+                                        const std::shared_ptr<const Scenario>& sc) {
+        if (!root || root->children.empty()) return nullptr;
+        auto avail = availableActions(makeState(obs), sc);
+
+        MCTSNode* best = nullptr;
+        for (const auto& c : root->children) {
+            bool feasible = std::any_of(avail.begin(), avail.end(), [&](const Action& a) {
+                return a.getType()   == c->action.getType() &&
+                       a.getTarget() == c->action.getTarget();
+            });
+            if (!feasible) continue;
+            if (!best || c->N > best->N) best = c.get();
+        }
+        return best;
+    }
+
 public:
     explicit DecMCTSSolverV1(RobotID id)
         : myId(id), rng(std::random_device{}()) {}
@@ -708,8 +739,8 @@ public:
                 runIteration(obs, sc);
         }
 
-        // Seleccionar la acción con más visitas (política robusta)
-        MCTSNode* bestChild = root->mostVisitedChild();
+        // Seleccionar la acción con más visitas entre las aplicables (política robusta)
+        MCTSNode* bestChild = mostVisitedFeasibleChild(obs, sc);
         Action chosen = bestChild ? bestChild->action
                                    : greedyAction(myId, makeState(obs), sc);
 

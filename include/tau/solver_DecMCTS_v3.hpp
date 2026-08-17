@@ -528,7 +528,9 @@ class DecMCTSSolverV3 : public ISolver {
         robot.onTask = tId;
         task.assignedWorkers++;
         task.initTime = std::max({task.initTime, arrival, tInfo.earliestStart});
-        robot.time = task.initTime;
+        // Fidelidad con simulator.cpp::simulateTask: el robot se da por ocupado
+        // hasta el cierre de la ventana mientras espera a su coalición.
+        robot.time = tInfo.latestStart;
         if (task.assignedWorkers == tInfo.requiredWorkers) {
             task.status = TaskStatus::ASSIGNED;
             q.push({task.initTime, REType::TASK_START, NULL_ID, tId, 0, 0});
@@ -613,8 +615,10 @@ class DecMCTSSolverV3 : public ISolver {
         Time execTime = std::max(0.0, s.globalTime - task.initTime);
         BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
         Time avgTime  = success ? tInfo.averageSuccessTime : tInfo.averageFailTime;
-        BatteryRate rate = (avgTime > 0.0) ? (avgDemand / avgTime) : 0.0;
-        BatteryLevel consumption = rate * execTime;
+        // Fidelidad con simulator.cpp::endTask: si la duración media de este
+        // desenlace es 0 (fail_time=[0,0]), el consumo es la demanda completa.
+        BatteryLevel consumption = (avgTime > 0.0) ? (avgDemand / avgTime) * execTime
+                                                   : avgDemand;
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
             w.batteryLevel -= consumption;
@@ -770,16 +774,23 @@ class DecMCTSSolverV3 : public ISolver {
                                 currentNode = newNode;
                                 action = toExpand;
 
+                                // CORRECCIÓN: tras EXPANDIR se abandona el árbol y
+                                // comienza la fase de rollout, como en MCTS estándar
+                                // (y como describe el Algoritmo de la memoria). Antes
+                                // se permanecía inTree, de modo que cada iteración
+                                // expandía una cadena completa de nodos hasta el final
+                                // del episodio: no había rollout y la evaluación de la
+                                // hoja la producía de facto la regla de expansión
+                                // ("primera acción factible en orden de TaskID"), un
+                                // sesgo sistemático. El chance node se sigue anotando
+                                // al conocerse el desenlace, aunque ya no estemos
+                                // dentro del árbol, para que entre en la backprop.
+                                inTree = false;
                                 if (action.getType() == Action::Type::EXECUTE_TASK) {
                                     pendingOutcome    = true;
                                     pendingTaskId     = action.getTarget();
                                     pendingActionNode = newNode;
-                                    // permanecemos inTree; al recibir el outcome
-                                    // descenderemos al chance node
-                                } else if (action.getType() == Action::Type::FINISH) {
-                                    inTree = false;
                                 }
-                                // RECHARGE: permanecemos inTree, sin chance node intermedio
                             } else {
                                 MCTSNode* best = selectActionChildDUCT(currentNode, avail);
                                 if (best) {
@@ -816,7 +827,10 @@ class DecMCTSSolverV3 : public ISolver {
                     break;
 
                 case REType::TASK_END: {
-                    if (inTree && pendingOutcome && ev.taskID == pendingTaskId) {
+                    // Sin `inTree`: el chance node debe anotarse también cuando la
+                    // acción se acaba de expandir y ya estamos en fase de rollout.
+                    // `pendingOutcome` solo puede estar activo en modo ACTIVE.
+                    if (pendingOutcome && ev.taskID == pendingTaskId) {
                         int outcome = (ev.payload == 1) ? OUTCOME_SUCCESS : OUTCOME_FAIL;
                         MCTSNode* chance = pendingActionNode->findChanceChild(outcome);
                         if (!chance) {
@@ -835,7 +849,7 @@ class DecMCTSSolverV3 : public ISolver {
                 }
 
                 case REType::TASK_EXPIRATION: {
-                    if (inTree && pendingOutcome && ev.taskID == pendingTaskId) {
+                    if (pendingOutcome && ev.taskID == pendingTaskId) {
                         MCTSNode* chance = pendingActionNode->findChanceChild(OUTCOME_FAIL);
                         if (!chance) {
                             pendingActionNode->children.push_back(
@@ -856,7 +870,7 @@ class DecMCTSSolverV3 : public ISolver {
 
         // Caso anómalo: rollout terminó sin cerrar el outcome (p.ej. myId murió
         // navegando por batería antes de TASK_START). Tratar como FAIL.
-        if (inTree && pendingOutcome && pendingActionNode) {
+        if (pendingOutcome && pendingActionNode) {
             MCTSNode* chance = pendingActionNode->findChanceChild(OUTCOME_FAIL);
             if (!chance) {
                 pendingActionNode->children.push_back(
@@ -985,6 +999,34 @@ class DecMCTSSolverV3 : public ISolver {
         }
     }
 
+    // =========================================================================
+    // Política de explotación final, filtrada por factibilidad
+    // =========================================================================
+    // Coherencia entre la selección (que ya filtra por `avail`) y la decisión
+    // final (`mostVisitedActionChild`, que compara visitas en bruto). Sin esto,
+    // una acción que solo aparece cuando es la única posible —típicamente
+    // FINISH— acumula todas las visitas de esos rollouts y gana la decisión
+    // aunque queden tareas disponibles. El filtro es NO destructivo.
+    MCTSNode* mostVisitedFeasibleActionChild(const Observation& obs,
+                                              const std::shared_ptr<const Scenario>& sc) {
+        if (!root || root->children.empty()) return nullptr;
+        auto avail = availableActions(makeState(obs), sc);
+
+        MCTSNode* best = nullptr;
+        double bestN = -1.0;
+        for (auto& c : root->children) {
+            if (c->nodeType != MCTSNode::NodeType::ACTION) continue;
+            bool feasible = std::any_of(avail.begin(), avail.end(), [&](const Action& a) {
+                return a.getType()   == c->action.getType() &&
+                       a.getTarget() == c->action.getTarget();
+            });
+            if (!feasible) continue;
+            c->decayTo(globalTick, gamma_);
+            if (c->N_disc > bestN) { bestN = c->N_disc; best = c.get(); }
+        }
+        return best;
+    }
+
 public:
     explicit DecMCTSSolverV3(RobotID id, double gamma = 0.999, bool useDiffReward = false)
         : myId(id), gamma_(gamma), useDiffReward_(useDiffReward),
@@ -1028,8 +1070,8 @@ public:
             for (int i = 0; i < EMERGENCY_ITERS; ++i) runIteration(obs, sc);
         }
 
-        // 3) Elegir el hijo ACTION con más visitas descontadas
-        MCTSNode* bestChild = root->mostVisitedActionChild(globalTick, gamma_);
+        // 3) Elegir el hijo ACTION con más visitas descontadas entre los aplicables
+        MCTSNode* bestChild = mostVisitedFeasibleActionChild(obs, sc);
 
         Action chosen = Action(Action::Type::IDLE);
         if (bestChild) {

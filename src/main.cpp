@@ -184,6 +184,12 @@ int main(int argc, char** argv) {
                             } else if (solverName == "dec-mcts-v4-g9999") {
                                 // Ablación V4: descuento más lento (gamma=0.9999, más memoria)
                                 solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false);
+                            } else if (solverName == "dec-mcts-v4-nocomm") {
+                                // Ablación C1: idéntico a dec-mcts-v4-g9999 pero IGNORANDO las
+                                // distribuciones comunicadas por los vecinos. Mide cuánto aporta
+                                // realmente el canal de comunicación de Dec-MCTS.
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
+                                                                                0.7, 30, 300, false);
                             } else if (solverName == "dec-mcts-v4-g9999-hc") {
                                 // V4 g9999 con ALTO CÓMPUTO. iteraciones por latido y de
                                 // emergencia configurables vía env DECMCTS_ITERS / DECMCTS_EMERG

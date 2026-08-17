@@ -520,7 +520,9 @@ class DecMCTSSolverV2 : public ISolver {
 
         task.assignedWorkers++;
         task.initTime = std::max({task.initTime, arrival, tInfo.earliestStart});
-        robot.time = task.initTime;
+        // Fidelidad con simulator.cpp::simulateTask: el robot se da por ocupado
+        // hasta el cierre de la ventana mientras espera a su coalición.
+        robot.time = tInfo.latestStart;
 
         if (task.assignedWorkers == tInfo.requiredWorkers) {
             task.status = TaskStatus::ASSIGNED;
@@ -628,8 +630,10 @@ class DecMCTSSolverV2 : public ISolver {
         Time execTime  = std::max(0.0, s.globalTime - task.initTime);
         BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
         Time          avgTime  = success ? tInfo.averageSuccessTime   : tInfo.averageFailTime;
-        BatteryRate   rate     = (avgTime > 0.0) ? (avgDemand / avgTime) : 0.0;
-        BatteryLevel  consumption = rate * execTime;
+        // Fidelidad con simulator.cpp::endTask: si la duración media de este
+        // desenlace es 0 (fail_time=[0,0]), el consumo es la demanda completa.
+        BatteryLevel  consumption = (avgTime > 0.0) ? (avgDemand / avgTime) * execTime
+                                                    : avgDemand;
 
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
@@ -863,6 +867,34 @@ class DecMCTSSolverV2 : public ISolver {
         return dist;
     }
 
+    // =========================================================================
+    // Política de explotación final, filtrada por factibilidad
+    // =========================================================================
+    // Las visitas descontadas NO son comparables entre hermanos cuando el
+    // conjunto de acciones disponibles varía de un rollout a otro: una acción
+    // que solo aparece cuando es la única posible (típicamente FINISH) acumula
+    // todas las visitas de esos rollouts, mientras las demás se reparten las
+    // restantes. Sin filtrar, el robot podía retirarse quedando tareas
+    // alcanzables. El filtro es NO destructivo: no borra subárboles.
+    MCTSNode* mostVisitedFeasibleChild(const Observation& obs,
+                                        const std::shared_ptr<const Scenario>& sc) {
+        if (!root || root->children.empty()) return nullptr;
+        auto avail = availableActions(makeState(obs), sc);
+
+        MCTSNode* best = nullptr;
+        double bestN = -1.0;
+        for (auto& c : root->children) {
+            bool feasible = std::any_of(avail.begin(), avail.end(), [&](const Action& a) {
+                return a.getType()   == c->action.getType() &&
+                       a.getTarget() == c->action.getTarget();
+            });
+            if (!feasible) continue;
+            c->decayTo(globalTick, gamma_);
+            if (c->N_disc > bestN) { bestN = c->N_disc; best = c.get(); }
+        }
+        return best;
+    }
+
 public:
     // gamma: factor D-UCT (0.95–0.999). useDiffReward: activa el doble rollout f^r.
     // Ablación H1 confirmó que useDiffReward=false es ligeramente mejor en escenarios
@@ -898,8 +930,8 @@ public:
                 runIteration(obs, sc);
         }
 
-        // Política robusta: hijo con más visitas descontadas
-        MCTSNode* bestChild = root->mostVisitedChild(globalTick, gamma_);
+        // Política robusta: hijo con más visitas descontadas entre las aplicables
+        MCTSNode* bestChild = mostVisitedFeasibleChild(obs, sc);
 
         Action chosen = Action(Action::Type::IDLE); // Pongo IDLE como valor por defecto, aunque no debería usarse.
         if (bestChild) {

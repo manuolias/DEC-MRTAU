@@ -220,6 +220,13 @@ class DecMCTSSolverV4 : public ISolver {
     double cExplore_;
     int    iterationsPerCall_;   // iteraciones MCTS por latido de planificación
     int    emergencyIters_;      // iteraciones de emergencia si el árbol está vacío
+    // Ablación C1: si es false, el solver IGNORA las distribuciones comunicadas por
+    // los vecinos. En los rollouts, los demás robots dejan de seguir su bundle
+    // muestreado y pasan a regirse por la política de rollout, y blockingProb queda
+    // a 0 para todas las tareas (sin de-conflicción). Todo lo demás (árbol, D-UCT,
+    // física, publicación de la propia distribución) es idéntico. Sirve para medir
+    // cuánto aporta realmente el canal de comunicación de Dec-MCTS.
+    bool   useComm_;
     std::unique_ptr<MCTSNode> root;
     mutable std::mt19937 rng;
     int globalTick = 0;
@@ -503,6 +510,13 @@ class DecMCTSSolverV4 : public ISolver {
         return best;
     }
 
+    // Punto único de lectura del canal de comunicación. Con useComm_ = false
+    // devuelve un mapa vacío: los vecinos no tienen plan conocido (ablación C1).
+    std::map<RobotID, std::vector<TaskID>> sampleNeighbourBundles(const Observation& obs) {
+        if (!useComm_) return {};
+        return sampleBundles(obs.getKnownDistributions());
+    }
+
     // =========================================================================
     // Muestrea bundles de la distribución de cada robot vecino (idéntico a V2)
     // =========================================================================
@@ -600,7 +614,10 @@ class DecMCTSSolverV4 : public ISolver {
 
         task.assignedWorkers++;
         task.initTime = std::max({task.initTime, arrival, tInfo.earliestStart});
-        robot.time = task.initTime;
+        // Fidelidad con simulator.cpp::simulateTask: mientras espera a que se
+        // complete la coalición, el robot se da por ocupado hasta el cierre de la
+        // ventana (estimación conservadora), no hasta el initTime provisional.
+        robot.time = tInfo.latestStart;
 
         if (task.assignedWorkers == tInfo.requiredWorkers) {
             task.status = TaskStatus::ASSIGNED;
@@ -707,8 +724,12 @@ class DecMCTSSolverV4 : public ISolver {
         Time execTime  = std::max(0.0, s.globalTime - task.initTime);
         BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
         Time          avgTime  = success ? tInfo.averageSuccessTime   : tInfo.averageFailTime;
-        BatteryRate   rate     = (avgTime > 0.0) ? (avgDemand / avgTime) : 0.0;
-        BatteryLevel  consumption = rate * execTime;
+        // Fidelidad con simulator.cpp::endTask: si la duración media de este
+        // desenlace es 0 (típico en fail_time=[0,0]), el consumo NO es 0 sino la
+        // demanda completa. Antes la réplica cobraba 0 y los rollouts trataban el
+        // fracaso como gratis, infravalorando su coste energético.
+        BatteryLevel  consumption = (avgTime > 0.0) ? (avgDemand / avgTime) * execTime
+                                                    : avgDemand;
 
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
@@ -891,7 +912,7 @@ class DecMCTSSolverV4 : public ISolver {
         if (!root)
             root = std::make_unique<MCTSNode>(Action(Action::Type::START), nullptr);
 
-        auto sampledBundles = sampleBundles(obs.getKnownDistributions());
+        auto sampledBundles = sampleNeighbourBundles(obs);
         auto blockingProb   = computeBlockingProb(myId, sampledBundles, sc);
 
         std::vector<MCTSNode*> path;
@@ -924,6 +945,13 @@ class DecMCTSSolverV4 : public ISolver {
     //   - EXECUTE_TASK cuya ventana es definitivamente inalcanzable (cota
     //     inferior de llegada: now + viaje > latestStart)
     //   - RECHARGE con la batería ya llena
+    //
+    // La poda es DESTRUCTIVA (se lleva por delante el subárbol del hijo), así
+    // que su criterio debe ser conservador: solo acciones que ya no volverán a
+    // ser aplicables. La infactibilidad *temporal* (batería insuficiente ahora
+    // mismo, o FINISH mientras queden tareas) NO se poda aquí: se filtra en la
+    // decisión, con `mostVisitedFeasibleChild`, para no destruir información
+    // que volverá a ser útil dentro de unos instantes.
     void pruneStaleRootChildren(const Observation& obs,
                                  const std::shared_ptr<const Scenario>& sc) {
         if (!root || root->children.empty()) return;
@@ -956,6 +984,44 @@ class DecMCTSSolverV4 : public ISolver {
 
         auto& ch = root->children;
         ch.erase(std::remove_if(ch.begin(), ch.end(), isStale), ch.end());
+    }
+
+    // =========================================================================
+    // Política de explotación final, filtrada por factibilidad
+    // =========================================================================
+    // Devuelve el hijo del root con más visitas descontadas DE ENTRE los que
+    // son aplicables ahora mismo, con el mismo criterio que usa la selección
+    // (`treeActions`). Devuelve nullptr si ninguno lo es.
+    //
+    // MOTIVO (corrección del retiro prematuro): `treeActions` solo ofrece
+    // FINISH en solitario cuando no queda ninguna tarea factible. Un rollout
+    // que alcanza ese estado vuelca TODAS sus visitas en el hijo FINISH,
+    // mientras los hijos EXECUTE_TASK se reparten las visitas de los rollouts
+    // restantes entre 12-24 hermanos. Comparando N_disc en bruto, FINISH ganaba
+    // la decisión aunque quedasen tareas disponibles y el robot abandonaba la
+    // misión con la batería casi intacta. Los conteos de visitas solo son
+    // comparables entre acciones que compiten en las mismas condiciones.
+    MCTSNode* mostVisitedFeasibleChild(const Observation& obs,
+                                        const std::shared_ptr<const Scenario>& sc) {
+        if (!root || root->children.empty()) return nullptr;
+
+        // La factibilidad no depende de blockingProb (solo el orden por score).
+        const std::unordered_map<TaskID, double> noBlocking;
+        auto avail = treeActions(makeState(obs), noBlocking, sc);
+
+        MCTSNode* best = nullptr;
+        double bestN = -1.0;
+        for (auto& c : root->children) {
+            bool feasible = std::any_of(avail.begin(), avail.end(),
+                                        [&](const ScoredAction& sa) {
+                                            return sa.action.getType()   == c->action.getType() &&
+                                                   sa.action.getTarget() == c->action.getTarget();
+                                        });
+            if (!feasible) continue;
+            c->decayTo(globalTick, gamma_);
+            if (c->N_disc > bestN) { bestN = c->N_disc; best = c.get(); }
+        }
+        return best;
     }
 
     // =========================================================================
@@ -993,21 +1059,25 @@ public:
     // gamma: factor D-UCT. useDiffReward: doble rollout f^r (las ablaciones de
     // V2 confirmaron gamma=0.999 y useDiffReward=false como mejores).
     // cExplore: constante de exploración D-UCT (el bono efectivo es 2*cExplore).
-    // NOTA (ablación con simulador corregido, 16 escenarios x 4 réplicas):
-    //   gamma=0.9999 ("dec-mcts-v4-g9999") rindió mejor que el 0.999 por defecto
-    //   (0.6171 vs 0.6069 de media; tendencia consistente, t=1.41) y C=0.35 peor
-    //   que C=0.7. Se mantiene 0.999 por defecto para no invalidar los logs
-    //   existentes de "dec-mcts-v4"; usar la variante -g9999 en nuevos experimentos.
+    // NOTA sobre gamma: el valor por defecto del constructor es 0.9999, que es
+    //   el de la variante "dec-mcts-v4-g9999" usada en los experimentos. La
+    //   variante "dec-mcts-v4" de main.cpp lo fija explícitamente a 0.999.
+    //   La ablación que lo respaldaba (0.6171 vs 0.6069; C=0.35 peor que C=0.7)
+    //   se hizo sobre 16 escenarios de la familia 1E, que es DETERMINISTA: no
+    //   debe extrapolarse al régimen estocástico sin repetirla allí.
     // iterationsPerCall / emergencyIters: presupuesto de cómputo MCTS. Por defecto
     // 30/300 (rápido, ~8s/run). Subirlos permite estudiar si el rendimiento mejora
     // con más cómputo (cada run tarda ~linealmente más).
+    // useComm: si es false, se ignoran las distribuciones comunicadas por los
+    // vecinos (ablación C1; ver el comentario del miembro useComm_).
     explicit DecMCTSSolverV4(RobotID id, double gamma = 0.9999, bool useDiffReward = false,
                              double cExplore = DEFAULT_C_EXPLORE,
                              int iterationsPerCall = ITERATIONS_PER_CALL,
-                             int emergencyIters = EMERGENCY_ITERS)
+                             int emergencyIters = EMERGENCY_ITERS,
+                             bool useComm = true)
         : myId(id), gamma_(gamma), useDiffReward_(useDiffReward), cExplore_(cExplore),
           iterationsPerCall_(iterationsPerCall), emergencyIters_(emergencyIters),
-          rng(std::random_device{}()) {}
+          useComm_(useComm), rng(std::random_device{}()) {}
 
     // =========================================================================
     // Interfaz ISolver
@@ -1041,16 +1111,16 @@ public:
             pruneStaleRootChildren(obs, sc);
         }
 
-        // Política robusta: hijo con más visitas descontadas (todos los hijos
-        // restantes son factibles gracias a la poda previa)
-        MCTSNode* bestChild = root->mostVisitedChild(globalTick, gamma_);
+        // Política robusta: hijo con más visitas descontadas de entre los que
+        // son aplicables ahora mismo (ver mostVisitedFeasibleChild)
+        MCTSNode* bestChild = mostVisitedFeasibleChild(obs, sc);
 
         Action chosen = Action(Action::Type::IDLE); // valor por defecto, no debería usarse
         if (bestChild) {
             chosen = bestChild->action;
         } else {
             // Fallback: política marginal-aware con la información actual
-            auto sampledBundles = sampleBundles(obs.getKnownDistributions());
+            auto sampledBundles = sampleNeighbourBundles(obs);
             auto blockingProb   = computeBlockingProb(myId, sampledBundles, sc);
             chosen = rolloutAction(myId, makeState(obs), blockingProb, sc);
         }
