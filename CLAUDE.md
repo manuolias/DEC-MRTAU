@@ -19,15 +19,16 @@ Recapitulación** y la reserva para **abrir el capítulo 6**: con ella se fueron
 agregadas del catálogo, las **3 réplicas** y las **5 400 ejecuciones**, que hoy no aparecen en
 ninguna parte de la memoria.
 
-📌 **SIGUIENTE SESIÓN**:
-1. ✅ HECHO (sesión 9): `analisis/evaluacion_final.ipynb` rehecho sobre el v3, en **tres partes**
-   (conjunto · por bloque · métricas adicionales) y **14 figuras** `figuras/p1_*`, `p2_*`, `p3_*`.
-   El cuaderno del v1 se archivó como `analisis/evaluacion_v1_obsoleto.ipynb`.
-2. **Escribir el capítulo 6** (`memoria/sections/06_experimentación_pruebas.tex`) con el
-   **addendum 2** de `.claude-notes/06_conclusiones.md` — el vigente; los otros dos son
-   histórico. Abrirlo con la recapitulación que salió del cap. 5. Antes, decidir D-13 y D-14.
-Recordar allí lo que el cap. 5 no dice: mortalidad de robots (peor en el v3, y también en
-determinista) y el protocolo experimental completo.
+📌 **Capítulo 6 ESCRITO** (sesión 10): ~4 400 palabras, 7 tablas y **4 de las 14 figuras** del
+cuaderno, copiadas a `memoria/figures/06_experimentación_pruebas/`. Estructura del cuaderno
+(conjunto · por bloque · magnitudes secundarias) + §6.1 protocolo experimental, que **resuelve
+D-10**. ⚠️ Pendiente: **borrar el bloque comentado del final del cap. 5** (su contenido, incluida
+`eq:ejecuciones`, está ya en la introducción del 6 ⇒ etiqueta duplicada si se descomenta).
+
+📌 **SIGUIENTE SESIÓN**: escribir el **capítulo 7** (`07_conclusiones_trabajo_futuro.tex`, etiqueta
+`cap:conclusiones_trabajo_futuros`) con las ideas 1, 2, 4 y 5 de `.claude-notes/06_conclusiones.md`
+— **addendum 2**, el vigente. Es el capítulo donde van las valoraciones que el 6 deja fuera.
+Antes, decidir D-03 (cómo citar el paper del tutor), D-13 y D-14.
 
 `.claude-notes/` es el cuaderno de trabajo del asistente y **no forma parte de la entrega**.
 
@@ -151,10 +152,18 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
   ⚠️ Dos correcciones señaladas y no aplicadas, de una línea cada una: «formato yaml» → «YAML»,
   y «$L$ representa el número de **tareas** por robot» → **plazas de trabajador** (con
   coaliciones no coinciden; es el motivo del reajuste $m=Ln/\bar q$).
-- **Siguiente capítulo a escribir: el 6 (Experimentación y pruebas)**. Material en el
-  **addendum 2** de `.claude-notes/06_conclusiones.md`. Reportar siempre por bloque y por
-  régimen, nunca liderar con el agregado. Abrirlo con la recapitulación del catálogo que el
-  usuario retiró del cap. 5.
+- **Cap. 6 (`06_experimentación_pruebas.tex`): borrador completo (sesión 10)**, pendiente de la
+  revisión del usuario. Estructura del cuaderno + §6.1 protocolo experimental (resuelve D-10).
+  7 tablas y 4 figuras (`memoria/figures/06_experimentación_pruebas/`). ⚠️ Notación: la memoria
+  usa **$n$ = robots** y $m$ = tareas; el cuaderno se corrigió para coincidir.
+- **Siguiente capítulo a escribir: el 7 (Conclusiones y trabajo futuro)**, etiqueta
+  `cap:conclusiones_trabajo_futuros`. Ideas 1, 2, 4 y 5 del **addendum 2** de
+  `.claude-notes/06_conclusiones.md`. Es donde van las valoraciones que el cap. 6 deja fuera.
+- ⚠️ **Registro OBJETIVO en el análisis de resultados** (exigido por el usuario, 2026-09-11):
+  describir **qué se mide y cómo se obtiene**, no lo que se espera ver; nada de dar por supuesto
+  que «queremos que gane Dec-MCTS»; las explicaciones mecanísticas se marcan como
+  **interpretación**. Las valoraciones y la defensa de la hipótesis van **solo en el cap. 7**.
+  Aplica al cap. 6 y ya está aplicado en `analisis/evaluacion_final.ipynb`.
 - **Sin ablaciones en la memoria** (decisión del usuario, 2026-08-21): los hiperparámetros se
   presentan como fijados empíricamente durante el desarrollo.
 - Redacción en **LaTeX y español**, registro académico formal y riguroso, reutilizando los

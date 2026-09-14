@@ -48,7 +48,15 @@ python3 scripts/analyze_probe.py analisis/probe.csv
 ## Estructura de `evaluacion_final.ipynb`
 
 **Unidad de análisis: el escenario** (media de sus 3 réplicas). Comparaciones **pareadas por
-escenario** y error estándar calculado **entre escenarios**.
+escenario** y error estándar calculado **entre escenarios**. El cuaderno está redactado en
+**registro descriptivo**: los apartados enuncian qué se mide y cómo se obtiene, las explicaciones
+mecanísticas van marcadas como *interpretación* y las valoraciones quedan para el capítulo 7.
+
+**Convenio de color, constante en todas las figuras**: `Random` gris · `Greedy` morado ·
+`CBAA` verde · **`CBBA` rojo** · **`Dec-MCTS` azul**. En las figuras de diferencias, rojo = Δ<0
+(ventaja de CBBA) y azul = Δ>0 (ventaja de Dec-MCTS). Los cortes que **no** son un solver
+—régimen, tamaño de equipo, términos de la descomposición— usan negro, naranja o una rampa de
+grises, para no confundirse con esa codificación.
 
 | Parte | Secciones | Figuras |
 |---|---|---|

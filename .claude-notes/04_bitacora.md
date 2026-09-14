@@ -4,6 +4,54 @@ Entrada más reciente arriba. Formato: fecha · objetivo · qué se hizo · qué
 
 ---
 
+## 2026-09-14 — Sesión 10: redacción del capítulo 6 (Experimentación y pruebas)
+
+**Petición del usuario**: escribir `memoria/sections/06_experimentación_pruebas.tex` con **la misma
+estructura del cuaderno** (conjunto · por bloque · adicional), enfocado en las evaluaciones y su
+comentario; **no incluir todas las figuras del cuaderno**, saber distinguir lo esencial para que no
+quede excesivamente largo; tomar los capítulos anteriores como referencia de estilo, notación y
+extensión; y **abrir el capítulo con la sección que él dejó comentada al final del cap. 5**.
+
+**Qué se hizo**
+- Capítulo 6 completo: **~4 400 palabras, 7 tablas y 4 figuras**, en registro objetivo (la norma
+  fijada en la sesión 9). Estructura: introducción con la recapitulación del catálogo ·
+  §6.1 protocolo experimental · §6.2 resultados agregados · §6.3 los cinco bloques ·
+  §6.4 magnitudes secundarias · §6.5 síntesis.
+- **§6.1 resuelve por fin D-10**: el protocolo experimental (unidad de análisis, pareado, EE entre
+  escenarios, justificación de la Δ dec−cbba, ejecutor idempotente, 6 procesos en paralelo, 35 min,
+  `computing_time` no comparable en absoluto, irreproducibilidad por `std::random_device`) no
+  estaba en ninguna parte de la memoria y ahora está aquí.
+- **Figuras seleccionadas (4 de las 14)**, copiadas a
+  `memoria/figures/06_experimentación_pruebas/`: `panorama.pdf` (p1_panorama),
+  `diferencia_pareada.pdf` (p1_agregado), `escalado_equipo.pdf` (p2_A_escalado) e
+  `intento_exito.pdf` (p3_mecanismo). El resto del material va en tablas.
+- **7 tablas**: niveles por régimen y bloque · Δ por régimen y por bloque **con la columna de
+  sensibilidad** (leave-one-block-out) · ventanas · rejilla robots × carga · coaliciones ·
+  gradiente de incertidumbre × tamaño de equipo · magnitudes secundarias.
+- ⚠️ **Corrección de notación en el cuaderno**: la memoria usa **$n$ = nº de robots** y $m$ = nº de
+  tareas; el cuaderno usaba $R$. Se renombró en los rótulos de figura (`p2_A` panel c, `p2_C`
+  eje x, `p3_coste` panel b) y en el markdown, y se regeneraron las 14 figuras.
+- No se tocó `\multirow` (no está en el preámbulo de `TFE.tex`) ni ningún capítulo anterior.
+  Verificado: entornos balanceados, columnas de cada `tabular` correctas y **todas las
+  `\ref`/`\eqref` externas resuelven** (`sec:algoritmos`, `tab:materiales`, `tab:decmcts-hiper`,
+  `tab:regimenes`, `eq:alcanzable`, `eq:recompensa`, `subsec:casos-bloqueB`, …).
+  ⚠️ El capítulo 7 se etiqueta `cap:conclusiones_trabajo_futuros`, no `cap:conclusiones`.
+
+**Pendiente de decisión del usuario**
+1. **Borrar el bloque comentado al final del cap. 5** (`% \section{Recapitulación}`): su contenido
+   está ya en la introducción del cap. 6, incluida la ecuación `eq:ejecuciones`. Si se descomenta
+   habría **etiqueta duplicada**. No se ha tocado porque el usuario prohibió modificar capítulos
+   anteriores sin permiso.
+2. **Extensión**: 4 393 palabras frente a las 3 024 del cap. 4 y las 2 520 del cap. 5. Se ofreció
+   recortar más (candidatos: la síntesis y el párrafo de dominancia de §6.2.2).
+3. **Rótulos de las figuras**: las cuatro llevan título propio además del pie de figura. Se ofreció
+   regenerar versiones sin `suptitle` para la memoria si prefiere que el pie haga todo el trabajo.
+
+**Qué queda**: capítulo 7 (conclusiones y trabajo futuro) con las ideas 1, 2, 4 y 5 de
+`06_conclusiones.md`; capítulo 1; y la limpieza del repositorio (D-17, renombrado de escenarios).
+
+---
+
 ## 2026-09-11 — Sesión 9: notebook de evaluación rehecho sobre el catálogo v3
 
 **Petición del usuario**: rehacer `analisis/evaluacion_final.ipynb`, desactualizado (catálogo v1
@@ -78,8 +126,41 @@ están **equilibrados entre bloques** (162 escenarios cada uno, 36 por bloque sa
 18), pero `lev` y `fue` **solo existen en el bloque E** (18 cada uno). Por eso toda figura con eje
 de cuatro regímenes se restringe al bloque E, y el panorama global se lee en det/est.
 
+**🔴 Revisión del usuario, mismo día — REGISTRO OBJETIVO**. El usuario señaló que el borrador
+daba por supuesto en todo momento que «queremos que gane Dec-MCTS», y que eso puede sugerir que
+las métricas y las gráficas se eligieron para favorecerlo, **cosa que es falsa**. Pidió:
+(a) reescribir **todas las celdas markdown, títulos de figura y leyendas** en registro objetivo y
+formal, describiendo **cómo se obtiene** cada gráfica y no qué se espera ver, y dejar los
+comentarios y los deseos personales para el capítulo de conclusiones; (b) fijar **un color por
+solver** constante en todo el cuaderno, con **CBBA rojo y Dec-MCTS azul**.
+
+Qué se cambió (el código de cálculo y la geometría de las figuras **no** se tocaron):
+- **Registro**: portada reescrita como evaluación comparativa de cinco políticas, con un apartado
+  **«Criterios de comparación»** que fija de antemano métrica, unidad de análisis, pareado, error
+  estándar, **por qué se detalla precisamente la pareja Dec-MCTS / CBBA** (son las dos de mayor
+  media y la única ordenación no resuelta) y el convenio de color. Los títulos de figura pasan de
+  enunciar conclusiones («El mejor terreno de Dec-MCTS es…») a describir contenido («Bloque B:
+  recompensa media y diferencia pareada según la forma de la ventana»). Las lecturas se titulan
+  **«Resultados»** y las explicaciones mecanísticas se marcan explícitamente como
+  ***interpretación (hipótesis, no contrastada en este cuaderno)***. La síntesis final pasa a
+  «Resumen de resultados» + «Condiciones que deben acompañar a la presentación».
+- **Color por solver**: Random gris · Greedy morado · CBAA verde · **CBBA rojo (`#e34948`)** ·
+  **Dec-MCTS azul (`#2a78d6`)**. Encaja con la escala divergente que ya se usaba para las Δ
+  (rojo = Δ<0 = ventaja de CBBA, azul = Δ>0 = ventaja de Dec-MCTS), y así se declara.
+- **Colores auxiliares**, para que ningún corte que no sea un solver reutilice sus colores:
+  régimen → negro / naranja (`C_REG`); tamaño de equipo → rampa de grises (`C_TAM`); términos de
+  la descomposición intento/éxito → negro / naranja. La **matriz de dominancia** pasa de la escala
+  divergente a una **secuencial de grises** (`SEQ`), porque cuenta victorias, no diferencias.
+- Añadida una tabla que define las columnas (`Δ`, `EE`, `t`, `n`, `G/E/P`, `máx.`) usadas en todo
+  el cuaderno; la columna «mejor» se renombra a «máx.» (solver con la media más alta).
+- `analisis/README.md` recoge el convenio de color y el registro.
+80 celdas, 0 errores, las mismas 14 figuras regeneradas.
+
 **Qué queda**: escribir el capítulo 6 (ver «PARA LA PRÓXIMA SESIÓN», sigue vigente salvo el punto
-1, ya hecho). Las figuras del cuaderno son material directo para él.
+1, ya hecho). Las figuras del cuaderno son material directo para él. El usuario anticipa que
+pedirá **retoques pequeños de presentación en las gráficas** más adelante.
+📌 **Al redactar el cap. 6, mantener este mismo registro**: describir lo medido, no lo esperado.
+Las valoraciones y la defensa de la hipótesis van en el cap. 7.
 
 ---
 

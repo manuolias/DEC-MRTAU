@@ -1,6 +1,326 @@
 \chapter{Experimentación y pruebas}\label{cap:experimentacion_pruebas}
 
-Utilizando los casos de estudio y los materiales y metodos, diseña
-experimentos o pruebas para probar tu desarrollo y/o demostrar tu 
-hipotesis. Enfoque científico si la temática lo permite. Analisis de métricas, rendimiento, comparativas, obtención de gráficos y tablas. 
-Comentar resultados particulares de los experimentos.
+El catálogo descrito en el capítulo anterior reúne \textbf{360 escenarios} que suman $10\,896$ tareas y $12\,264$ plazas de trabajador, con equipos de $2$ a $10$ robots y escenarios de entre $6$ y $80$ tareas. Todos ellos comparten la misma geometría en racimos, la misma cinemática, la misma restricción de batería y el mismo horizonte, y se reparten en cinco bloques de igual tamaño que aíslan, respectivamente, el tamaño del equipo, la forma de la ventana de ejecución, la carga por robot, el tamaño de las coaliciones y el grado de incertidumbre.
+
+Cada escenario se resuelve con los \textbf{cinco algoritmos} presentados en la Sección~\ref{sec:algoritmos} y, dado que tanto el entorno como los propios algoritmos son estocásticos, cada combinación de escenario y algoritmo se repite en \textbf{tres réplicas} independientes cuyo resultado se promedia. El número de réplicas es moderado a propósito: al disponer de varias instancias distintas por celda del diseño, la variabilidad dominante es la que existe \emph{entre instancias} y no la que existe entre réplicas de una misma instancia, de modo que el esfuerzo de cómputo rinde más repartido en escenarios distintos que en repeticiones del mismo. La evaluación completa asciende por tanto a
+\begin{equation} \label{eq:ejecuciones}
+    360 \;\text{escenarios} \;\times\; 5 \;\text{algoritmos} \;\times\; 3 \;\text{réplicas} \;=\; 5\,400 \;\text{ejecuciones},
+\end{equation}
+cada una de las cuales produce un registro completo de su traza de eventos (Sección~\ref{subsec:mat-logger}).
+
+Este capítulo analiza sus resultados con un doble objetivo: \textbf{cuantificar el rendimiento relativo} de los cinco algoritmos y \textbf{caracterizar las condiciones bajo las cuales ese rendimiento cambia}. Se presentan todos los cortes que el diseño del catálogo define, con independencia de a qué algoritmo favorezcan, y los criterios de comparación se fijan de antemano en la Sección~\ref{sec:exp-protocolo} para aplicarse sin excepción. La Sección~\ref{sec:exp-agregado} examina el catálogo como un único conjunto; la Sección~\ref{sec:exp-bloques} lo desglosa en sus cinco bloques, donde reside el grueso del análisis; y la Sección~\ref{sec:exp-otras} estudia magnitudes distintas de la métrica objetivo. La interpretación de todo ello se aborda en el Capítulo~\ref{cap:conclusiones_trabajo_futuros}.
+
+% ===========================================================================
+\section{Protocolo experimental y criterios de análisis} \label{sec:exp-protocolo}
+% ===========================================================================
+
+\paragraph{Unidad de análisis.} La unidad es el \textbf{escenario}, entendido como la media de sus tres réplicas, de modo que cada escenario aporta una única observación a cada estadístico. La métrica objetivo es la definida en la Sección~\ref{sec:mat-recompensa}: la \textbf{fracción de tareas completadas}, correspondiente a la Ecuación~\eqref{eq:recompensa} con $k_1=1$.
+
+\paragraph{Comparaciones pareadas.} Todas las comparaciones entre algoritmos se realizan \textbf{escenario a escenario}, restando sus recompensas sobre el mismo problema antes de promediar, y el \textbf{error estándar se calcula entre escenarios}. El motivo es que la variabilidad dominante del catálogo no procede de los algoritmos sino de los propios escenarios: la desviación típica de la recompensa entre escenarios se sitúa entre $0{,}10$ y $0{,}15$, un orden de magnitud por encima de las diferencias que se pretenden medir. Al parear, esa variabilidad se cancela; calcular el error sobre las réplicas de una misma instancia mediría en cambio la repetibilidad de una ejecución y sobrestimaría la precisión.
+
+\paragraph{La diferencia de referencia.} Buena parte del capítulo detalla la diferencia pareada
+\begin{equation} \label{eq:delta}
+    \Delta_e \;=\; r_e^{\mathrm{Dec\text{-}MCTS}} \;-\; r_e^{\mathrm{CBBA}},
+\end{equation}
+donde $r_e^{\,\cdot}$ es la recompensa media del algoritmo en el escenario $e$. Se privilegia esta pareja porque son los dos algoritmos de mayor recompensa media y el único par cuya ordenación no resuelve el ranking global; las restantes parejas se cubren con la matriz de dominancia, que no privilegia a ninguno. Junto a la media de $\Delta$ se reportan su error estándar, el estadístico $t=\Delta/\mathrm{EE}$ y el \textbf{recuento de escenarios} con diferencia positiva, nula y negativa, notado $G/E/P$. Esta última cifra es necesaria porque una media pequeña puede proceder tanto de un efecto homogéneo y débil como de dos poblaciones de signo opuesto que se compensan.
+
+\paragraph{Ejecución y reproducibilidad.} Las $5\,400$ ejecuciones se lanzaron repartidas en seis procesos independientes sobre el equipo de la Tabla~\ref{tab:materiales}, con un tiempo total aproximado de $35$ minutos. El ejecutor es \textbf{idempotente}: comprueba qué registros están completos y solo ejecuta los que faltan, de modo que una tanda interrumpida puede reanudarse. Esta paralelización obliga a una advertencia: los tiempos de cómputo de la Sección~\ref{sec:exp-otras} incorporan la contención entre procesos y \textbf{son comparables entre algoritmos, pero no representan el coste de una ejecución aislada}; el número de iteraciones por ronda es fijo (Tabla~\ref{tab:decmcts-hiper}), así que ese tiempo no influye en la calidad de las soluciones. Por último, el simulador no admite semilla configurable, de manera que una tanda \textbf{no es reproducible ejecución a ejecución} ---lo que justifica el promediado sobre réplicas---, si bien el catálogo sí se genera de forma determinista a partir de su especificación y todo el análisis parte de los registros producidos por el simulador.
+
+% ===========================================================================
+\section{Resultados sobre el conjunto del catálogo} \label{sec:exp-agregado}
+% ===========================================================================
+
+\subsection{Recompensa media} \label{subsec:exp-niveles}
+
+La Tabla~\ref{tab:res-niveles} recoge la recompensa media de los cinco algoritmos sobre el conjunto del catálogo, separando los dos regímenes de referencia y los cinco bloques; la Figura~\ref{fig:res-panorama} la representa gráficamente.
+
+\begin{table}[t]
+\centering
+\caption{Recompensa media (fracción de tareas completadas) por algoritmo. Las columnas \emph{det} y \emph{est} recogen los $162$ escenarios de cada régimen de referencia; las cinco últimas, los $72$ escenarios de cada bloque. Los regímenes \emph{lev} y \emph{fue} solo existen en el bloque~E y se analizan en la Sección~\ref{subsec:exp-bloqueE}.}
+\label{tab:res-niveles}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lccc ccccc}
+\hline
+ & \textbf{Catálogo} & \textbf{det} & \textbf{est} & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} \\
+\hline
+Random    & $0{,}271$ & $0{,}308$ & $0{,}247$ & $0{,}269$ & $0{,}317$ & $0{,}359$ & $0{,}169$ & $0{,}241$ \\
+Greedy    & $0{,}354$ & $0{,}403$ & $0{,}324$ & $0{,}327$ & $0{,}452$ & $0{,}404$ & $0{,}287$ & $0{,}302$ \\
+CBAA      & $0{,}437$ & $0{,}512$ & $0{,}377$ & $0{,}406$ & $0{,}480$ & $0{,}460$ & $\mathbf{0{,}431}$ & $0{,}407$ \\
+CBBA      & $0{,}494$ & $0{,}565$ & $0{,}438$ & $\mathbf{0{,}511}$ & $0{,}525$ & $0{,}560$ & $0{,}407$ & $\mathbf{0{,}466}$ \\
+Dec-MCTS  & $\mathbf{0{,}502}$ & $\mathbf{0{,}585}$ & $\mathbf{0{,}444}$ & $0{,}497$ & $\mathbf{0{,}546}$ & $\mathbf{0{,}621}$ & $0{,}401$ & $0{,}446$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/06_experimentación_pruebas/panorama.pdf}
+    \caption{Recompensa media por algoritmo. En (a), el agregado de los $360$ escenarios con su error estándar entre escenarios. En (b), la misma magnitud calculada dentro de cada bloque; la estrella señala el algoritmo con la media más alta del bloque. El color de cada algoritmo se mantiene constante en todas las figuras del capítulo.}
+    \label{fig:res-panorama}
+\end{figure}
+
+La ordenación sobre el agregado es Random $0{,}271 <$ Greedy $0{,}354 <$ CBAA $0{,}437 <$ CBBA $0{,}494 <$ Dec-MCTS $0{,}502$. Sus tres primeras separaciones son amplias y, sobre todo, \textbf{estables}: ninguna cambia de signo en ninguno de los cinco bloques ni en ningún corte por régimen del resto del capítulo. Su lectura es directa en términos de la escala de coordinación de la Sección~\ref{sec:algoritmos}: añadir una heurística mínima de eficiencia a la elección aleatoria (Random $\to$ Greedy) aporta $0{,}083$; introducir comunicación y resolución de conflictos mediante pujas (Greedy $\to$ CBAA) aporta otros $0{,}083$; y pujar por \emph{paquetes} en lugar de por tareas sueltas (CBAA $\to$ CBBA) aporta $0{,}057$. Cada escalón de coordinación se traduce en rendimiento medible.
+
+La cuarta separación es de otra naturaleza. Los $0{,}009$ que separan a CBBA de Dec-MCTS deben compararse con la desviación típica entre escenarios, de $0{,}13$ a $0{,}15$, y el panel (b) muestra que el algoritmo de media máxima \textbf{cambia de bloque en bloque}: CBBA en A y E, Dec-MCTS en B y C, y CBAA ---tercero en el agregado--- en D. Los apartados siguientes cuantifican esa indeterminación.
+
+\subsection{La diferencia entre los dos algoritmos de cabeza} \label{subsec:exp-delta}
+
+La Figura~\ref{fig:res-delta} representa la distribución de la diferencia pareada~\eqref{eq:delta} y su desglose por régimen, cuyos valores recoge la primera mitad de la Tabla~\ref{tab:res-delta}.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/06_experimentación_pruebas/diferencia_pareada.pdf}
+    \caption{Diferencia pareada $\Delta$ entre Dec-MCTS y CBBA. En (a), su distribución sobre los $360$ escenarios: cada escenario aporta una observación, coloreada según el signo de la diferencia; la línea discontinua marca la media. En (b), la media por régimen de incertidumbre con su error estándar entre escenarios; los regímenes \emph{lev} y \emph{fue} proceden únicamente del bloque~E, de ahí su menor número de escenarios y su mayor error.}
+    \label{fig:res-delta}
+\end{figure}
+
+La media sobre el catálogo completo es $\Delta = +0{,}0086 \pm 0{,}0040$, con $t=2{,}1$. Los descriptores restantes sitúan esa cifra en su contexto: el recuento es de \textbf{158 escenarios positivos, 42 nulos y 160 negativos}, la mediana de $\Delta$ es exactamente $0{,}000$, el rango intercuartílico es $[-0{,}040,\,+0{,}044]$ y en $108$ de los $360$ escenarios la diferencia es inferior a $0{,}02$, esto es, menos de una tarea de cada cincuenta. La media difiere de cero, pero la distribución subyacente está centrada en cero y es aproximadamente simétrica, con colas de $\pm0{,}1$ en ambos sentidos: \textbf{el signo de la media no permite anticipar cuál de los dos algoritmos rendirá más en un escenario arbitrario}.
+
+El desglose por régimen sí distingue situaciones. La diferencia es positiva y separable de cero en régimen determinista ($+0{,}0201 \pm 0{,}0055$), negativa y separable de cero bajo incertidumbre fuerte ($-0{,}0497 \pm 0{,}0167$) e indistinguible de cero en los dos regímenes intermedios. La dependencia del régimen resulta, por tanto, más informativa que el agregado, y así será en todo el capítulo.
+
+Complementariamente, el recuento de victorias entre todas las parejas confirma el carácter de cada escalón: Dec-MCTS supera a Random en $358$ de $360$ escenarios y a Greedy en $333$, y CBBA supera a CBAA en $209$ frente a $103$. Dos estadísticos adicionales matizan el agregado. El primero es el número de escenarios en que cada algoritmo obtiene la \textbf{máxima} recompensa de los cinco: CBBA en $131$, Dec-MCTS en $108$, CBAA en $107$, Greedy en $14$ y Random en ninguno; CBAA, tercero en la media global, alcanza el máximo casi tantas veces como Dec-MCTS, lo que indica que su rendimiento no está uniformemente por debajo sino concentrado en un subconjunto del catálogo (Sección~\ref{subsec:exp-bloqueD}). El segundo es el \textbf{arrepentimiento medio}, distancia media de cada algoritmo al mejor de los cinco \emph{en cada escenario}, que cuantifica el coste de fijar un único algoritmo sin conocer de antemano el problema: Dec-MCTS $0{,}034$, CBBA $0{,}043$, CBAA $0{,}100$, Greedy $0{,}182$ y Random $0{,}265$. Que Dec-MCTS obtenga el máximo en menos escenarios que CBBA y acumule a la vez menos pérdida respecto de ese máximo indica una distribución de diferencias más concentrada.
+
+\subsection{Sensibilidad del agregado a la composición del catálogo} \label{subsec:exp-composicion}
+
+El agregado es una media sobre cinco bloques que miden factores distintos, y sus diferencias no apuntan en el mismo sentido. La segunda mitad de la Tabla~\ref{tab:res-delta} recoge $\Delta$ dentro de cada bloque y, en su última columna, el valor que tomaría la diferencia global si se excluyera ese bloque del conjunto.
+
+\begin{table}[t]
+\centering
+\caption{Diferencia pareada $\Delta$ entre Dec-MCTS y CBBA, por régimen de incertidumbre y por bloque. $G/E/P$ es el número de escenarios con diferencia positiva, nula y negativa. La última columna indica el valor que tomaría la diferencia sobre el catálogo completo ($+0{,}0086$) si se excluyera ese bloque.}
+\label{tab:res-delta}
+\small
+\begin{tabular}{lcccccl}
+\hline
+\textbf{Corte} & \textbf{\#esc.} & $\boldsymbol{\Delta}$ & \textbf{EE} & $\boldsymbol{t}$ & $\boldsymbol{G/E/P}$ & \textbf{Sin ese bloque} \\
+\hline
+Catálogo completo & $360$ & $+0{,}0086$ & $0{,}0040$ & $2{,}1$ & $158/42/160$ & --- \\
+\hline
+\multicolumn{7}{l}{\emph{Por régimen de incertidumbre}} \\
+\quad det ($\rho_j=1{,}00$)  & $162$ & $+0{,}0201$ & $0{,}0055$ & $3{,}6$  & $76/30/56$ & --- \\
+\quad lev ($\rho_j=0{,}90$)  & $18$  & $-0{,}0099$ & $0{,}0153$ & $-0{,}6$ & $4/3/11$   & --- \\
+\quad est ($\rho_j=0{,}75$)  & $162$ & $+0{,}0057$ & $0{,}0064$ & $0{,}9$  & $74/9/79$  & --- \\
+\quad fue ($\rho_j=0{,}50$)  & $18$  & $-0{,}0497$ & $0{,}0167$ & $-3{,}0$ & $4/0/14$   & --- \\
+\hline
+\multicolumn{7}{l}{\emph{Por bloque}} \\
+\quad A · tamaño del equipo  & $72$ & $-0{,}0132$ & $0{,}0063$ & $-2{,}1$ & $21/12/39$ & $+0{,}0141$ \\
+\quad B · ventana            & $72$ & $+0{,}0211$ & $0{,}0068$ & $3{,}1$  & $42/9/21$  & $+0{,}0055$ \\
+\quad C · carga por robot    & $72$ & $+0{,}0605$ & $0{,}0126$ & $4{,}8$  & $47/2/23$  & $\mathbf{-0{,}0043}$ \\
+\quad D · coaliciones        & $72$ & $-0{,}0060$ & $0{,}0074$ & $-0{,}8$ & $27/11/34$ & $+0{,}0123$ \\
+\quad E · incertidumbre      & $72$ & $-0{,}0192$ & $0{,}0071$ & $-2{,}7$ & $21/8/43$  & $+0{,}0156$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Excluir el bloque~C invierte el signo del agregado} ($+0{,}0086 \to -0{,}0043$) y, con él, el orden de los dos primeros algoritmos; excluir A o E lo multiplica por algo menos de dos. La inversión no procede de un desequilibrio en el número de escenarios ---los cinco bloques aportan $72$--- sino de \emph{qué} factores se decidió barrer y con qué niveles.
+
+Ello obliga a una declaración que acompaña a todos los resultados de este capítulo: \textbf{el signo del agregado no es una propiedad invariante de los algoritmos, sino del conjunto de prueba}. Una auditoría posterior de la composición lo confirma: dos de los tres niveles del bloque~B (ventanas de solo plazo y escalonada) y dos de los tres del bloque~C (cargas $L=3$ y $L=4$) caen en la región donde $\Delta$ es positiva, mientras que A, D y E caen mayoritariamente en la región donde es negativa. Los niveles se fijaron antes de medir y por razones ajenas a este resultado, pero el agregado depende de ellos. En consecuencia, \textbf{ninguna conclusión de este trabajo se apoya en la cifra global}: el análisis relevante es el que sigue.
+
+% ===========================================================================
+\section{Resultados por bloque} \label{sec:exp-bloques}
+% ===========================================================================
+
+Cada bloque aísla un único factor sobre la configuración de referencia y, salvo el bloque~C, se compara contra las celdas del bloque de control generadas con la misma semilla (Sección~\ref{sec:casos-bloques}). El pareado es por tanto exacto tarea a tarea, y la diferencia observada solo puede atribuirse al factor variado.
+
+\subsection{Bloque A: el tamaño del equipo} \label{subsec:exp-bloqueA}
+
+El bloque de control mantiene la carga por robot constante mientras el equipo crece de $2$ a $10$ robots, de modo que el estadístico natural es la \textbf{pendiente de la recompensa frente al tamaño del equipo}, estimada por mínimos cuadrados sobre los $36$ escenarios de cada régimen (Figura~\ref{fig:res-escalado}).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/06_experimentación_pruebas/escalado_equipo.pdf}
+    \caption{Bloque~A. Recompensa media frente al tamaño del equipo con carga por robot constante $L=6$, en régimen determinista (a) y con incertidumbre media (b); en cada panel se indica la pendiente por robot adicional de los dos algoritmos de cabeza. El panel (c) representa la diferencia pareada $\Delta$ en ambos regímenes, junto con su recta de mínimos cuadrados.}
+    \label{fig:res-escalado}
+\end{figure}
+
+En régimen \textbf{determinista}, solo dos algoritmos convierten robots adicionales en recompensa: CBBA, con $+0{,}0164$ por robot ($t=6{,}6$), y Dec-MCTS, con $+0{,}0121$ ($t=7{,}7$). Los otros tres son planos ---Random $-0{,}0011$ ($t=-0{,}5$), Greedy $+0{,}0034$ ($t=1{,}0$) y CBAA $-0{,}0020$ ($t=-0{,}4$)---, lo que es coherente con su naturaleza: los \textit{baselines} no comunican, y CBAA, que puja por una tarea cada vez, carece de mecanismo para repartir trabajo \emph{futuro} entre más agentes.
+
+Bajo \textbf{incertidumbre media} ambas pendientes positivas se separan. La de CBBA se mantiene, e incluso crece, hasta $+0{,}0195$ por robot ($t=6{,}6$); la de Dec-MCTS cae hasta $+0{,}0040$ con $t=1{,}5$, es decir, deja de distinguirse de cero. La formulación más precisa del resultado es la pendiente de la propia diferencia, en el panel (c): \textbf{$\Delta$ decrece $-0{,}0155$ por robot adicional} ($t=-4{,}7$), pasando de $+0{,}069$ con dos robots a $-0{,}071$ con diez. En determinista esa pendiente es $-0{,}0043$ ($t=-2{,}0$), tres veces menor. La desventaja de Dec-MCTS bajo incertidumbre no es, por tanto, un nivel constante, sino una cantidad que \textbf{crece de forma aproximadamente lineal con el tamaño del equipo}.
+
+Una explicación compatible con esta observación, que el capítulo no contrasta, es un exceso de deconflicción: Dec-MCTS descuenta las tareas que estima cubiertas por sus vecinos a partir de las distribuciones sobre planes que estos publican (Sección~\ref{subsec:dec-mcts}); si la incertidumbre invalida esos planes la estimación falla, y el número de vecinos sobre los que se condiciona crece con el equipo. El mecanismo predice a la vez el signo del efecto, su dependencia del régimen y su crecimiento con $n$.
+
+\subsection{Bloque B: la forma de la ventana de ejecución} \label{subsec:exp-bloqueB}
+
+Este bloque produce el contraste más nítido del catálogo, porque las tres ventanas alternativas modifican \emph{qué} tiene de difícil el problema sin alterar su tamaño. La Tabla~\ref{tab:res-ventana} recoge la diferencia pareada en cada una y el efecto de sustituir la ventana de referencia por cada alternativa, medido contra el escenario de control con idénticos sorteos.
+
+\begin{table}[t]
+\centering
+\caption{Bloque~B. Diferencia pareada $\Delta$ por forma de ventana, en los dos regímenes, y efecto de sustituir la ventana estrecha de referencia por cada alternativa (diferencia de $\Delta$ respecto del escenario de control). Cada celda resume $12$ escenarios.}
+\label{tab:res-ventana}
+\small
+\begin{tabular}{lccccc}
+\hline
+& \multicolumn{2}{c}{\textbf{Determinista}} & \multicolumn{2}{c}{\textbf{Incertidumbre media}} & \textbf{Efecto vs.} \\
+\textbf{Ventana} & $\Delta \pm \mathrm{EE}$ & $G/E/P$ & $\Delta \pm \mathrm{EE}$ & $G/E/P$ & \textbf{control (det)} \\
+\hline
+Estrecha (control) & $+0{,}007 \pm 0{,}010$ & $5/4/3$   & $-0{,}008 \pm 0{,}024$ & $4/2/6$ & --- \\
+Solo plazo         & $+0{,}038 \pm 0{,}014$ & $8/3/1$   & $+0{,}021 \pm 0{,}012$ & $8/0/4$ & $+0{,}031 \pm 0{,}011$ \\
+Escalonada         & $\mathbf{+0{,}078 \pm 0{,}010}$ & $\mathbf{12/0/0}$ & $+0{,}030 \pm 0{,}017$ & $8/0/4$ & $+0{,}071 \pm 0{,}013$ \\
+Ancha              & $\mathbf{-0{,}034 \pm 0{,}011}$ & $\mathbf{0/6/6}$  & $-0{,}007 \pm 0{,}016$ & $6/0/6$ & $-0{,}041 \pm 0{,}011$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Los extremos son la ventana escalonada y la ancha. Con \textbf{plazo escalonado}, $\Delta$ es positiva en los doce escenarios deterministas y Dec-MCTS obtiene la media más alta de los cinco algoritmos ($0{,}533$ frente a $0{,}455$ de CBBA); con ventana \textbf{ancha} ocurre lo contrario: $\Delta$ no es positiva en ninguno de los doce y CBBA obtiene la media más alta ($0{,}703$ frente a $0{,}669$). Eliminar únicamente la \emph{espera} manteniendo los plazos (ventana de solo plazo) desplaza $\Delta$ en $+0{,}031 \pm 0{,}011$, lo que aísla ese factor: parte de la desventaja de Dec-MCTS en la configuración de referencia procede de la espera obligatoria y no de los plazos.
+
+Los tres resultados se ordenan según la cantidad de estructura temporal que conserva el problema: cuando los plazos son heterogéneos y el orden de ejecución condiciona el resultado, un método que simula secuencias completas dispone de información que una puja no utiliza; cuando la ventana deja de ser una restricción efectiva, el problema se aproxima a uno de recorrido y esa ventaja desaparece. Conviene recordar una propiedad de diseño señalada en la Sección~\ref{subsec:casos-bloqueB}: el plazo medio de la ventana escalonada resulta unas cinco unidades más corto que el de la de solo plazo, porque el margen nominal que heredan las demás no se aplica a una ventana cuyo cierre no depende de $t_0$. La escalonada no es solo una forma distinta, sino también algo más exigente.
+
+\subsection{Bloque C: la carga por robot} \label{subsec:exp-bloqueC}
+
+La rejilla completa de tamaños de equipo y cargas por robot (Tabla~\ref{tab:res-carga}) produce el gradiente más regular del catálogo: la diferencia decrece \textbf{en los dos ejes a la vez} ---al aumentar la carga y al aumentar el número de robots--- con una única excepción entre las veinticuatro celdas. Los extremos son $+0{,}208$ (dos robots, $L=3$, determinista) y $-0{,}080$ (diez robots, $L=8$, incertidumbre media).
+
+\begin{table}[t]
+\centering
+\caption{Bloque~C. Diferencia pareada $\Delta$ en la rejilla de tamaño de equipo $\times$ carga por robot. La columna $L=6$ corresponde al control del bloque~A restringido a los mismos tamaños de equipo. A diferencia de los demás bloques, el pareado no es exacto: variar $L$ cambia el número de tareas del escenario.}
+\label{tab:res-carga}
+\small
+\begin{tabular}{lcccc cccc}
+\hline
+& \multicolumn{4}{c}{\textbf{Determinista}} & \multicolumn{4}{c}{\textbf{Incertidumbre media}} \\
+\textbf{Robots} & $L=3$ & $L=4$ & $L=6$ & $L=8$ & $L=3$ & $L=4$ & $L=6$ & $L=8$ \\
+\hline
+$n=2$  & $+0{,}208$ & $+0{,}167$ & $+0{,}021$ & $+0{,}078$ & $+0{,}167$ & $+0{,}135$ & $+0{,}069$ & $-0{,}021$ \\
+$n=5$  & $+0{,}100$ & $+0{,}067$ & $+0{,}011$ & $-0{,}006$ & $+0{,}156$ & $+0{,}104$ & $-0{,}022$ & $-0{,}056$ \\
+$n=10$ & $+0{,}081$ & $+0{,}006$ & $-0{,}010$ & $-0{,}036$ & $+0{,}042$ & $-0{,}021$ & $-0{,}071$ & $-0{,}080$ \\
+\hline
+\end{tabular}
+\end{table}
+
+En niveles absolutos, con $L=3$ y régimen determinista Dec-MCTS alcanza $0{,}930$ frente a $0{,}800$ de CBBA; con $L=8$ ambas medias se aproximan ($0{,}451$ y $0{,}440$) y bajo incertidumbre se invierten ($0{,}324$ frente a $0{,}376$). La explicación más plausible es que la saturación reduce el margen en que cualquier política puede diferenciarse: cuando la carga supera lo que el horizonte permite completar, una fracción creciente de la recompensa se pierde con independencia de la asignación, mientras que con holgura el problema se reduce a decidir el orden de ejecución. Este es, además, el bloque que determina el signo del agregado (Sección~\ref{subsec:exp-composicion}).
+
+\subsection{Bloque D: las coaliciones} \label{subsec:exp-bloqueD}
+
+El bloque de coaliciones produce los dos resultados menos previsibles del catálogo, recogidos en la Tabla~\ref{tab:res-coaliciones}.
+
+\begin{table}[t]
+\centering
+\caption{Bloque~D. Recompensa media de los tres algoritmos coordinados y diferencia pareada $\Delta$ por tipo de coalición. La fila $q_j=1$ es el control del bloque~A restringido a los mismos tamaños de equipo. Las coaliciones de tamaño variable ($qm$) mantienen $\bar q=2$, idéntico al de la coalición uniforme.}
+\label{tab:res-coaliciones}
+\small
+\begin{tabular}{llccc c}
+\hline
+\textbf{Régimen} & \textbf{Coalición} & \textbf{CBAA} & \textbf{CBBA} & \textbf{Dec-MCTS} & $\boldsymbol{\Delta \pm \mathrm{EE}}$ \\
+\hline
+det & $q_j=1$ (control)     & $0{,}457$ & $\mathbf{0{,}575}$ & $0{,}574$ & $-0{,}002 \pm 0{,}010$ \\
+    & $q_j=2$ uniforme      & $\mathbf{0{,}472}$ & $0{,}441$ & $0{,}388$ & $\mathbf{-0{,}052 \pm 0{,}016}$ \\
+    & $q_j$ variable ($qm$) & $0{,}519$ & $0{,}503$ & $\mathbf{0{,}527}$ & $\mathbf{+0{,}023 \pm 0{,}011}$ \\
+\hline
+est & $q_j=1$ (control)     & $0{,}298$ & $\mathbf{0{,}434}$ & $0{,}411$ & $-0{,}024 \pm 0{,}018$ \\
+    & $q_j=2$ uniforme      & $\mathbf{0{,}347}$ & $0{,}306$ & $0{,}310$ & $+0{,}004 \pm 0{,}012$ \\
+    & $q_j$ variable ($qm$) & $\mathbf{0{,}384}$ & $0{,}379$ & $0{,}380$ & $+0{,}001 \pm 0{,}015$ \\
+\hline
+\end{tabular}
+\end{table}
+
+El primero es que \textbf{CBAA obtiene la media más alta del bloque} ($0{,}431$ frente a $0{,}407$ de CBBA y $0{,}401$ de Dec-MCTS), alcanzando el máximo en $45$ de sus $72$ escenarios. Es el único corte del catálogo en que la subasta de tarea única supera a la de paquete, invirtiendo un orden que se mantiene en todos los demás. Una explicación coherente con lo que el bloque introduce es que comprometerse con un paquete de tareas futuras reduce la disponibilidad del robot en el instante en que una coalición debe formarse: cuando una tarea exige $q_j$ robots \emph{simultáneamente}, la flexibilidad de decidir tarea a tarea vale más que la anticipación del paquete.
+
+El segundo es que \textbf{las dos variantes de coalición producen diferencias de signo opuesto} pese a compartir tamaño medio de coalición y carga por robot: la uniforme da $-0{,}052 \pm 0{,}016$ en régimen determinista y la variable $+0{,}023 \pm 0{,}011$. El efecto de la uniforme se acentúa con el equipo, desde $-0{,}006$ con tres robots hasta $-0{,}093$ con diez, mientras que bajo incertidumbre ambas diferencias son indistinguibles de cero. Merece señalarse que el efecto \textbf{aparece ya en régimen determinista}, donde los demás contrastes no muestran desventaja alguna para Dec-MCTS: no es atribuible a la incertidumbre. Una explicación plausible apunta al modelo de bloqueo de la Tabla~\ref{tab:decmcts-hiper}, que decide de forma \emph{binaria} si los vecinos cubren una tarea comprobando si al menos $q_j$ de ellos la incluyen en su plan; con requisitos homogéneos esa decisión se toma en idénticas condiciones para todas las tareas y sus errores se correlacionan, mientras que con requisitos heterogéneos no.
+
+\subsection{Bloque E: el nivel de incertidumbre} \label{subsec:exp-bloqueE}
+
+El último bloque recorre los cuatro regímenes de la Tabla~\ref{tab:regimenes} para tres tamaños de equipo, lo que permite observar la transición completa en lugar de dos extremos (Tabla~\ref{tab:res-incertidumbre}).
+
+\begin{table}[t]
+\centering
+\caption{Bloque~E. Recompensa media de los dos algoritmos de cabeza a lo largo del gradiente de incertidumbre, variación relativa respecto del régimen determinista y diferencia pareada $\Delta$ desglosada por tamaño de equipo. Cada nivel reúne $18$ escenarios.}
+\label{tab:res-incertidumbre}
+\small
+\begin{tabular}{lcccc ccc}
+\hline
+& \multicolumn{2}{c}{\textbf{CBBA}} & \multicolumn{2}{c}{\textbf{Dec-MCTS}} & \multicolumn{3}{c}{$\boldsymbol{\Delta}$ \textbf{por tamaño de equipo}} \\
+\textbf{Régimen} & media & var. & media & var. & $n=2$ & $n=5$ & $n=10$ \\
+\hline
+det ($\rho_j=1{,}00$)  & $0{,}563$ & ---            & $\mathbf{0{,}570}$ & ---            & $+0{,}028$ & $+0{,}006$ & $-0{,}013$ \\
+lev ($\rho_j=0{,}90$)  & $\mathbf{0{,}520}$ & $-7{,}7\,\%$   & $0{,}510$ & $-10{,}5\,\%$  & $+0{,}037$ & $-0{,}006$ & $-0{,}061$ \\
+est ($\rho_j=0{,}75$)  & $\mathbf{0{,}452}$ & $-19{,}7\,\%$  & $0{,}428$ & $-24{,}9\,\%$  & $-0{,}000$ & $+0{,}004$ & $-0{,}076$ \\
+fue ($\rho_j=0{,}50$)  & $\mathbf{0{,}328}$ & $-41{,}8\,\%$  & $0{,}278$ & $-51{,}2\,\%$  & $+0{,}005$ & $-0{,}052$ & $-0{,}102$ \\
+\hline
+\end{tabular}
+\end{table}
+
+Los cinco algoritmos decrecen de forma monótona a lo largo del gradiente, pero no al mismo ritmo. Entre $\rho_j=1$ y $\rho_j=0{,}5$, \textbf{CBBA pierde el $41{,}8\,\%$ de su recompensa, la menor caída de los cinco, y Dec-MCTS el $51{,}2\,\%$, la mayor}; CBAA pierde el $49{,}9\,\%$, Random el $46{,}4\,\%$ y Greedy el $43{,}3\,\%$. El resultado es un cruce: Dec-MCTS obtiene la media más alta en el extremo determinista y la segunda, a distancia, en el de incertidumbre fuerte. La robustez comparativa de CBBA admite una explicación estructural que conviene enunciar con precisión, porque es la contrapartida del resultado del bloque~B: \textbf{una puja compromete un precio, no una trayectoria}; cuando el plan de un vecino se desvía, la puja sigue siendo válida y se recalcula en la siguiente ronda de consenso, mientras que condicionar simulaciones sobre trayectorias muestreadas deja de serlo.
+
+El desglose por tamaño de equipo aporta el resultado más informativo del bloque: \textbf{la incertidumbre y el tamaño del equipo interactúan}. Con dos robots, $\Delta$ no es negativa en ninguno de los cuatro niveles de $\rho_j$; con diez, cae de $-0{,}013$ a $-0{,}102$ a lo largo del mismo gradiente. Ninguno de los dos factores por separado explica el patrón observado, lo que concuerda con la pendiente medida en el bloque~A.
+
+% ===========================================================================
+\section{Análisis de magnitudes secundarias} \label{sec:exp-otras}
+% ===========================================================================
+
+La métrica objetivo resume el resultado pero no describe cómo se alcanza. Esta sección examina cuatro magnitudes obtenidas de la traza de eventos (Sección~\ref{subsec:mat-logger}) que no intervienen en la recompensa y que, por tanto, caracterizan el comportamiento de cada algoritmo sin reordenar su rendimiento. Las tres últimas se recogen en la Tabla~\ref{tab:res-secundarias}.
+
+\subsection{Robots perdidos por agotamiento de batería} \label{subsec:exp-mortalidad}
+
+Un robot se pierde cuando agota la batería sin alcanzar una estación de recarga y queda excluido del escenario durante el resto del episodio. Es un \textbf{modo de fallo distinto de la mala asignación} y por eso se contabiliza por separado.
+
+Random pierde $1{,}98$ robots por escenario y registra bajas en el $85{,}3\,\%$ de los escenarios; Greedy, $1{,}44$ y el $66{,}9\,\%$. \textbf{CBAA, CBBA y Dec-MCTS no pierden un solo robot en las $5\,400$ ejecuciones}, en ninguno de los cuatro regímenes. La diferencia se corresponde con una condición de factibilidad que unos comprueban y otros no: los \textit{baselines} solo verifican disponer de batería para \emph{desplazarse} hasta la tarea, según la Ecuación~\eqref{eq:alcanzable}, mientras que los tres algoritmos coordinados comprueban además la energía necesaria para \emph{ejecutarla}. Si un robot arranca una tarea sin batería para terminarla, el simulador trunca la ejecución, la contabiliza como fracaso y le carga la demanda correspondiente, lo que puede dejarlo sin energía. Esta condición no requiere incertidumbre: se produce también con $\rho_j=1$, y de hecho las bajas en régimen determinista ($1{,}85$ y $1{,}27$) son del mismo orden que bajo incertidumbre. Sobre el bloque~A, donde la dificultad se mantiene constante al crecer el equipo, la magnitud que se conserva es la \textbf{fracción de flota}: Random pierde el $27{,}7\,\%$ de sus robots con independencia del tamaño del equipo y Greedy el $13{,}3\,\%$; no es un efecto de escala, sino una tasa característica de cada política.
+
+La consecuencia para la lectura del capítulo debe declararse: una parte no cuantificada de la distancia que separa a los tres algoritmos coordinados de los dos \textit{baselines} ---entre $0{,}08$ y $0{,}23$ según la pareja--- corresponde a este modo de fallo y no a la calidad de la asignación. La comparación entre Dec-MCTS y CBBA, que sostiene el análisis anterior, no se ve afectada: ninguno de los dos pierde robots en ningún escenario.
+
+\subsection{Descomposición de la recompensa} \label{subsec:exp-mecanismo}
+
+La fracción de tareas completadas se factoriza de forma exacta en dos magnitudes observables,
+\begin{equation} \label{eq:descomposicion}
+    \underbrace{\frac{|\mathcal{T}_{\mathrm{comp}}|}{m}}_{\text{recompensa}}
+    \;=\;
+    \underbrace{\frac{|\mathcal{T}_{\mathrm{int}}|}{m}}_{\text{tasa de intento}}
+    \;\times\;
+    \underbrace{\frac{|\mathcal{T}_{\mathrm{comp}}|}{|\mathcal{T}_{\mathrm{int}}|}}_{\text{tasa de éxito}},
+\end{equation}
+donde $\mathcal{T}_{\mathrm{int}}$ es el conjunto de tareas que el equipo llega a emprender. La primera mide la \textbf{cobertura} y la segunda el \textbf{acierto} de lo emprendido; separarlas indica si un algoritmo pierde recompensa por elegir mal o por no llegar a intentarlo (Figura~\ref{fig:res-mecanismo}).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/06_experimentación_pruebas/intento_exito.pdf}
+    \caption{Descomposición~\eqref{eq:descomposicion} de la recompensa. En (a), ambas tasas para los dos algoritmos de cabeza a lo largo de los cuatro regímenes. En (b), la diferencia de cada término frente a la diferencia de recompensa, con un punto por escenario y su recta de regresión; el coeficiente de correlación indica cuál de los dos términos acompaña a la diferencia de recompensa.}
+    \label{fig:res-mecanismo}
+\end{figure}
+
+El resultado contradice la explicación más inmediata. La \textbf{tasa de éxito de Dec-MCTS es igual o superior a la de CBBA} en los tres primeros regímenes ($+0{,}014$ con incertidumbre leve, $+0{,}035$ con incertidumbre media) y equivalente en el cuarto: de las tareas que emprende, Dec-MCTS termina una fracción igual o mayor. Es la \textbf{tasa de intento} la que se invierte con el régimen: Dec-MCTS emprende más tareas que CBBA en determinista ($0{,}585$ frente a $0{,}565$) y menos en los tres regímenes con incertidumbre, con una diferencia que crece hasta $-0{,}091$ en el más severo; con incertidumbre media, el equipo emprende $17{,}75$ tareas distintas por escenario frente a las $19{,}26$ de CBBA. La correlación de la diferencia de recompensa con la diferencia de tasa de intento es $r=0{,}77$, frente a $r=0{,}42$ con la de tasa de éxito.
+
+La diferencia de recompensa bajo incertidumbre no procede, por tanto, de un peor criterio al elegir tareas, sino de una \textbf{menor cobertura}. Es la firma que anticipaba la lectura del bloque~A: el déficit aparece solo en presencia de incertidumbre y resulta coherente con un descuento excesivo de las tareas que se estiman cubiertas por planes ajenos que la incertidumbre ya ha invalidado. Obsérvese además que las tasas de éxito de los tres algoritmos coordinados alcanzan exactamente la unidad en régimen determinista, lo que concuerda con la ausencia de bajas del apartado anterior.
+
+\subsection{Distancia, coste de cómputo y ocupación del horizonte} \label{subsec:exp-coste}
+
+\begin{table}[t]
+\centering
+\caption{Magnitudes secundarias por algoritmo, promediadas sobre los $360$ escenarios. El tiempo de cómputo procede de una tanda con seis procesos en paralelo: es comparable entre algoritmos, pero no representa el coste de una ejecución aislada.}
+\label{tab:res-secundarias}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lccccc}
+\hline
+ & \textbf{Robots} & \textbf{\% esc.} & \textbf{Distancia} & \textbf{Distancia por} & \textbf{Tiempo} \\
+ & \textbf{perdidos} & \textbf{con bajas} & \textbf{por robot} & \textbf{tarea completada} & \textbf{(s/ejec.)} \\
+\hline
+Random    & $1{,}98$ & $85{,}3$ & $15{,}94$ & $16{,}44$ & $0{,}0009$ \\
+Greedy    & $1{,}44$ & $66{,}9$ & $10{,}75$ & $7{,}46$  & $0{,}0011$ \\
+CBAA      & $0{,}00$ & $0{,}0$  & $13{,}93$ & $\mathbf{7{,}13}$  & $0{,}0015$ \\
+CBBA      & $0{,}00$ & $0{,}0$  & $15{,}50$ & $7{,}44$  & $0{,}0082$ \\
+Dec-MCTS  & $0{,}00$ & $0{,}0$  & $19{,}42$ & $8{,}86$  & $15{,}32$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Distancia.} Dec-MCTS recorre un $25{,}3\,\%$ más de distancia por robot que CBBA, y la diferencia relativa aumenta con la incertidumbre. Normalizada por unidad de resultado, paga $8{,}86$ unidades de distancia por tarea completada frente a $7{,}44$ de CBBA y $7{,}13$ de CBAA, el valor más bajo de los cinco. La caracterización operativa es que Dec-MCTS \textbf{cubre más ventanas a costa de desplazarse más}, lo que resulta inocuo mientras navegar sea barato pero acota su rendimiento en cuanto el desplazamiento sea el recurso limitante. Random ilustra el caso degenerado opuesto: recorre tanto como CBBA pero necesita $16{,}44$ unidades por tarea completada, aproximadamente el doble que cualquier otro, porque buena parte de ese recorrido termina en tareas fallidas o en robots sin batería.
+
+\paragraph{Coste de cómputo.} Los tiempos separan a los algoritmos en tres órdenes de magnitud: por debajo de los dos milisegundos los \textit{baselines} y CBAA, en $8{,}2$ milisegundos CBBA y en $15{,}32$ segundos Dec-MCTS, unas $1\,900$ veces el coste de CBBA. La cifra relevante, sin embargo, no es la media sino su evolución con el tamaño del equipo: sobre el bloque~A, el tiempo de Dec-MCTS crece de $0{,}55$ segundos con dos robots a $44{,}41$ con diez, mientras su ventaja en recompensa recorre el sentido contrario y cambia de signo en ese mismo intervalo. El coste marginal de la búsqueda crece, por tanto, justo donde su beneficio desaparece. Debe precisarse que ese coste es lineal en el presupuesto de iteraciones por ronda, un hiperparámetro fijado durante el desarrollo (Tabla~\ref{tab:decmcts-hiper}) y no una propiedad del método.
+
+\paragraph{Ocupación del horizonte.} El instante medio en que los robots se retiran ---por concluir su plan, por no disponer de tareas alcanzables o por quedarse sin batería--- resulta revelador. Dec-MCTS es el que más prolonga su actividad ($54{,}94$ en régimen determinista y $52{,}41$ con incertidumbre media) y CBAA el que antes la abandona ($44{,}40$ y $37{,}40$). Dado que CBAA no pierde robots por batería, su retirada temprana solo puede deberse a robots que dejan de encontrar tareas alcanzables dentro de plazo y quedan inactivos, lo que resulta coherente con su baja tasa de intento bajo incertidumbre y con su pendiente nula frente al tamaño del equipo: en las tres magnitudes, añadirle robots no se traduce en más cobertura. El \textit{makespan} del último robot activo, en cambio, apenas discrimina entre algoritmos.
+
+% ===========================================================================
+\section{Síntesis de los resultados} \label{sec:exp-sintesis}
+% ===========================================================================
+
+\begin{enumerate}
+    \item \textbf{La escala de coordinación se traduce en rendimiento.} La ordenación Random $<$ Greedy $<$ CBAA $<$ CBBA es amplia, estable en todos los cortes y estricta escenario a escenario: Dec-MCTS supera a Random en $358$ de $360$ escenarios y a Greedy en $333$; CBBA supera a CBAA en $209$.
+    \item \textbf{La comparación entre CBBA y Dec-MCTS no la resuelve el agregado}, cuyo signo se invierte al excluir un bloque del conjunto: es una propiedad de la composición del catálogo, no de los algoritmos. Sí la resuelve el régimen: Dec-MCTS obtiene mayor recompensa en determinista ($+0{,}0201 \pm 0{,}0055$) y menor bajo incertidumbre fuerte ($-0{,}0497 \pm 0{,}0167$).
+    \item \textbf{El resultado más nítido es el escalado con el equipo.} A dificultad constante y bajo incertidumbre, CBBA convierte cada robot adicional en $+0{,}0195$ de recompensa ($t=6{,}6$) mientras que la pendiente de Dec-MCTS, $+0{,}0040$ ($t=1{,}5$), es unas cinco veces menor y no se distingue de cero; la diferencia entre ambos decrece $-0{,}0155$ por robot ($t=-4{,}7$).
+    \item \textbf{La brecha se localiza en la cobertura, no en el acierto.} Bajo incertidumbre, la tasa de éxito de Dec-MCTS es igual o superior a la de CBBA y toda la diferencia vive en la tasa de intento ($r=0{,}77$ frente a $r=0{,}42$).
+    \item \textbf{Hay regiones del problema bien delimitadas en las que Dec-MCTS rinde más}: plazos escalonados ($+0{,}078$, positiva en $12$ de $12$ escenarios), ausencia de espera obligatoria ($+0{,}038$), carga holgada (hasta $+0{,}208$) y coaliciones de tamaño variable ($+0{,}023$); y otras en las que rinde menos: ventanas anchas, coaliciones uniformes, carga alta y equipos grandes bajo incertidumbre.
+    \item \textbf{Dos resultados propios de un solo bloque.} CBAA, tercero en el agregado, obtiene la media más alta del bloque de coaliciones y el máximo en $45$ de sus $72$ escenarios; y las coaliciones uniforme y variable producen diferencias de signo opuesto pese a compartir tamaño medio y carga.
+    \item \textbf{El coste de la anticipación es alto y crece con el equipo}: unas $1\,900$ veces más tiempo de cómputo que CBBA y un $25\,\%$ más de distancia recorrida por robot.
+\end{enumerate}
+
+Cuatro condiciones deben acompañar a la lectura de estos resultados: la ya señalada dependencia del agregado respecto de la composición del catálogo; que los regímenes de incertidumbre leve y fuerte proceden únicamente del bloque~E, con $18$ escenarios cada uno, frente a los $162$ de cada régimen de referencia; que parte de la ventaja de los algoritmos coordinados sobre los \textit{baselines} corresponde a robots perdidos por batería y no a la calidad de la asignación; y que los tiempos de cómputo proceden de una tanda paralelizada y solo admiten lectura comparativa.
+
+Conviene, por último, distinguir lo medido de lo interpretado. Los resultados anteriores son medidas; las explicaciones apuntadas a lo largo del capítulo ---el descuento excesivo de tareas que se creen cubiertas, la diferencia entre comprometer un precio y comprometer una trayectoria, o el carácter binario de la decisión de bloqueo--- son \textbf{hipótesis compatibles con los datos} que este capítulo no contrasta. El Capítulo~\ref{cap:conclusiones_trabajo_futuros} retoma esa distinción para valorar qué aportan estos resultados al objetivo del trabajo y qué líneas abren.

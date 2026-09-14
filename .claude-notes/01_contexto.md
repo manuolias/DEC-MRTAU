@@ -90,8 +90,8 @@ crecientes de coordinación:
 | 2. Marco teórico | `02_marco_teórico.tex` | **completo** — NO modificar sin preguntar |
 | 3. Estado del arte | `03_estado_del_arte.tex` | **completo** — NO modificar sin preguntar |
 | 4. Materiales y métodos | `04_materiales_y_metodos.tex` | **completo y CERRADO (sesión 5)** — NO modificar salvo necesidad estricta |
-| 5. Casos de estudio | `05_casos_de_estudio.tex` | vacío |
-| 6. Experimentación | `06_experimentación_pruebas.tex` | vacío |
+| 5. Casos de estudio | `05_casos_de_estudio.tex` | **completo y CERRADO (sesión 8)** |
+| 6. Experimentación | `06_experimentación_pruebas.tex` | **borrador completo (sesión 10)**, pendiente de revisión del usuario |
 | 7. Conclusiones | `07_conclusiones_trabajo_futuro.tex` | vacío |
 
 Pendientes marcados dentro del cap. 2/3: varios `\red{CITA AL TUTOR}` (el paper no está
@@ -169,7 +169,11 @@ comparación centralizado/distribuido no medida → D-09).
   `figuras/p1_*`, `p2_*`, `p3_*`. El cuaderno del v1 queda archivado como
   `analisis/evaluacion_v1_obsoleto.ipynb` (conserva las cuatro refutaciones y la ablación C1,
   D-13). Índice en `analisis/README.md`; hallazgos nuevos en la bitácora, sesión 9; y
-  (b) ⏭️ **escribir `memoria/sections/06_experimentación_pruebas.tex`** con el **addendum 2** de
+  (b) ✅ **CERRADO (sesión 10)**: `memoria/sections/06_experimentación_pruebas.tex` escrito
+  (~4 400 palabras, 7 tablas, 4 figuras en `memoria/figures/06_experimentación_pruebas/`).
+  Resuelve **D-10** (el protocolo experimental entra en §6.1). ⚠️ Queda por borrar el bloque
+  comentado del final del cap. 5, cuyo contenido está ya en la introducción del 6. Se escribió con
+  el **addendum 2** de
   `06_conclusiones.md`. Abrirlo con la recapitulación del catálogo que el usuario quitó del
   cap. 5. Ver la sección «PARA LA PRÓXIMA SESIÓN» de la bitácora (sesión 8).
 - **2.4** Cap. 7 Conclusiones y trabajo futuro → ideas 1, 2, 4 y 5 de `06_conclusiones.md`.
