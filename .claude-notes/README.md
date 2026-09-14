@@ -11,7 +11,9 @@ eliminarse (o quedar en `.gitignore`) en la fase de limpieza del repositorio (ob
 2. `01_contexto.md` — qué es el proyecto, qué se persigue, estado de la memoria.
 3. `04_bitacora.md` — **las 2-3 últimas entradas**: qué se hizo y qué quedó a medias.
 4. `05_dudas.md` — preguntas abiertas y decisiones pendientes del usuario.
-5. Según la tarea: `02_codigo.md` (tocar código) o `03_experimentos.md` (análisis/escenarios).
+5. **`06_conclusiones.md` — la tesis del trabajo.** Obligatorio antes de redactar cualquier
+   capítulo de la memoria.
+6. Según la tarea: `02_codigo.md` (tocar código) o `03_experimentos.md` (análisis/escenarios).
 
 **Al terminar una sesión** — actualizar siempre:
 
@@ -32,6 +34,7 @@ eliminarse (o quedar en `.gitignore`) en la fase de limpieza del repositorio (ob
 | `03_experimentos.md` | Escenarios, validez de cada tanda de logs, resultados y diagnóstico |
 | `04_bitacora.md` | Registro cronológico de cambios y avances |
 | `05_dudas.md` | Dudas abiertas, hipótesis sobre el bajo rendimiento de Dec-MCTS, decisiones del usuario |
+| `06_conclusiones.md` | **Las cinco ideas que sostienen la memoria**, con las cifras que las respaldan |
 
 ## Reglas de trabajo (del usuario, `informacion.txt`)
 

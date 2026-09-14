@@ -207,3 +207,12 @@ Nota: las variantes `dec-mcts-bp-*` que aparecen en `logs/ablacion_*` **ya no ex
    simulador). No hay semilla configurable ⇒ solo se puede promediar sobre réplicas.
 6. **`build/` está versionado en git** (binarios `.o` y el ejecutable). Debe salir en la
    limpieza (objetivo 3.1).
+7. ⚠️ **`Robot.completedTasks` nunca se incrementa** (hallazgo de la sesión 5). Se inicializa a
+   0 en `state.cpp:18` y no vuelve a tocarse: `endTask()` marca la tarea como `COMPLETED` pero
+   no actualiza el contador de sus trabajadores. En consecuencia, las cuatro métricas
+   `average/sd/max/min_completed_tasks_by_robot` valen **0 en todos los logs generados**,
+   incluidas ejecuciones con `final_reward` alta. **No afecta a `final_reward`**, que cuenta
+   estados de tarea en `RewardFunction00`, ni a ninguna cifra ya reportada. Pero **el reparto de
+   tareas por robot no está en los logs**: si el cap. 6 lo necesita (p. ej. para hablar de
+   equilibrio de carga), hay que derivarlo de la traza de eventos con
+   `scripts/extract_metrics.py`, no de esas métricas.

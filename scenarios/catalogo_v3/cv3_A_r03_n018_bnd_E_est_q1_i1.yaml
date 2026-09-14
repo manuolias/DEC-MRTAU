@@ -1,0 +1,277 @@
+name: "cv3_A_r03_n018_bnd_E_est_q1_i1"
+height: 15
+width: 15
+initial_time: 0
+
+graph:
+  - node: 1
+    description: "Node 1"
+    coords: [0,0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 2
+    description: "Node 2"
+    coords: [0.0,5.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 3
+    description: "Node 3"
+    coords: [0.95,4.31]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 4
+    description: "Node 4"
+    coords: [0.59,3.19]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 5
+    description: "Node 5"
+    coords: [-0.59,3.19]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 6
+    description: "Node 6"
+    coords: [-0.95,4.31]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 7
+    description: "Node 7"
+    coords: [4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 8
+    description: "Node 8"
+    coords: [4.95,0.31]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 9
+    description: "Node 9"
+    coords: [4.59,-0.81]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 10
+    description: "Node 10"
+    coords: [3.41,-0.81]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 11
+    description: "Node 11"
+    coords: [3.05,0.31]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 12
+    description: "Node 12"
+    coords: [0.0,-3.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 13
+    description: "Node 13"
+    coords: [1.0,-4.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 14
+    description: "Node 14"
+    coords: [0.0,-5.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 15
+    description: "Node 15"
+    coords: [-1.0,-4.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 16
+    description: "Node 16"
+    coords: [-4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 17
+    description: "Node 17"
+    coords: [-3.0,0.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 18
+    description: "Node 18"
+    coords: [-4.0,-1.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+  - node: 19
+    description: "Node 19"
+    coords: [-5.0,-0.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+
+tasks:
+  - id: 1
+    node: 2
+    description: "Task 1"
+    time_window: [27.0,35.0]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 2
+    node: 3
+    description: "Task 2"
+    time_window: [24.0,34.12]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 3
+    node: 4
+    description: "Task 3"
+    time_window: [9.0,15.59]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 4
+    node: 5
+    description: "Task 4"
+    time_window: [24.0,31.27]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 5
+    node: 6
+    description: "Task 5"
+    time_window: [9.0,16.83]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 6
+    node: 7
+    description: "Task 6"
+    time_window: [18.0,33.86]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 7
+    node: 8
+    description: "Task 7"
+    time_window: [14.0,28.88]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 8
+    node: 9
+    description: "Task 8"
+    time_window: [13.0,22.37]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 9
+    node: 10
+    description: "Task 9"
+    time_window: [22.0,35.93]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 10
+    node: 11
+    description: "Task 10"
+    time_window: [26.0,33.85]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 11
+    node: 12
+    description: "Task 11"
+    time_window: [21.0,25.21]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 12
+    node: 13
+    description: "Task 12"
+    time_window: [35.0,41.97]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 13
+    node: 14
+    description: "Task 13"
+    time_window: [7.0,19.66]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 14
+    node: 15
+    description: "Task 14"
+    time_window: [18.0,27.06]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 15
+    node: 16
+    description: "Task 15"
+    time_window: [25.0,34.62]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 16
+    node: 17
+    description: "Task 16"
+    time_window: [0.0,13.41]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 17
+    node: 18
+    description: "Task 17"
+    time_window: [23.0,27.75]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 18
+    node: 19
+    description: "Task 18"
+    time_window: [30.0,38.36]
+    success_prob: 0.75
+    success_time: [10,3.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+
+robots:
+  - id: 1
+    initial_node: 1
+    description: "Robot 1"
+    initial_battery_level: 40.0
+    battery_capacity: 40.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+  - id: 2
+    initial_node: 1
+    description: "Robot 2"
+    initial_battery_level: 40.0
+    battery_capacity: 40.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+  - id: 3
+    initial_node: 1
+    description: "Robot 3"
+    initial_battery_level: 40.0
+    battery_capacity: 40.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+
+recharging_stations:
+  - id: 1
+    node: 1
+    description: "Station 1"

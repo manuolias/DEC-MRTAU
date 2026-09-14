@@ -190,6 +190,25 @@ int main(int argc, char** argv) {
                                 // realmente el canal de comunicación de Dec-MCTS.
                                 solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
                                                                                 0.7, 30, 300, false);
+                            } else if (solverName == "dec-mcts-v4-b4") {
+                                // Mejora B4: idéntico a dec-mcts-v4-g9999 pero con blockingProb
+                                // PROBABILÍSTICA en vez de binaria — descuenta una tarea según la
+                                // probabilidad de que los vecinos lleguen realmente a cubrirla,
+                                // atendiendo a su posición en el bundle y a la varianza acumulada.
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
+                                                                                0.7, 30, 300, true, true);
+                            } else if (solverName == "dec-mcts-v4-d8") {
+                                // D-08: bundle comunicado construido siguiendo la cadena más
+                                // visitada RESTRINGIDA a EXECUTE_TASK. Corrige que el 69% de
+                                // las cadenas se cortaran en un nodo FINISH, dejando los planes
+                                // comunicados con longitud media 1.25.
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
+                                                                                0.7, 30, 300, true, false, true);
+                            } else if (solverName == "dec-mcts-v4-d8b4") {
+                                // D-08 + B4 combinadas: con bundles profundos, la blockingProb
+                                // probabilística sí tiene profundidad sobre la que operar.
+                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
+                                                                                0.7, 30, 300, true, true, true);
                             } else if (solverName == "dec-mcts-v4-g9999-hc") {
                                 // V4 g9999 con ALTO CÓMPUTO. iteraciones por latido y de
                                 // emergencia configurables vía env DECMCTS_ITERS / DECMCTS_EMERG

@@ -96,6 +96,8 @@ class DecMCTSSolverV4 : public ISolver {
     // Score heurístico asignado a RECHARGE: positivo pero mínimo, de forma que
     // el widening lo expanda el último salvo que no haya tareas factibles.
     static constexpr double RECHARGE_SCORE = 1e-6;
+    // Cota de seguridad para la longitud del bundle comunicado (D-08)
+    static constexpr size_t MAX_BUNDLE_LEN = 32;
 
     // =========================================================================
     // Nodo MCTS con estadísticas descontadas y descuento perezoso (como V2)
@@ -147,6 +149,24 @@ class DecMCTSSolverV4 : public ISolver {
             MCTSNode* best = nullptr;
             double bestN = -1.0;
             for (auto& c : children) {
+                c->decayTo(currentTick, gamma);
+                if (c->N_disc > bestN) { bestN = c->N_disc; best = c.get(); }
+            }
+            return best;
+        }
+
+        // Igual que mostVisitedChild pero restringido a acciones EXECUTE_TASK.
+        // Necesario para D-08: el hijo FINISH acapara visitas (en los rollouts que
+        // alcanzan estados sin tareas factibles es el ÚNICO hijo disponible, así que
+        // recibe todas las visitas de ese rollout), de modo que al construir el
+        // bundle con mostVisitedChild la cadena se corta en FINISH casi siempre.
+        // Es la misma incoherencia que D-BUG-01, que solo se corrigió en la regla de
+        // decisión y no en la extracción de la distribución comunicada.
+        MCTSNode* mostVisitedTaskChild(int currentTick, double gamma) {
+            MCTSNode* best = nullptr;
+            double bestN = -1.0;
+            for (auto& c : children) {
+                if (c->action.getType() != Action::Type::EXECUTE_TASK) continue;
                 c->decayTo(currentTick, gamma);
                 if (c->N_disc > bestN) { bestN = c->N_disc; best = c.get(); }
             }
@@ -227,6 +247,16 @@ class DecMCTSSolverV4 : public ISolver {
     // física, publicación de la propia distribución) es idéntico. Sirve para medir
     // cuánto aporta realmente el canal de comunicación de Dec-MCTS.
     bool   useComm_;
+    // Mejora B4: si es true, blockingProb deja de ser binaria y pasa a estimar la
+    // PROBABILIDAD de que los vecinos lleguen realmente a cubrir la tarea, teniendo
+    // en cuenta la posición de la tarea dentro del bundle del vecino y la varianza
+    // acumulada de las tareas que la preceden. Ver computeBlockingProbB4().
+    bool   useProbBlocking_;
+    // D-08: si es true, extractDistribution construye el bundle siguiendo la cadena
+    // más visitada RESTRINGIDA a acciones EXECUTE_TASK, en vez de la cadena más
+    // visitada en crudo (que se corta en FINISH el 69 % de las veces y deja los
+    // planes comunicados con longitud media 1.25). Ver mostVisitedTaskChild().
+    bool   deepBundle_;
     std::unique_ptr<MCTSNode> root;
     mutable std::mt19937 rng;
     int globalTick = 0;
@@ -340,6 +370,116 @@ class DecMCTSSolverV4 : public ISolver {
             auto it = countOthers.find(tId);
             int n = (it == countOthers.end()) ? 0 : it->second;
             result[tId] = (n >= tInfo.requiredWorkers) ? tInfo.successProb : 0.0;
+        }
+        return result;
+    }
+
+    // =========================================================================
+    // B4 · blockingProb sensible a la incertidumbre
+    // =========================================================================
+    // La versión original es binaria: si al menos `requiredWorkers` vecinos tienen
+    // la tarea en su bundle muestreado, se descuenta por completo (`successProb`);
+    // si no, no se descuenta nada. Eso ignora dos cosas que importan mucho bajo
+    // incertidumbre:
+    //   (a) la POSICIÓN de la tarea en el bundle del vecino — una tarea en la
+    //       séptima posición tiene bastantes menos posibilidades de alcanzarse que
+    //       una en la primera;
+    //   (b) si al vecino le DA TIEMPO a llegar antes de `latestStart`.
+    // Aquí se recorre el bundle de cada vecino acumulando el instante esperado de
+    // llegada y su VARIANZA (que crece con cada tarea previa, tanto por la
+    // dispersión de las duraciones como por la incertidumbre del desenlace), y se
+    // estima
+    //        p_llegada(r,j) = P(llegada_j <= latestStart_j) ≈ Φ((L_j - μ_j)/σ_j).
+    // Después se combina la cobertura de todos los vecinos con una Poisson-binomial
+    // exacta (programación dinámica) para obtener P(al menos q vecinos lleguen):
+    //        blockingProb[t] = successProb(t) · P(X >= requiredWorkers).
+    //
+    // En el límite determinista (σ = 0, ρ = 1) la varianza acumulada es nula, Φ pasa
+    // a ser un escalón y se recupera EXACTAMENTE la semántica anterior, salvo que
+    // los vecinos que no llegan a tiempo dejan de bloquear (que ya es una mejora).
+    // Bajo incertidumbre, en cambio, las tareas profundas del bundle del vecino se
+    // descuentan poco, de modo que el robot deja de cederlas.
+    std::unordered_map<TaskID, double> computeBlockingProbB4(
+        RobotID excludeId,
+        const std::map<RobotID, std::vector<TaskID>>& sampledBundles,
+        const Observation& obs,
+        const std::shared_ptr<const Scenario>& sc) const {
+
+        const auto& robots = obs.getKnownRobots();
+        const auto& tasks  = obs.getKnownTasks();
+        Time now = obs.getCurrentTime();
+
+        // Probabilidades de cobertura por tarea, una entrada por vecino
+        std::unordered_map<TaskID, std::vector<double>> cover;
+
+        for (const auto& [rId, bundle] : sampledBundles) {
+            if (rId == excludeId) continue;
+            auto itR = robots.find(rId);
+            if (itR == robots.end()) continue;
+            const Robot& nb = itR->second;
+            if (nb.status == RobotStatus::FAILED || nb.status == RobotStatus::FINISHED) continue;
+
+            const RobotInfo& nInfo = sc->robots.at(rId);
+            NodeID node = nb.node;
+            Time   mu   = std::max(now, nb.time);
+            double var  = 0.0;
+            std::set<TaskID> seen;
+
+            for (TaskID tId : bundle) {
+                if (!seen.insert(tId).second) continue;      // el bundle puede repetir
+                auto itT = tasks.find(tId);
+                if (itT == tasks.end()) continue;
+                if (itT->second.status != TaskStatus::PENDING) continue;
+
+                const TaskInfo& tInfo = sc->getTasks().at(tId);
+                Time travel = sc->distanceBetween(node, tInfo.node) / nInfo.navigationVelocity;
+                mu = std::max(mu + travel, tInfo.earliestStart);
+
+                // P(llegar antes del cierre de la ventana)
+                double sd = std::sqrt(var);
+                double pReach;
+                if (sd < 1e-6) {
+                    pReach = (mu <= tInfo.latestStart) ? 1.0 : 0.0;
+                } else {
+                    pReach = 1.0 - tau::utils::survival_Phi((tInfo.latestStart - mu) / sd);
+                    pReach = std::min(1.0, std::max(0.0, pReach));
+                }
+                if (pReach > 0.0) cover[tId].push_back(pReach);
+
+                // avanzar por la ejecución: media y varianza de la mezcla
+                // éxito/fracaso (capta a la vez el ruido de duración y el del desenlace)
+                double p   = tInfo.successProb;
+                double m1  = p * tInfo.averageSuccessTime + (1.0 - p) * tInfo.averageFailTime;
+                double m2  = p * (tInfo.stdSuccessTime * tInfo.stdSuccessTime
+                                  + tInfo.averageSuccessTime * tInfo.averageSuccessTime)
+                           + (1.0 - p) * (tInfo.stdFailTime * tInfo.stdFailTime
+                                  + tInfo.averageFailTime * tInfo.averageFailTime);
+                mu  += m1;
+                var += std::max(0.0, m2 - m1 * m1);
+                node = tInfo.node;
+            }
+        }
+
+        std::unordered_map<TaskID, double> result;
+        result.reserve(sc->getTasks().size());
+        for (const auto& [tId, tInfo] : sc->getTasks()) {
+            auto it = cover.find(tId);
+            if (it == cover.end()) { result[tId] = 0.0; continue; }
+
+            // Poisson-binomial exacta: dist[k] = P(exactamente k vecinos lleguen)
+            const int q = tInfo.requiredWorkers;
+            std::vector<double> dist(it->second.size() + 1, 0.0);
+            dist[0] = 1.0;
+            int n = 0;
+            for (double p : it->second) {
+                ++n;
+                for (int k = n; k >= 1; --k) dist[k] = dist[k] * (1.0 - p) + dist[k - 1] * p;
+                dist[0] *= (1.0 - p);
+            }
+            double pAtLeastQ = 0.0;
+            for (int k = q; k <= n; ++k) pAtLeastQ += dist[k];
+
+            result[tId] = tInfo.successProb * std::min(1.0, std::max(0.0, pAtLeastQ));
         }
         return result;
     }
@@ -913,7 +1053,9 @@ class DecMCTSSolverV4 : public ISolver {
             root = std::make_unique<MCTSNode>(Action(Action::Type::START), nullptr);
 
         auto sampledBundles = sampleNeighbourBundles(obs);
-        auto blockingProb   = computeBlockingProb(myId, sampledBundles, sc);
+        auto blockingProb   = useProbBlocking_
+                            ? computeBlockingProbB4(myId, sampledBundles, obs, sc)
+                            : computeBlockingProb(myId, sampledBundles, sc);
 
         std::vector<MCTSNode*> path;
         double reward_with = simulate(obs, sc, sampledBundles, blockingProb,
@@ -1043,12 +1185,14 @@ class DecMCTSSolverV4 : public ISolver {
 
             Bundle bundle;
             MCTSNode* node = child.get();
-            while (node && node->action.getType() == Action::Type::EXECUTE_TASK) {
+            while (node && node->action.getType() == Action::Type::EXECUTE_TASK
+                   && bundle.size() < MAX_BUNDLE_LEN) {
                 bundle.push_back(node->action.getTarget());
-                MCTSNode* next = node->mostVisitedChild(globalTick, gamma_);
+                MCTSNode* next = deepBundle_
+                               ? node->mostVisitedTaskChild(globalTick, gamma_)
+                               : node->mostVisitedChild(globalTick, gamma_);
                 node = next;
             }
-
             double prob = child->N_disc / rootN;
             if (prob > 0.0) dist[bundle] += prob;
         }
@@ -1070,14 +1214,19 @@ public:
     // con más cómputo (cada run tarda ~linealmente más).
     // useComm: si es false, se ignoran las distribuciones comunicadas por los
     // vecinos (ablación C1; ver el comentario del miembro useComm_).
+    // useProbBlocking: mejora B4, blockingProb probabilística en vez de binaria
+    // (ver computeBlockingProbB4).
     explicit DecMCTSSolverV4(RobotID id, double gamma = 0.9999, bool useDiffReward = false,
                              double cExplore = DEFAULT_C_EXPLORE,
                              int iterationsPerCall = ITERATIONS_PER_CALL,
                              int emergencyIters = EMERGENCY_ITERS,
-                             bool useComm = true)
+                             bool useComm = true,
+                             bool useProbBlocking = false,
+                             bool deepBundle = false)
         : myId(id), gamma_(gamma), useDiffReward_(useDiffReward), cExplore_(cExplore),
           iterationsPerCall_(iterationsPerCall), emergencyIters_(emergencyIters),
-          useComm_(useComm), rng(std::random_device{}()) {}
+          useComm_(useComm), useProbBlocking_(useProbBlocking), deepBundle_(deepBundle),
+          rng(std::random_device{}()) {}
 
     // =========================================================================
     // Interfaz ISolver
@@ -1121,7 +1270,9 @@ public:
         } else {
             // Fallback: política marginal-aware con la información actual
             auto sampledBundles = sampleNeighbourBundles(obs);
-            auto blockingProb   = computeBlockingProb(myId, sampledBundles, sc);
+            auto blockingProb   = useProbBlocking_
+                                ? computeBlockingProbB4(myId, sampledBundles, obs, sc)
+                                : computeBlockingProb(myId, sampledBundles, sc);
             chosen = rolloutAction(myId, makeState(obs), blockingProb, sc);
         }
 
