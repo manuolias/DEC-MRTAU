@@ -1,3 +1,26 @@
+> # 🔴🔴 FICHERO OBSOLETO DESDE EL 17-09-2026 (sesión 12) — NO REDACTAR CON ÉL
+>
+> Las **cinco ideas** de este documento y sus **DOS addendums** se escribieron sobre tandas
+> ejecutadas con un simulador que tenía **dos defectos de batería** (navegar no mataba; el intento
+> truncado por batería se cobraba a la tarifa del fracaso por sorteo). Al corregirlos y reejecutar
+> el catálogo v3:
+>
+> - La Δ dec−cbba pasó de **+0.0086 (empate, 158/42/160)** a **+0.0431 ± 0.0039 (244/33/83)**.
+> - Dec-MCTS **gana en los cuatro regímenes y en cuatro de los cinco bloques** (en D gana cbaa).
+> - El *leave-one-block-out* **ya no invierte ningún signo** ⇒ **se cayó** la tesis de que «el
+>   diseño del conjunto de prueba determina la conclusión», que era la idea vertebradora.
+> - La corrección **no beneficia a Dec-MCTS** (su recompensa no se mueve, −0.001 ± 0.002): son
+>   cbaa y cbba las que pierden 0.035 cada una.
+>
+> ⚠️ **La hipótesis del TFM se cumple.** Lo que sigue describe el resultado contrario.
+> **Hay que rehacer este fichero antes de escribir el capítulo 7.** Sigue siendo útil su
+> *estructura* y los **límites que el usuario fijó** (la conjetura sobre la literatura se redacta
+> como teoría; la comparación centralizado/distribuido no se mide aquí y se apoya en el paper del
+> tutor, sin cifras de pérdida ⇒ D-03). Fuentes para rehacerlo: sesión 12 de `04_bitacora.md`,
+> «REEJECUCIÓN 17-09-2026» en `03_experimentos.md`, y el capítulo 6 ya cerrado.
+
+---
+
 # 06 — Conclusiones del trabajo (material para los caps. 6 y 7)
 
 > **Origen**: conclusión dictada por el usuario al cerrar la sesión 4 (2026-08-18), tras completar

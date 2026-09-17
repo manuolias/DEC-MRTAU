@@ -41,7 +41,11 @@ BatteryLevel DistributedSimulator::calculateBatteryConsumption(RobotID robotID, 
     BatteryLevel initLvl = state.getRobot(robotID).batteryLevel;
     if (duration <= 0.0) return initLvl;
     BatteryLevel cost = rate * duration;
-    BatteryLevel finalLvl = std::max(0.0, initLvl - cost);
+    // El nivel resultante puede ser NEGATIVO: es la señal de que el robot no tiene
+    // batería suficiente para completar el desplazamiento. Saturar en 0 aquí dejaría
+    // inalcanzables las ramas `finalBattery < 0.0` de simulateTask, simulateRecharge y
+    // simulateFinish, y un robot sin batería seguiría navegando gratis.
+    BatteryLevel finalLvl = initLvl - cost;
     return finalLvl;
 }
 
@@ -238,9 +242,10 @@ void DistributedSimulator::run() {
                 break;
             }
             case EventType::TASK_END: {
-                // Leemos el resultado (payload) que programó el TASK_START
-                bool success = (currentEvent.payload == 1);
-                endTask(currentEvent.taskID, success);
+                // Leemos el resultado (payload) que programó el TASK_START. El payload
+                // codifica dos bits: el desenlace muestreado y si el intento se
+                // interrumpió por agotamiento de batería (ver startTask).
+                endTask(currentEvent.taskID, currentEvent.payload);
                 break;
             }
 
@@ -462,37 +467,55 @@ void DistributedSimulator::startTask(TaskID taskID) {
     
     BatteryLevel consumptionInitial = rate * execTime;
 
+    // Guardamos el desenlace MUESTREADO antes de que el bucle pueda anularlo: es el que
+    // fija la tasa de consumo de la ejecución, aunque el intento acabe interrumpido.
+    const bool sampledSuccess = success;
+    bool batteryFailure = false;
+
     for (auto& [workerID, _] : state.getRobots()) {
         auto& w = state.getRobot(workerID);
         if (w.onTask == taskID) {
             w.status = RobotStatus::EXECUTING; // El robot pasa a ejecución (aislado del entorno)
             BatteryLevel fBat = w.batteryLevel - consumptionInitial;
-            if (fBat < 0.0) { 
+            if (fBat < 0.0) {
+                // FRACASO POR FALTA DE BATERÍA: distinto del fracaso por sorteo. La
+                // ejecución se trunca en el instante en que este worker llega a cero.
                 success = false;
+                batteryFailure = true;
                 Time tFail = (rate > 0.0) ? (w.batteryLevel / rate) : 0.0;
                 execTime = (tFail < execTime) ? tFail : execTime;
             }
         }
     }
 
-    // Programamos el evento de finalización, pasando el éxito en el payload
+    // Programamos el evento de finalización, pasando el desenlace en el payload.
+    // Bit 0: desenlace muestreado (1 = éxito). Bit 1: interrumpido por batería.
     Event ev;
     ev.time = task.initTime + execTime;
     ev.type = EventType::TASK_END;
     ev.taskID = taskID;
-    ev.payload = success ? 1 : 0; 
+    ev.payload = (sampledSuccess ? 1 : 0) | (batteryFailure ? 2 : 0);
     eventQueue.push(ev);
 }
 
-void DistributedSimulator::endTask(TaskID taskID, bool success) {
+void DistributedSimulator::endTask(TaskID taskID, int outcome) {
     auto& task = state.getTask(taskID);
     const auto& taskInfo = scenario->getTasks().at(taskID);
+
+    // Desenlace: bit 0 = resultado del sorteo, bit 1 = interrumpido por batería.
+    const bool sampledSuccess = (outcome & 1) != 0;
+    const bool batteryFailure = (outcome & 2) != 0;
+    const bool success = sampledSuccess && !batteryFailure;
 
     // Recuperamos el tiempo de ejecución restando el reloj actual menos el inicial
     Time execTime = std::max(0.0, globalTime - task.initTime);
 
-    BatteryLevel averageDemand = success ? taskInfo.averageSuccessDemand : taskInfo.averageFailDemand;
-    Time averageTime = success ? taskInfo.averageSuccessTime : taskInfo.averageFailTime;
+    // El consumo se cobra SIEMPRE con la distribución del desenlace que se estaba
+    // ejecutando. Un intento interrumpido por batería se cobra a la tasa del desenlace
+    // muestreado y en proporción al tiempo realmente ejecutado, no a la tarifa del
+    // fracaso: el robot gasta hasta quedarse exactamente a cero, y muere.
+    BatteryLevel averageDemand = sampledSuccess ? taskInfo.averageSuccessDemand : taskInfo.averageFailDemand;
+    Time averageTime = sampledSuccess ? taskInfo.averageSuccessTime : taskInfo.averageFailTime;
     BatteryRate rate = 0.0;
     if (averageTime > 0.0) rate = averageDemand / averageTime;
     BatteryLevel consumptionFinal = (averageTime > 0.0) ? (rate * execTime) : averageDemand;
@@ -502,11 +525,14 @@ void DistributedSimulator::endTask(TaskID taskID, bool success) {
         if (w.onTask == taskID) {
             logger->logTaskExecution(task.initTime, taskID, workerID, scenario->nodes.at(taskInfo.node).coords, execTime);
             logger->logBatteryConsumption(task.initTime, workerID, execTime, w.batteryLevel, w.batteryLevel - consumptionFinal);
-            
-            w.time = globalTime; 
+
+            w.time = globalTime;
             w.batteryLevel -= consumptionFinal;
-            
-            if (w.batteryLevel <= 0.0) { 
+
+            // Tolerancia: en un intento truncado el cargo cae justo sobre el nivel de
+            // batería del worker que se agota, y el redondeo puede dejar un residuo
+            // positivo del orden de 1e-16 que lo mantendría vivo con batería nula.
+            if (w.batteryLevel <= BATTERY_EPS) {
                 w.batteryLevel = 0.0;
                 logger->logRobotFailed(globalTime, workerID, scenario->getNodes().at(taskInfo.node).coords);
                 w.status = RobotStatus::FAILED; 

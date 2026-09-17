@@ -62,6 +62,14 @@ tareas iniciadas fuera de su ventana. Todo log anterior a la corrección está *
 | `logs/eval_hc` | 06-23 | 60 | ✅ SÍ | Alto cómputo (1200/12000 iters) en 12 escenarios |
 | `logs/eval_rounds` | 06-23 | 108 | ✅ SÍ | Efecto de las rondas de comunicación: `r300`/`r3000`/`r9000` |
 
+⚠️ **Segunda invalidación, 17-09-2026 (sesión 12)**: toda tanda anterior a esa fecha se ejecutó
+con **dos defectos de batería** en el simulador (ver `CLAUDE.md` y D-16). No invalida los
+diagnósticos de diseño ni las refutaciones, pero **ninguna de sus cifras de recompensa es
+comparable con las actuales**. La única tanda válida como resultado del trabajo es
+`logs/eval_catalogo_v3` **reejecutada**. `logs/eval_catalogo_v3_bug` y
+`analisis/catalogo_v3_bug.csv` conservan la anterior; **se borran en la limpieza** (objetivo 3.1,
+decisión del usuario).
+
 Los `.csv` de `logs/` (`results*.csv`, `resultado*.csv`) proceden **todos de `logs/prueba`** ⇒
 **no usar**. Los `.mp4` son visualizaciones sueltas (borrar en la limpieza).
 
@@ -671,6 +679,12 @@ decirlo explícitamente. Dec-MCTS sigue recorriendo un **+22 %** más de distanc
 
 ## 🟢 CATÁLOGO v3 — `scenarios/catalogo_v3/` · `logs/eval_catalogo_v3` (sesión 8, 2026-09-10)
 
+> 🔴🔴 **TANDA REEJECUTADA EL 17-09-2026 (sesión 12). Las cifras de esta sección son las de la
+> tanda ANTIGUA y NO deben citarse.** Los escenarios no cambiaron —el catálogo es el mismo, mismas
+> semillas—; lo que cambió es el **simulador**, al corregirse sus dos defectos de batería
+> (navegar no mataba, y el intento truncado por batería se cobraba a la tarifa del fracaso por
+> sorteo). Ver el apartado **«REEJECUCIÓN 17-09-2026»** al final de esta sección.
+
 **EL VIGENTE.** Generador `scripts/generate_catalog_v3.py`, analizador
 `scripts/analyze_catalog_v3.py`, comparador `scripts/compare_catalogos.py`,
 CSV `analisis/catalogo_v3.csv`. 360 esc. × 5 solvers × 3 réplicas = **5 400 ejecuciones**,
@@ -926,3 +940,91 @@ valor con ±0.007.
 ⚠️ **Actualizado en la sesión 9**: aquel cuaderno (catálogo v1) se archivó como
 `analisis/evaluacion_v1_obsoleto.ipynb` y `evaluacion_final.ipynb` es ahora el análisis del
 **catálogo v3** en tres partes, con 14 figuras `figuras/p1_*`, `p2_*`, `p3_*`.
+
+
+---
+
+## 🔴 REEJECUCIÓN DEL CATÁLOGO v3 — 17-09-2026 (sesión 12) · **LAS CIFRAS VIGENTES**
+
+**Qué se cambió**: nada del catálogo. Se corrigieron **dos defectos del simulador**
+(`src/simulator.cpp`, `include/tau/definitions.hpp`, `include/tau/simulator.hpp`,
+`include/tau/solver_DecMCTS_v4.hpp`; ~25 líneas):
+
+1. `calculateBatteryConsumption` saturaba en 0 ⇒ **navegar no podía matar**. Quitado el `std::max`.
+2. `endTask` recalculaba el consumo desde el flag `success`, de modo que un intento **truncado por
+   batería** se cobraba a la tarifa del *fracaso por sorteo* (10 planos) y el robot **sobrevivía con
+   batería de regalo**. Ahora el cargo usa la distribución del **desenlace muestreado** y es
+   proporcional al tiempo ejecutado ⇒ el robot acaba exactamente en 0 y muere. Transportado por dos
+   bits del `payload` del `TASK_END`; `BATTERY_EPS = 1e-9` para que el redondeo no lo salve.
+
+Ambos replicados en **v4** (el único evaluado). **v1–v3 no**, por decisión del usuario.
+
+**Cómo se lanzó** (la tanda vieja se aparta primero porque el ejecutor es idempotente):
+
+```bash
+mv logs/eval_catalogo_v3 logs/eval_catalogo_v3_bug && mv analisis/catalogo_v3.csv analisis/catalogo_v3_bug.csv
+cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make
+scripts/run_catalog.sh 6 scenarios/catalogo_v3 logs/eval_catalogo_v3 scenarios/catalogo_v3/experiment_config.yaml
+python3 scripts/extract_metrics.py logs/eval_catalogo_v3 -o analisis/catalogo_v3.csv
+```
+5 400 logs, **43 min** con 6 procesos (antes ~35: los episodios son distintos).
+
+**Verificación previa** (3 escenarios × 5 solvers, dos de coaliciones): `failed_agents` coincide con
+los eventos `robot_failed`; `available+failed+finished == n` en las quince ⇒ ninguna coalición
+huérfana bloquea el episodio; truncamiento visible en la traza
+(`initial_level: 10.3329 → final_level: -1.8e-15`).
+
+### Panorama vigente
+
+| celda | # | rand | greedy | cbaa | cbba | decmcts | Δ dec−cbba | G/E/P |
+|---|---|---|---|---|---|---|---|---|
+| catálogo completo | 360 | 0.268 | 0.346 | 0.401 | 0.459 | **0.502** | **+0.0431 ±0.0039** | 244/33/83 |
+| det (ρ=1.00 σ=0) | 162 | 0.305 | 0.396 | 0.483 | 0.532 | **0.586** | +0.0538 ±0.0052 | 125/16/21 |
+| lev (ρ=0.90 σ=1) | 18 | 0.266 | 0.338 | 0.413 | 0.467 | **0.495** | +0.0275 ±0.0193 | 11/2/5 |
+| est (ρ=0.75 σ=3) | 162 | 0.242 | 0.313 | 0.339 | 0.405 | **0.443** | +0.0379 ±0.0063 | 101/15/46 |
+| fue (ρ=0.50 σ=5) | 18 | 0.168 | 0.198 | 0.207 | 0.273 | **0.282** | +0.0083 ±0.0160 | 7/0/11 |
+| bloque A | 72 | 0.263 | 0.332 | 0.359 | 0.466 | **0.499** | +0.0330 ±0.0061 | 50/4/18 |
+| bloque B | 72 | 0.312 | 0.413 | 0.435 | 0.482 | **0.537** | +0.0550 ±0.0082 | 56/6/10 |
+| bloque C | 72 | 0.353 | 0.407 | 0.431 | 0.537 | **0.628** | +0.0900 ±0.0114 | 58/6/8 |
+| bloque D | 72 | 0.172 | 0.281 | **0.418** | 0.391 | 0.403 | +0.0120 ±0.0065 | 35/12/25 |
+| bloque E | 72 | 0.240 | 0.297 | 0.362 | 0.416 | **0.441** | +0.0250 ±0.0077 | 45/5/22 |
+
+### Efecto de la corrección, pareado escenario a escenario (viejo → nuevo)
+
+| solver | Δ pareada | lectura |
+|---|---|---|
+| random | −0.003 ±0.002 | nulo |
+| greedy | −0.008 ±0.003 | pequeño |
+| **cbaa** | **−0.036 ±0.003** | pierde lo que ganaba con robots secos |
+| **cbba** | **−0.035 ±0.003** | ídem |
+| **dec-mcts** | **−0.001 ±0.002** | **NULO: no le afecta** |
+
+⇒ El giro del resultado **no procede de una mejora de Dec-MCTS** sino de que las dos subastas
+dejan de completar tareas con robots que ya deberían estar retirados (8.7–8.9 % de las suyas,
+frente al 1.2 % de dec-mcts). La Δ global se movió **+0.0344 ±0.0034**.
+
+### Otras magnitudes vigentes
+
+- **Bajas por batería/escenario** (`failed_agents`, ya válido): random 2.79 · greedy 2.54 ·
+  cbba 2.51 · cbaa 1.83 · **dec-mcts 1.48**. Coincide con la reconstrucción desde las trazas de la
+  sesión 10 (2.80/2.53/2.48/1.78/1.39) ⇒ **aquella reconstrucción era buena**.
+  Bloque A, fracción de flota: cbba 55 % · random 45 % · cbaa 37 % · greedy 35 % · dec 30 %.
+  Dec-MCTS es el único cuyas bajas **decrecen** con la incertidumbre (2.04 det → 0.83 fue).
+- **Tareas completadas por robots ya sin batería**: 8.7–8.9 % → **0.01 %**.
+- **Pendientes bloque A**: det cbba +0.0135 (t=6.9), dec +0.0121 (t=7.4), Δ −0.0014 (t=−0.7);
+  est cbba +0.0120 (t=4.5), **dec +0.0016 (t=0.7)**, Δ **−0.0104 (t=−3.5)**, cruza cero hacia los
+  4 robots.
+- **Dominancia pareada**: dec > random 359, > greedy 351, > cbaa 265, > cbba 244; cbba > cbaa 215.
+  Máxima recompensa: **dec 190**, cbaa 89, cbba 80, greedy 1, random 0.
+  Arrepentimiento: dec **0.018** · cbba 0.061 · cbaa 0.119 · greedy 0.174 · random 0.252.
+- ***Leave-one-block-out***: sin A +0.0456 · sin B +0.0401 · **sin C +0.0313** · sin D +0.0508 ·
+  sin E +0.0476. **Ninguna exclusión cambia el signo** ⇒ se cayó la lección metodológica del v3.
+- **Intento × éxito**: det int 0.586 vs 0.532 y éxito 1.000 en ambos; est int 0.588 vs 0.567 y
+  éxito 0.759 vs 0.719; fue int 0.562 vs 0.563. Correlaciones: r(Δint)=0.75, r(Δéxito)=0.47.
+- **Secundarias**: distancia/robot dec 18.23 vs cbba 11.85 (+53.8 %); por tarea completada 8.34 vs
+  6.33 (+31.9 %); **instante medio de retirada** dec 54.22 · random 51.31 · greedy 50.72 ·
+  cbba 44.91 · **cbaa 35.02**; makespan 52.6–54.9 salvo dec 59.2; cpu dec 13.96 s (1857× cbba),
+  bloque A de 0.59 s (2 robots) a 40.26 s (10).
+  ⚠️ `t_retiro_medio` promedia **solo los eventos `robot_finished`**: los robots que mueren NO
+  cuentan, y los escenarios sin ninguna retirada quedan fuera (48 en random, 51 en greedy, 20 en
+  cbba, 11 en cbaa, **1 en dec-mcts**) ⇒ sesga al alza las medias de los baselines.

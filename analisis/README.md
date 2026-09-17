@@ -52,6 +52,11 @@ escenario** y error estándar calculado **entre escenarios**. El cuaderno está 
 **registro descriptivo**: los apartados enuncian qué se mide y cómo se obtiene, las explicaciones
 mecanísticas van marcadas como *interpretación* y las valoraciones quedan para el capítulo 7.
 
+**Figuras para la memoria**: `guardar(fig, nombre, memoria='<fichero>')` guarda, además de la
+figura normal, una variante **sin título** en `memoria/figures/06_experimentación_pruebas/`, que es
+la que se incrusta en el capítulo 6 (allí el pie de figura cumple esa función). La copia
+`figuras/<nombre>_memoria.png` permite revisarla sin abrir el PDF.
+
 **Convenio de color, constante en todas las figuras**: `Random` gris · `Greedy` morado ·
 `CBAA` verde · **`CBBA` rojo** · **`Dec-MCTS` azul**. En las figuras de diferencias, rojo = Δ<0
 (ventaja de CBBA) y azul = Δ>0 (ventaja de Dec-MCTS). Los cortes que **no** son un solver
@@ -61,7 +66,7 @@ grises, para no confundirse con esa codificación.
 | Parte | Secciones | Figuras |
 |---|---|---|
 | **1 · Análisis conjunto** | 1.1 panorama global y por bloque · 1.2 el agregado es un empate (Δ pareada, distribución, por régimen) · 1.3 dominancia pareada y arrepentimiento · 1.4 **cuánto del resultado es del catálogo** (Δ por bloque + *leave-one-block-out*) | `p1_panorama`, `p1_agregado`, `p1_dominancia`, `p1_composicion` |
-| **2 · Análisis por bloque** | 2.1 A equipo (pendientes frente a $R$) · 2.2 B ventana (pareado contra el control) · 2.3 C carga (rejilla robots × carga) · 2.4 D coaliciones · 2.5 E gradiente de incertidumbre | `p2_A_escalado`, `p2_B_ventana`, `p2_C_carga`, `p2_D_coaliciones`, `p2_E_incertidumbre` |
+| **2 · Análisis por bloque** | 2.1 A equipo (pendientes frente al tamaño del equipo $n$) · 2.2 B ventana (pareado contra el control) · 2.3 C carga (rejilla robots × carga) · 2.4 D coaliciones · 2.5 E gradiente de incertidumbre | `p2_A_escalado`, `p2_B_ventana`, `p2_C_carga`, `p2_D_coaliciones`, `p2_E_incertidumbre` |
 | **3 · Análisis adicional** | 3.1 mortalidad de robots · 3.2 descomposición intento × éxito · 3.3 distancia recorrida · 3.4 coste computacional · 3.5 ocupación del horizonte | `p3_mortalidad`, `p3_mecanismo`, `p3_distancia`, `p3_coste`, `p3_tiempos` |
 
 Cierra con una **síntesis** de siete puntos y la lista de lo que hay que declarar al presentar

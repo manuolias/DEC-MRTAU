@@ -4,6 +4,264 @@ Entrada más reciente arriba. Formato: fecha · objetivo · qué se hizo · qué
 
 ---
 
+## 2026-09-17 — Sesión 12: CORRECCIÓN DEL SIMULADOR, REEJECUCIÓN Y ACTUALIZACIÓN DEL CAP. 6
+
+🔴🔴 **El resultado central del trabajo ha cambiado: Dec-MCTS ya no empata, GANA.**
+
+### Dos correcciones, no una
+
+**(1) Navegar ya puede matar** (`src/simulator.cpp:44`): se quitó el `std::max(0.0, ...)` de
+`calculateBatteryConsumption`. Las tres ramas `finalBattery < 0` (293, 328, 390) se activaron solas,
+como estaba previsto en D-16. Ningún solver hubo que tocarlo por esto.
+
+**(2) El fracaso por falta de batería deja de re-tarifarse** (pregunta nueva del usuario, misma
+sesión). Diagnóstico: el simulador **ya truncaba** la duración a `tFail` (`startTask:470-474`), pero
+`endTask` recalculaba el consumo desde el flag `success` y, al estar ya en `false`, aplicaba la
+tarifa del fracaso —los 10 planos—. Un robot que se quedaba seco en el segundo 17 pagaba 10 y
+**sobrevivía con 7**. Corregido pasando dos bits por el `payload` del `TASK_END`:
+bit 0 = desenlace muestreado, bit 1 = interrumpido por batería; `endTask(TaskID, int)` cobra ahora
+con la distribución del **desenlace muestreado**, de modo que el intento truncado cuesta
+exactamente la batería que quedaba. Añadido `BATTERY_EPS = 1e-9` en `definitions.hpp` porque el
+cargo cae justo sobre el nivel y el redondeo dejaba residuos de ~1e-16 que salvaban al robot.
+Replicado en **`solver_DecMCTS_v4.hpp`** (`processTaskStart`/`processTaskEnd` + la llamada de la
+línea 1051), donde además **se añadió el truncamiento de la duración, que la réplica no hacía**.
+⚠️ **v1–v3 NO se tocaron** (decisión del usuario): solo v4 se evalúa. Nueva divergencia a declarar
+junto a las de D-06.
+
+**Medición previa sobre las trazas viejas** (cuánto pesaba el defecto 2): fracasos por batería,
+% de intentos — random 14.6 · greedy 8.6 · cbba 1.6 · cbaa 1.2 · **dec-mcts 0.6**. En los tres
+coordinados **el 100 % de esos robots sobrevivía**. En determinista no se dispara nunca (σ=0 y
+reservan exactamente 10), lo que explica que el det sea el régimen menos afectado.
+
+**Verificación previa al lanzamiento** (3 escenarios × 5 solvers, dos de ellos de coaliciones):
+`failed_agents` == eventos `robot_failed`; `available+failed+finished == n` en las 15 (ninguna
+coalición huérfana bloquea el episodio); y el truncamiento observado en la traza
+(`initial_level: 10.3329 → final_level: -1.8e-15`).
+
+### Reejecución
+
+`logs/eval_catalogo_v3` → `logs/eval_catalogo_v3_bug`, `analisis/catalogo_v3.csv` →
+`analisis/catalogo_v3_bug.csv`. Tanda nueva: 5 400 logs, 6 procesos, **43 min**. Cuaderno
+reejecutado entero sin editar (81 celdas, 0 errores); las 14 figuras y las 7 de
+`memoria/figures/06_experimentación_pruebas/` se regeneraron solas.
+📌 **Decisión del usuario: la tanda vieja se BORRA en la limpieza (objetivo 3.1)**, no entra en la
+memoria.
+
+### El resultado
+
+| | con el defecto | corregido |
+|---|---|---|
+| Δ dec−cbba | +0.0086 ± 0.0040 (t=2.1) | **+0.0431 ± 0.0039 (t=10.9)** |
+| G/E/P | 158/42/160 | **244/33/83** |
+| det · lev · est · fue | +0.020 · −0.010 · +0.006 · **−0.050** | +0.054 · +0.028 · +0.038 · **+0.008** |
+| bloques A/B/C/D/E | −0.013 / +0.021 / +0.061 / −0.006 / −0.019 | **+0.033 / +0.055 / +0.090 / +0.012 / +0.025** |
+
+**Gana en los cuatro regímenes y en cuatro de los cinco bloques** (en D sigue ganando cbaa, 0.418).
+Máxima recompensa en **190 de 360** (antes 108); arrepentimiento 0.018 (antes 0.034, cbba 0.061).
+
+**Por qué, y es la confirmación exacta del diagnóstico de la sesión 10** (comparación pareada entre
+las dos tandas): random −0.003 ± 0.002 · greedy −0.008 ± 0.003 · **cbaa −0.036 ± 0.003** ·
+**cbba −0.035 ± 0.003** · **dec-mcts −0.001 ± 0.002 (nulo)**. Dec-MCTS **no se mueve**; las dos
+subastas pierden 0.035 cada una, que es justo el 8.7–8.9 % de tareas que completaban con robots ya
+sin batería frente al 1.2 % de dec-mcts.
+
+**Validación de la reconstrucción de la sesión 10**: `failed_agents`, ya válido, da
+2.79 · 2.54 · 1.83 · 2.51 · 1.48; la reconstrucción desde las trazas daba 2.80 · 2.53 · 1.78 ·
+2.48 · 1.39. Y las tareas completadas por robots secos caen del 8.9 % al **0.01 %**.
+
+**Lo que sobrevive**: el escalonamiento de coordinación; el escalado del bloque A (est: dec +0.0016
+t=0.7 frente a cbba +0.0120 t=4.5; pendiente de la Δ −0.0104, t=−3.5, con cruce hacia los 4
+robots); la ventana escalonada como su mejor terreno (+0.084, **12/12**); cbaa como mejor del
+bloque D; el gradiente de la rejilla de carga; y las tasas de éxito **exactamente 1.000** en
+determinista para los tres coordinados (resuelve la 2ª marca roja, aunque por otro motivo: con σ=0
+ningún intento se trunca).
+
+**Lo que se cayó**: 🔴 **el leave-one-block-out ya no invierte nada** (sin cualquier bloque la Δ
+queda entre +0.0313 y +0.0508, siempre positiva) ⇒ **la lección metodológica de §6.2.3 y el cierre
+del capítulo perdieron su tesis**; el déficit de cobertura de §6.4.2 (ahora en est la cobertura
+está igualada y la ventaja viene del **acierto**: 0.759 vs 0.719); y la frase de §6.4.3 sobre «el
+bajo coste que navegar conlleva».
+
+### Capítulo 6 actualizado (autorizado por el usuario: cifras + prosa obsoleta)
+
+Las 6 tablas, todas las cifras y los 6 gráficos. Reescritos: §6.2.1 (escalones y estabilidad),
+§6.2.2 (distribución de Δ y regímenes), la lectura de la Tabla 6.2, **§6.2.3 entera**, §6.3.1–6.3.5,
+**§6.4.1 entera** (las 3 marcas `\red{}` eliminadas), §6.4.2, los tres párrafos de §6.4.3 y la
+**síntesis**, que pasa de 6 a 7 puntos (se añade el de mortalidad y se recupera el fragmento
+huérfano de la distancia). Verificado: 0 marcas rojas, entornos balanceados, columnas correctas.
+
+⚠️ **Dos frases que arrastraban una inexactitud previa y se corrigieron de paso**: «las tres primeras
+separaciones… ninguna cambia de signo en ninguno de los cinco bloques» (era falsa ya con el
+catálogo anterior: cbaa > cbba en el bloque D) y la justificación de la pareja dec/cbba en §6.1
+(«el único par cuya ordenación no resuelve el ranking global»).
+
+### Revisión del usuario, misma sesión — §6.3.2 rehecha con figura en vez de tabla
+
+Le gustó el enfoque general y confirmó que **la Δ sigue siendo pertinente** («establece la mejora
+introducida por mi algoritmo»), pero señaló apartados donde ya no es lo más informativo. El primero,
+el **bloque B**: se sustituye la Tabla 6.4 por la figura del cuaderno (`p2_B_ventana` →
+`memoria/figures/06_experimentación_pruebas/ventana.pdf`), que muestra **los cinco algoritmos** y no
+solo la diferencia.
+
+Cambios en la celda 36 del cuaderno, por petición suya:
+- Panel (a) de **barras a puntos unidos por líneas** (se ven mejor las diferencias).
+- **Eje x reordenado de ventana menos a más restrictiva: `A` ancha → `P` solo plazo → `E` estrecha
+  → `C` escalonada** (antes `E, P, C, A`). Es lo que justifica usar líneas: ahora el eje tiene orden.
+- Panel (b) igual, con el mismo orden nuevo; leyenda movida a `upper left` (en `lower left` pisaba
+  el bigote de la primera barra).
+- `guardar(..., memoria='ventana')` ⇒ versión **sin título** para la memoria.
+
+**Hallazgos que la tabla escondía y que ahora sostienen el apartado**: (a) **solo Dec-MCTS y CBBA
+decrecen de forma monótona** al endurecer la ventana —son los dos únicos que planifican secuencias—
+mientras Random apenas se mueve (rango 0.07); (b) la pérdida de CBBA (0.199) es **mayor** que la de
+Dec-MCTS (0.137); (c) en determinista **la Δ crece monótona con la restricción** (+0.021 → +0.039 →
++0.050 → +0.084), cosa que **no ocurre en estocástico** (+0.058, +0.066, +0.019, +0.062) y así se
+declara; (d) **CBAA supera a CBBA con el plazo escalonado** (0.456 vs 0.448), lo que anticipa el
+bloque D. El último párrafo se conservó íntegro, como pidió.
+⚠️ **Se cayó del apartado el «efecto vs control»** (aislar la espera): con los datos nuevos vale
+−0.011 ± 0.012 en det y +0.047 ± 0.018 en est, ya no aísla nada limpio y la figura no lo muestra.
+
+**Tabla 6.6**: el usuario corrigió su propio encargo — la tercera columna debía ser el **instante
+medio de retirada**, no el último instante de ejecución (*makespan*). Sustituida: random 51.31 ·
+greedy 50.72 · cbaa **35.02** · cbba 44.91 · **dec-mcts 54.22**.
+⚠️ **Al hacerlo salió un matiz que había que declarar**: `t_retiro_medio` promedia los eventos
+`robot_finished`, o sea **solo los robots que concluyen su misión**; los que mueren emiten
+`robot_failed` y **no cuentan**. Por eso (a) la descripción anterior del párrafo «Uso del horizonte»
+—«por concluir su plan, por no disponer de tareas alcanzables o **por quedarse sin batería**»— era
+falsa y se corrigió, y (b) los escenarios en que ningún robot llega a retirarse quedan fuera del
+promedio: **48 en random y 51 en greedy**, frente a **1 en dec-mcts**, lo que sesga sus medias al
+alza. Declarado en el pie de la tabla. El *makespan*, al salir de la tabla, se cita ahora con sus
+cifras dentro del párrafo para que siga siendo verificable.
+
+**Tres figuras con la escala rota tras la reejecución** (detectadas por el usuario al revisar):
+- **Fig. 1 `p1_panorama` (b)**: la ★ del bloque C chocaba con la leyenda superior. `ylim` fijo
+  `(0, 0.70)` → **`(0, bl.values.max() * 1.30)`**.
+- **Fig. 2 `p1_agregado` (b)**: el eje `(-0.107, 0.048)` se fijó cuando había Δ negativas. Con las
+  cuatro Δ positivas, la mitad inferior quedaba vacía y las etiquetas `+0.054` y `+0.038` se salían
+  por arriba contra el título; la fila `n=` estaba clavada a mano en `y=-0.098`. Ahora **los límites
+  y la fila `n=` se derivan de los datos** (`lo`, `hi`, `span`).
+- **Fig. 3 `p2_A_escalado` (c)**: la leyenda (`lower left`) pisaba el punto de incertidumbre media
+  con 4 robots (−0.028). Se recogen **todos los valores trazados, medias y rectas OLS**, y el eje
+  reserva un 42 % de `span` por debajo para la leyenda.
+⚠️ **Los tres arreglos son data-driven a propósito**: eran límites absolutos escritos a mano para
+los datos viejos, así que volverían a romperse en la siguiente reejecución.
+
+También por decisión suya: **celda markdown 55 del cuaderno actualizada** (describe ahora los dos
+modos de agotar la batería y relega el defecto a una nota histórica, señalando que la
+reconstrucción desde las trazas queda como **comprobación** y que coincide con `failed_agents`).
+El cuaderno se reejecutó dos veces, sin errores. El cap. 6 pasa a **7 figuras y 5 tablas**.
+
+### CIERRE — el usuario da el capítulo 6 por ACABADO (17-09-2026)
+
+Sus palabras: *«Voy a dar el capítulo por acabado, esta vez sí con el error resuelto y con aún
+mejores resultados de los esperados.»* Y sobre el enfoque, resuelto: **la Δ dec−cbba se mantiene
+como hilo del capítulo** porque *«establece la mejora introducida por mi algoritmo»*, aunque ya no
+sea la comparación más reñida. La versión final es suya, sobre el texto actualizado por el
+asistente. Estado: **7 figuras, 5 tablas**, ninguna marca `\red{}`.
+
+**Qué recortó de la versión del asistente** (patrón habitual suyo, ya documentado: poda lo
+explicativo y lo cualificado):
+- Las explicaciones mecanísticas largas → «Una posible explicación es que…».
+- En el bloque B: el dato de Random (rango 0.07), el «12 de 12», el desglose por equipo de la
+  ventana ancha y **el párrafo entero sobre CBAA** que anticipaba el bloque D.
+- En §6.4.2: la explicación de **por qué** las tasas de éxito valen exactamente 1 en determinista
+  (σ=0 ⇒ ningún intento se trunca) y las cifras de los baselines (0.874 / 0.927).
+- En §6.4.1 y §6.4.3: las cifras de apoyo de CBAA y el detalle del pie de la Tabla 6.6.
+- En §6.3.1: la frase de cierre sobre el corte donde la ventaja se cancela.
+**Añadió** a la síntesis los recuentos «a CBAA en 265 y a CBBA en 244».
+
+✅ **UN AVISO, señalado al cerrar y CORREGIDO por el usuario acto seguido**: en §6.4.3, párrafo «Uso
+del horizonte», su versión final había **restaurado** el paréntesis «*(por concluir su plan, por no disponer de
+tareas alcanzables o **por quedarse sin batería**)*». Es **falso para la magnitud que se mide**:
+`t_retiro_medio` promedia solo los eventos `robot_finished`, y un robot que agota la batería emite
+`robot_failed`, luego **no entra**. Y **contradice el pie de su propia Tabla 6.6**, dos líneas más
+arriba, que dice «los robots que agotan la batería no intervienen en él». Arreglo de una línea:
+borrar «o por quedarse sin batería», que es lo que hizo. El paréntesis dice ahora «por concluir su
+plan o por no disponer de tareas alcanzables», coherente con el pie de la tabla.
+📌 **Lección para futuras revisiones**: al reescribir, el usuario tiende a restaurar redacciones
+previas; si una de ellas se había corregido por ser **factualmente falsa** (y no por estilo), hay
+que volver a señalarlo, porque él no tiene por qué recordar el motivo del cambio.
+
+### Qué queda
+
+1. ✅ **Enfoque decidido: se mantiene la Δ dec−cbba como hilo del capítulo 6.** La duda que él mismo
+   planteó (*«si Dec-MCTS es muy superior, el estudio de su diferencia deja de estar justificado»*)
+   la resolvió al revisar: la conserva porque **establece la mejora que aporta su algoritmo**.
+2. ✅ Celda markdown 55 del cuaderno actualizada. ✅ §5.1 del cap. 5 matizado por el usuario para
+   distinguir los dos modos de fracaso. ✅ Las tres figuras con la escala rota, arregladas.
+3. ✅ El fleco de §6.4.3 lo corrigió el usuario al cerrar. **Capítulo 6 sin pendientes.**
+4. 🔴 **LO PRIMERO DE LA PRÓXIMA SESIÓN: rehacer `06_conclusiones.md`.** Sus cinco ideas y sus DOS
+   addendums sostienen la tesis del empate y la de «el conjunto de prueba determina la conclusión»,
+   **ambas caídas**. Es la fuente que el protocolo obliga a leer antes de redactar cualquier
+   capítulo, así que mientras no se rehaga, quien la lea escribirá el capítulo 7 sobre premisas
+   falsas. Material para rehacerla: esta entrada, la sección «REEJECUCIÓN 17-09-2026» de
+   `03_experimentos.md` y el propio capítulo 6, ya cerrado.
+5. Después, **capítulo 7** (`07_conclusiones_trabajo_futuro.tex`, etiqueta
+   `cap:conclusiones_trabajo_futuros`). Antes hay que decidir **D-03** (cómo citar el paper del
+   tutor, estructural para ese capítulo), D-13 y D-14.
+6. Luego el **capítulo 1** y la **limpieza del repositorio** (objetivo 3.1), que ahora incluye
+   borrar `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv`, además del renombrado de
+   escenarios (D-17).
+
+---
+
+## 2026-09-16 — Sesión 11: pulido de figuras y CIERRE DEL CAPÍTULO 6 por el usuario
+
+**Cómo terminó**: el usuario reescribió el cap. 6 sobre el borrador de la sesión 10 y lo dio por
+terminado, dejando **tres apartados marcados con `\red{PENDIENTE DE ACTUALIZACIÓN}`** porque
+dependen del defecto de los «robots zombis». Estado final: **4 187 palabras, 6 tablas y 6 figuras**.
+
+**Repaso de figuras, una a una (peticiones del usuario)**
+- Se añadió al cuaderno el mecanismo `guardar(fig, nombre, memoria='<fichero>')`: guarda la figura
+  normal en `analisis/figuras/` y, además, **una variante sin `suptitle`** directamente en
+  `memoria/figures/06_experimentación_pruebas/`, más un `<nombre>_memoria.png` para revisarla.
+  ⚠️ Usa `RUTA.resolve()`: con nbconvert el cwd es `analisis/` y `Path('.').parent` sigue siendo `.`.
+- **Fig. 1 panorama**: sin título.
+- **Fig. 2 diferencia pareada**: sin título; fuera el bloque de texto que se pisaba con las líneas;
+  las dos líneas verticales pasan a la leyenda como **«mediana = 0.0000»** y «media = +0.0086»
+  (⚠️ la continua **no era** la mediana: se dibujaba en 0; ahora se dibuja en la mediana, que vale
+  exactamente 0); los valores de (b) se colocan fuera del bigote de ±EE.
+- **Fig. 3 escalado**: sin título; **fuera los rótulos de pendiente** de los tres paneles (se
+  comentan en el texto, que ya las llevaba todas); título de (c) acortado; `wspace` para liberar
+  la etiqueta del eje.
+- **Fig. 4 rejilla de carga**: **sustituye a la tabla** de §6.3.3 (el usuario: «mucho número y no
+  hay nada claro»); sin título; título de (c) condensado; fuera los ticks sueltos de (b).
+- **Fig. 6 gradiente de incertidumbre**: **sustituye a la tabla** de §6.3.5; sin título.
+- **Fig. 5 intento × éxito**: el usuario pidió eliminar el diagrama de dispersión («no entiendo
+  absolutamente nada») → se quitó; luego preguntó **qué significaba la correlación**, y al
+  explicárselo pidió **recuperarla con las aclaraciones adecuadas**. Se rehízo como **dos paneles
+  separados con ejes idénticos** (uno por término) con su `r` y `r²` anotados, y el capítulo
+  explica ahora cómo se construye cada variable, qué mide `r` (la variación **entre escenarios**,
+  no la media) y la cautela de que ambos correlacionan por construcción al ser una identidad.
+- **Tabla 6.6** rehecha a petición suya con solo las métricas de su apartado y en su orden:
+  distancia por robot · distancia por tarea completada · último instante de ejecución
+  (*makespan*) · tiempo por ejecución.
+
+**🔴 Hallazgo del camino: la descomposición intento × éxito dice más que la correlación.**
+Con $\Delta R \approx \bar E\,\Delta I + \bar I\,\Delta E$ (identidad a primer orden, R²=0.995):
+
+| régimen | cobertura | acierto | ΔR |
+|---|---|---|---|
+| det | +0.0201 | +0.0000 | +0.0201 |
+| lev | −0.0185 | +0.0077 | −0.0099 |
+| est | −0.0156 | **+0.0208** | +0.0057 |
+| fue | **−0.0434** | −0.0030 | −0.0497 |
+
+⇒ **toda la desventaja de dec-mcts bajo incertidumbre es cobertura**, y el acierto la compensa
+—hasta darle la vuelta en `est`—. Sobre el agregado, el +0.0086 procede **casi todo del acierto**
+(+0.0096 frente a −0.0011). La tabla **no entró en la memoria** (el usuario no la pidió), pero
+está aquí por si hace falta en el cap. 7.
+
+**Cierre**: se le señalaron tres erratas y un fragmento huérfano en la síntesis, **que corrigió**.
+Sobre el resto del contenido del borrador que no llegó a su versión (irreproducibilidad, ejecutor
+idempotente, las cuatro condiciones de lectura), respondió que **no es necesario en la memoria**:
+✅ decisión cerrada, **no volver a proponerlo**.
+
+**Qué queda**: 🔴 **la corrección del simulador**, que es lo primero de la próxima sesión.
+Plan completo y checklist de lo que hay que revisar en el capítulo: **D-16 de `05_dudas.md`**.
+
+---
+
 ## 2026-09-14 — Sesión 10: redacción del capítulo 6 (Experimentación y pruebas)
 
 **Petición del usuario**: escribir `memoria/sections/06_experimentación_pruebas.tex` con **la misma
@@ -44,8 +302,52 @@ extensión; y **abrir el capítulo con la sección que él dejó comentada al fi
    anteriores sin permiso.
 2. **Extensión**: 4 393 palabras frente a las 3 024 del cap. 4 y las 2 520 del cap. 5. Se ofreció
    recortar más (candidatos: la síntesis y el párrafo de dominancia de §6.2.2).
-3. **Rótulos de las figuras**: las cuatro llevan título propio además del pie de figura. Se ofreció
-   regenerar versiones sin `suptitle` para la memoria si prefiere que el pie haga todo el trabajo.
+3. ✅ **RESUELTO para la figura 1** (misma sesión): el usuario pidió quitarle el título en la
+   versión de la memoria, por ser redundante con el pie. Se añadió al cuaderno el mecanismo
+   general: `guardar(fig, nombre, memoria='<fichero>')` guarda la figura normal (con título) en
+   `analisis/figuras/` y, además, una variante **sin `suptitle`** directamente en
+   `memoria/figures/06_experimentación_pruebas/<fichero>.pdf`, más un
+   `analisis/figuras/<nombre>_memoria.png` para revisarla. Solo `p1_panorama` lo usa por ahora;
+   las figuras 2-4 siguen llevando título y conviene igualarlas si el usuario lo confirma.
+   ⚠️ Detalle: hay que usar `RUTA.resolve().parent.parent`, porque al ejecutar con nbconvert el
+   directorio de trabajo es `analisis/` y `Path('.').parent` sigue siendo `.`.
+
+**🔴 Añadido en la revisión de la sesión 10 — mecanismo de mortalidad cerrado.** El usuario
+detectó que la explicación de §6.4.1 no cuadraba con los números («si el mecanismo existe, ¿por qué
+cbaa/cbba/dec no pierden ni un robot?»). Tenía razón: era correcta pero incompleta. El criterio
+exacto es que **el cargo por resolver un intento nunca supera 10, luego muere quien emprende un
+intento con menos de 10 de batería**, y los tres coordinados reservan exactamente esas 10 unidades
+(la demanda esperada, que en el v3 vale 10 para toda tarea). Detalle completo y verificación
+empírica en **D-16** de `05_dudas.md`. Se reescribió el párrafo de la memoria, se amplió el texto
+de §3.1 del cuaderno y se añadió una **celda de verificación** que relee los 5 400 registros
+(la única del cuaderno que depende de `logs/`, protegida con `if LOGS.is_dir()`).
+
+**🔴🔴 Hallazgo mayor de la revisión: el simulador no mata a nadie navegando.** Tirando del hilo
+de la pregunta anterior apareció que `calculateBatteryConsumption` satura en cero, de modo que un
+robot sin batería para llegar a su destino **no muere: llega a cero y sigue desplazándose gratis**.
+El usuario lo califica de error claro y decide, dado que es tarde para reejecutar, **adoptar como
+recuento de bajas el reconstruido de las trazas**. Consecuencias, todas ya aplicadas:
+- **Los cinco algoritmos pierden robots** (2.80 / 2.53 / 1.78 / 2.48 / 1.39 por escenario), no solo
+  los baselines. En el bloque A, **cbba es el que más flota pierde (55 %)** y **dec-mcts el que
+  menos (27 %)**. Se invierte el sentido de lo que decía el apartado.
+- **La exposición al defecto no es uniforme**: 8.9 % de las tareas de cbaa y 8.7 % de las de cbba
+  las completan robots ya sin batería, frente al 1.2 % de dec-mcts.
+- Cuaderno: §3.1 reescrita con una **única pasada por los registros** que produce las tres cosas
+  (umbral de los 10, bajas reconstruidas y exposición), tabla y figura `p3_mortalidad` rehechas con
+  los cinco solvers.
+- Memoria: §6.4.1 reescrita y retitulada «Robots que agotan la batería», tabla de magnitudes
+  secundarias actualizada, nuevo punto en la síntesis y nueva condición de lectura.
+📌 Detalle completo y tabla en **D-16** de `05_dudas.md`. Si alguna vez se corrige el simulador,
+**esta es la reejecución que más cambiaría los resultados del trabajo**.
+
+**📋 Decisión del usuario al cerrar la sesión: se corregirá el simulador, pero DESPUÉS.** Orden
+acordado: (1) él termina el cap. 6 y escribe el cap. 7 *como si el defecto no existiera*;
+(2) se corrige el simulador —comprobé que es **una sola línea** y que **ningún solver hay que
+tocarlo**, porque la réplica interna de Dec-MCTS ya modela la muerte por navegación—;
+(3) reejecución completa, cuaderno reejecutado sin editar y actualización **solo de los valores y
+gráficos del cap. 6**; (4) relectura del capítulo para cazar lo que se haya quedado obsoleto.
+📌 **Plan completo, comandos, la trampa de la idempotencia del ejecutor y la tabla de riesgo por
+apartado: «PLAN DE CORRECCIÓN Y REEJECUCIÓN» en D-16 de `05_dudas.md`.**
 
 **Qué queda**: capítulo 7 (conclusiones y trabajo futuro) con las ideas 1, 2, 4 y 5 de
 `06_conclusiones.md`; capítulo 1; y la limpieza del repositorio (D-17, renombrado de escenarios).

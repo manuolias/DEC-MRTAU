@@ -15,46 +15,49 @@ emerge de la comunicación.
 **Hipótesis a demostrar**: Dec-MCTS (el algoritmo más elaborado, el que más esfuerzo ha
 costado) debe rendir **por encima** de los otros cuatro solvers (random, greedy, CBAA, CBBA).
 
-**Estado de la hipótesis (tras la sesión 8): NI se confirma NI se refuta — depende del
-conjunto de prueba, y esa es la conclusión.**
+🔴 **Estado de la hipótesis (tras la sesión 12): SE CONFIRMA.** Al corregir los dos defectos de
+batería del simulador (navegar no mataba; el intento truncado por batería se re-tarifaba con la
+tarifa del fracaso) la Δ frente a cbba pasó de **+0.0086 (empate)** a **+0.0431 ± 0.0039**, con
+244/33/83, y Dec-MCTS gana **en los cuatro regímenes y en cuatro de los cinco bloques** (en D gana
+cbaa). La corrección **no le beneficia a él**: su recompensa no se mueve (−0.001 ± 0.002); son
+cbaa y cbba las que pierden 0.035 cada una, porque completaban el 8.7–8.9 % de sus tareas con
+robots que ya habían agotado la batería.
+⚠️ **Todo lo que sigue en este fichero sobre el «empate» y sobre que «el conjunto de prueba
+determina la conclusión» está OBSOLETO**, igual que los dos addendums de `06_conclusiones.md`.
+✅ **Enfoque resuelto por el usuario (17-09-2026)**: el cap. 6 conserva la Δ dec−cbba como hilo,
+porque «establece la mejora introducida por mi algoritmo». Detalle: sesión 12 de `04_bitacora.md`
+y «REEJECUCIÓN 17-09-2026» en `03_experimentos.md`.
 
-| | catálogo v1 (obsoleto) | catálogo v2 (obsoleto) | **catálogo v3 (oficial)** |
-|---|---|---|---|
-| escenarios × réplicas | 288 × 10, batería 100 | 360 × 3, batería 40 | **360 × 3, batería 40** |
-| regímenes (σ / coste de fallo) | — | 0/3/10/10 · 0/3/10/10 | **0/1/3/5 · 10 fijo** |
-| cbba | **0.6031** | 0.482 | 0.494 |
-| dec-mcts-v4-g9999 | 0.5676 | **0.487** | **0.502** |
-| Δ pareada | **−0.0355 ± 0.0034** | +0.0047 ± 0.0044 | **+0.0086 ± 0.0040** |
-| recuento | 67 / 26 / 195 | 154 / 33 / 173 | **158 / 42 / 160** |
+**Lo sólido, sobre la tanda reejecutada (sesión 12):**
+- **Δ positiva en los cuatro regímenes**, decreciente con la incertidumbre: det +0.054 ± 0.005 ·
+  lev +0.028 ± 0.019 · est +0.038 ± 0.006 · **fue +0.008 ± 0.016 (ya no separable de cero)**.
+- **Δ positiva en los cinco bloques**: A +0.033 · B +0.055 · **C +0.090** · D +0.012 · E +0.025.
+  El *leave-one-block-out* deja el agregado entre +0.031 y +0.051: **ninguna exclusión cambia el
+  signo** ⇒ lo que depende de la composición del catálogo es la **magnitud**, no la ordenación.
+- **Escalado (bloque A)**: bajo incertidumbre la pendiente de Dec-MCTS frente al nº de robots es
+  **+0.0016 (t = 0.7)**, nula, frente a **+0.0120 (t = 4.5)** de cbba; la pendiente de la propia Δ
+  es **−0.0104/robot (t = −3.5)** y cruza el cero hacia los 4 robots. En determinista las dos
+  pendientes casi coinciden (+0.0121 vs +0.0135) y la Δ no decae (−0.0014, t = −0.7).
+- **Ventana escalonada**: +0.084, gana **12 de 12** en determinista. Su mejor terreno. En el bloque B
+  solo dec-mcts y cbba decrecen de forma monótona al endurecer la ventana, y cbba pierde más
+  (0.199 frente a 0.137).
+- **Carga (bloque C)**: su mejor bloque (+0.090). La Δ decrece de forma monótona con el nº de robots
+  en las ocho columnas; en el eje de la carga no es monótona.
+- **Coaliciones (bloque D)**: único bloque donde **cbaa** es el mejor de los cinco (0.418 vs 0.403 de
+  dec y 0.391 de cbba) y único donde dec-mcts no lidera. La uniforme `q2` anula la ventaja
+  (−0.007 det) y la mixta `qm` no (+0.028 det).
+- **Intento × éxito**: en determinista toda la ventaja es **cobertura** (0.586 vs 0.532, éxito 1.000
+  en ambos); bajo incertidumbre la cobertura se iguala y la sostiene el **acierto** (0.759 vs
+  0.719). Entre escenarios manda la cobertura: r = 0.75 frente a 0.47.
+- **Mortalidad**: `failed_agents` ya es válido — random 2.79 · greedy 2.54 · cbba 2.51 · cbaa 1.83 ·
+  **dec-mcts 1.48**, el más bajo, y el único cuyas bajas **decrecen** con la incertidumbre.
+- **Coste**: dec-mcts recorre un +53.8 % de distancia por robot que cbba y tarda 13.96 s por
+  ejecución (≈1 900× cbba).
 
-El v2 dio la vuelta al signo del agregado **sin tocar una línea de código del solver**, y el v3
-lo mantiene; pero en ambos es un **empate** y por recuento de escenarios sigue siendo una moneda
-al aire. La lectura correcta —y la aportación metodológica más fuerte del trabajo— es que **el
-diseño del conjunto de prueba determina la conclusión**, ahora demostrado en las dos direcciones.
-
-**Lo que es sólido en el v3, por bloque y por régimen:**
-- **Determinista: Dec-MCTS gana** (+0.020 ± 0.006). Incertidumbre media: empate (+0.006 ± 0.006);
-  incertidumbre fuerte: **pierde claramente** (−0.050 ± 0.017).
-- **Escalado** (la formulación más limpia de la tesis): bajo incertidumbre la pendiente propia de
-  Dec-MCTS frente a $R$ es **+0.0040 (t = 1.5)**, indistinguible de cero, frente a
-  **+0.0195 (t = 6.6)** de cbba — unas **cinco veces peor**. Y la pendiente de la propia Δ es
-  **−0.0155 por robot (t = −4.7)**: la desventaja crece linealmente con el equipo (mecanismo
-  H-07). En determinista sí escala (+0.0121, t = 7.7) y la Δ apenas cae (−0.0043, t = −2.0).
-  ⚠️ Con el v2 la pendiente propia era −0.0004 (t = −0.2) y se decía «no convierte robots en
-  rendimiento **en absoluto**». **Esa frase ya no vale**; ver el addendum 2 de `06_conclusiones.md`.
-- **Ventana escalonada**: +0.078, gana **12 de 12** en determinista. Su mejor terreno.
-- **Espera vs plazo**: quitar la espera manteniendo los plazos le da +0.031 ± 0.011.
-- **Carga**: es su mejor bloque (+0.061 ± 0.013); gradiente monótono en L y en R.
-- **Coaliciones**: es el único bloque donde **cbaa** es el mejor de los cinco (0.431 vs 0.407).
-  Y la coalición mixta va al revés que la uniforme: `qm` +0.023 det, `q2` −0.052 det.
-- **Tasa de éxito**: Dec-MCTS por encima de cbba en est (0.754 vs 0.719); la brecha vive en la
-  **tasa de intento** (17.7 vs 19.3 tareas intentadas).
-- ⚠️ **Mortalidad**: `random` y `greedy` pierden 0.9–2.3 robots por ejecución **también en
-  determinista**; cbaa, cbba y dec-mcts, ninguno en 5 400. Reportar aparte.
-
-⚠️ Cifras del v1 y del v2 que **ya no deben citarse como resultado**: los rankings globales, la
-Δ −0.0355 (v1) y +0.0047 (v2), la pendiente −0.0130/robot (v1) y −0.0004 (v2) y las tablas por
-familias. Se conservan solo como contraste metodológico en el cap. 6.
+⚠️ **Cifras OBSOLETAS que no deben citarse**: todo lo medido antes del 17-09-2026, incluidos los
+rankings de los catálogos v1 y v2, la Δ +0.0086 del v3 original, las pendientes −0.0155/+0.0195, la
+inversión del signo al quitar el bloque C y la afirmación de que cbaa/cbba/dec-mcts «no perdían
+ningún robot». El histórico está en `03_experimentos.md`.
 
 ## El problema (resumen formal, cap. 2 de la memoria)
 
@@ -91,7 +94,7 @@ crecientes de coordinación:
 | 3. Estado del arte | `03_estado_del_arte.tex` | **completo** — NO modificar sin preguntar |
 | 4. Materiales y métodos | `04_materiales_y_metodos.tex` | **completo y CERRADO (sesión 5)** — NO modificar salvo necesidad estricta |
 | 5. Casos de estudio | `05_casos_de_estudio.tex` | **completo y CERRADO (sesión 8)** |
-| 6. Experimentación | `06_experimentación_pruebas.tex` | **borrador completo (sesión 10)**, pendiente de revisión del usuario |
+| 6. Experimentación | `06_experimentación_pruebas.tex` | ✅ **CERRADO por el usuario (sesión 12)**, sobre la tanda reejecutada — 7 figuras, 5 tablas, ninguna marca `\red{}`, sin pendientes |
 | 7. Conclusiones | `07_conclusiones_trabajo_futuro.tex` | vacío |
 
 Pendientes marcados dentro del cap. 2/3: varios `\red{CITA AL TUTOR}` (el paper no está
@@ -163,14 +166,18 @@ comparación centralizado/distribuido no medida → D-09).
   obsoleto**. ⚠️ **El usuario eliminó la Recapitulación** y la reserva para abrir el cap. 6:
   con ella se van las cifras agregadas, las 3 réplicas y las 5 400 ejecuciones.
   ⚠️ **D-10 queda sin resolver de hecho**: el protocolo experimental NO entró en el cap. 5.
-- **2.3 ⏭️ EN CURSO.** Dos pasos:
+- **2.3 ✅ CERRADO (sesión 11).** Dos pasos, y el capítulo ya está escrito y cerrado por el
+  usuario. 🔴 **Pero la próxima sesión empieza corrigiendo el defecto de navegación del simulador
+  y reejecutando**: el cap. 6 tiene 3 marcas `\red{PENDIENTE}` que dependen de él. Plan completo
+  en el «PLAN DE CORRECCIÓN Y REEJECUCIÓN» de D-16, en `05_dudas.md`.
   (a) ✅ **CERRADO (sesión 9)**: `analisis/evaluacion_final.ipynb` rehecho sobre el catálogo v3,
   en **tres partes** (conjunto · por bloque · métricas adicionales), 74 celdas y **14 figuras**
   `figuras/p1_*`, `p2_*`, `p3_*`. El cuaderno del v1 queda archivado como
   `analisis/evaluacion_v1_obsoleto.ipynb` (conserva las cuatro refutaciones y la ablación C1,
   D-13). Índice en `analisis/README.md`; hallazgos nuevos en la bitácora, sesión 9; y
-  (b) ✅ **CERRADO (sesión 10)**: `memoria/sections/06_experimentación_pruebas.tex` escrito
-  (~4 400 palabras, 7 tablas, 4 figuras en `memoria/figures/06_experimentación_pruebas/`).
+  (b) ✅ **CERRADO (sesión 11)**: `memoria/sections/06_experimentación_pruebas.tex`, borrador del
+  asistente (sesión 10) **reescrito y terminado por el usuario** (4 187 palabras, 6 tablas y
+  6 figuras en `memoria/figures/06_experimentación_pruebas/`, exportadas por el propio cuaderno).
   Resuelve **D-10** (el protocolo experimental entra en §6.1). ⚠️ Queda por borrar el bloque
   comentado del final del cap. 5, cuyo contenido está ya en la introducción del 6. Se escribió con
   el **addendum 2** de

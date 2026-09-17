@@ -844,26 +844,41 @@ class DecMCTSSolverV4 : public ISolver {
         BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
         BatteryRate  rate      = (mu > 0.0) ? (avgDemand / mu) : 0.0;
 
+        // Fidelidad con simulator.cpp::startTask: el desenlace muestreado fija la tasa
+        // de consumo aunque el intento acabe interrumpido, y un intento que agota la
+        // batería de un worker se TRUNCA en el instante en que ese worker llega a cero.
+        const bool sampledSuccess = success;
+        bool batteryFailure = false;
+        BatteryLevel consumptionInitial = rate * execTime;
+
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
             w.status = RobotStatus::EXECUTING;
-            if (w.batteryLevel - rate * execTime < 0.0) {
+            if (w.batteryLevel - consumptionInitial < 0.0) {
                 success = false;
+                batteryFailure = true;
+                Time tFail = (rate > 0.0) ? (w.batteryLevel / rate) : 0.0;
+                execTime = (tFail < execTime) ? tFail : execTime;
             }
         }
-        int success_payload = success ? 1 : 0;
+        // Bit 0: desenlace muestreado. Bit 1: interrumpido por batería.
+        int success_payload = (sampledSuccess ? 1 : 0) | (batteryFailure ? 2 : 0);
 
         q.push({task.initTime + execTime, REType::TASK_END, NULL_ID, tId, success_payload, 0});
     }
 
-    void processTaskEnd(TaskID tId, bool success, RolloutState& s, EventQueue& q,
+    void processTaskEnd(TaskID tId, int outcome, RolloutState& s, EventQueue& q,
                         const std::shared_ptr<const Scenario>& sc) {
         Task& task = s.tasks.at(tId);
         const TaskInfo& tInfo = sc->getTasks().at(tId);
 
+        const bool sampledSuccess = (outcome & 1) != 0;
+        const bool batteryFailure = (outcome & 2) != 0;
+        const bool success = sampledSuccess && !batteryFailure;
+
         Time execTime  = std::max(0.0, s.globalTime - task.initTime);
-        BatteryLevel avgDemand = success ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
-        Time          avgTime  = success ? tInfo.averageSuccessTime   : tInfo.averageFailTime;
+        BatteryLevel avgDemand = sampledSuccess ? tInfo.averageSuccessDemand : tInfo.averageFailDemand;
+        Time          avgTime  = sampledSuccess ? tInfo.averageSuccessTime   : tInfo.averageFailTime;
         // Fidelidad con simulator.cpp::endTask: si la duración media de este
         // desenlace es 0 (típico en fail_time=[0,0]), el consumo NO es 0 sino la
         // demanda completa. Antes la réplica cobraba 0 y los rollouts trataban el
@@ -874,7 +889,7 @@ class DecMCTSSolverV4 : public ISolver {
         for (auto& [wId, w] : s.robots) {
             if (w.onTask != tId) continue;
             w.batteryLevel -= consumption;
-            if (w.batteryLevel <= 0.0) {
+            if (w.batteryLevel <= BATTERY_EPS) {
                 w.batteryLevel = 0.0;
                 w.status       = RobotStatus::FAILED;
             } else {
@@ -1033,7 +1048,7 @@ class DecMCTSSolverV4 : public ISolver {
                     break;
 
                 case REType::TASK_END:
-                    processTaskEnd(ev.taskID, (ev.payload == 1), s, q, sc);
+                    processTaskEnd(ev.taskID, ev.payload, s, q, sc);
                     break;
 
                 case REType::TASK_EXPIRATION:

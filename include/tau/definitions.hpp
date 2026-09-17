@@ -10,6 +10,12 @@ namespace tau {
 using ID = int;
 const ID NULL_ID = -1;
 
+// Tolerancia con la que se considera agotada la batería de un robot. Un intento de
+// tarea interrumpido por falta de batería se cobra exactamente el nivel que le
+// quedaba al robot, y el redondeo en coma flotante puede dejar un residuo positivo
+// del orden de 1e-16 que lo mantendría vivo con batería nula.
+const BatteryLevel BATTERY_EPS = 1e-9;
+
 enum class RobotStatus {
     AVAILABLE,
     FINISHED,

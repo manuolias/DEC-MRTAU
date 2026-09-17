@@ -87,7 +87,9 @@ private:
     void simulateRecharge(RobotID robotID);
     void simulateTask(RobotID robotID, TaskID taskID);
     void startTask(TaskID taskID); 
-    void endTask(TaskID taskID, bool success); // Extraído de simulateTask
+    // outcome: bit 0 = desenlace muestreado (1 = éxito), bit 1 = intento interrumpido
+    // por agotamiento de batería. Lo codifica startTask en el payload del TASK_END.
+    void endTask(TaskID taskID, int outcome); // Extraído de simulateTask
     void expireTask(TaskID taskID);  // Nuevo evento
 
     void scheduleRobotDecision(Time t, RobotID id);

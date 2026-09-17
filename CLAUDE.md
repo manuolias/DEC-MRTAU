@@ -7,11 +7,12 @@ al empezar, leer `.claude-notes/01_contexto.md`, las últimas entradas de
 `.claude-notes/04_bitacora.md` y `.claude-notes/05_dudas.md`; al terminar, actualizarlos.
 
 📌 **La fase actual es la REDACCIÓN DE LA MEMORIA.** Antes de escribir cualquier capítulo es
-obligatorio leer **`.claude-notes/06_conclusiones.md`**: contiene las cinco ideas que sostienen
-el trabajo, dictadas por el usuario, con las cifras que las respaldan y los avisos sobre qué no
-se puede afirmar. ⚠️ Ese fichero se escribió sobre el catálogo v1; **leer sus DOS addendums
-finales**, que recogen lo que los catálogos v2 y v3 confirman y lo que matizan. El vigente es
-el del **v3**.
+obligatorio leer **`.claude-notes/06_conclusiones.md`**, que contiene las ideas que sostienen el
+trabajo. 🔴 **PERO ESTÁ OBSOLETO desde el 17-09-2026** y lleva un banner que lo dice: sus cinco
+ideas y sus dos addendums defienden el **empate** frente a CBBA, que la reejecución del catálogo
+deshizo. **Rehacerlo es la primera tarea pendiente** y requisito previo al capítulo 7. Mientras
+tanto, la fuente de verdad de las cifras son este fichero, «REEJECUCIÓN 17-09-2026» en
+`.claude-notes/03_experimentos.md` y el capítulo 6 ya cerrado.
 
 📌 **Capítulo 5 CERRADO** (sesión 8): introducción + §5.1 configuración común + §5.2 los cinco
 bloques, uno por subapartado. Sus dos figuras existen. ⚠️ El usuario **eliminó la
@@ -19,16 +20,29 @@ Recapitulación** y la reserva para **abrir el capítulo 6**: con ella se fueron
 agregadas del catálogo, las **3 réplicas** y las **5 400 ejecuciones**, que hoy no aparecen en
 ninguna parte de la memoria.
 
-📌 **Capítulo 6 ESCRITO** (sesión 10): ~4 400 palabras, 7 tablas y **4 de las 14 figuras** del
-cuaderno, copiadas a `memoria/figures/06_experimentación_pruebas/`. Estructura del cuaderno
-(conjunto · por bloque · magnitudes secundarias) + §6.1 protocolo experimental, que **resuelve
-D-10**. ⚠️ Pendiente: **borrar el bloque comentado del final del cap. 5** (su contenido, incluida
+📌 **Capítulo 6 CERRADO por el usuario** (sesión 12), sobre la **tanda reejecutada**: 7 figuras y
+5 tablas en `memoria/figures/06_experimentación_pruebas/`. Estructura del cuaderno (conjunto · por
+bloque · magnitudes secundarias) + §6.1 protocolo experimental, que **resuelve D-10**.
+⚠️ Sigue pendiente: **borrar el bloque comentado del final del cap. 5** (su contenido, incluida
 `eq:ejecuciones`, está ya en la introducción del 6 ⇒ etiqueta duplicada si se descomenta).
 
-📌 **SIGUIENTE SESIÓN**: escribir el **capítulo 7** (`07_conclusiones_trabajo_futuro.tex`, etiqueta
-`cap:conclusiones_trabajo_futuros`) con las ideas 1, 2, 4 y 5 de `.claude-notes/06_conclusiones.md`
-— **addendum 2**, el vigente. Es el capítulo donde van las valoraciones que el 6 deja fuera.
-Antes, decidir D-03 (cómo citar el paper del tutor), D-13 y D-14.
+📌 **COLA DE TRABAJO — LO PRIMERO DE LA PRÓXIMA SESIÓN**:
+1. ✅ **Sesión 12 cerrada**: simulador corregido (dos defectos de batería), catálogo reejecutado,
+   cuaderno reejecutado y **capítulo 6 CERRADO por el usuario** sobre los datos nuevos.
+   Detalle completo en la sesión 12 de `.claude-notes/04_bitacora.md`.
+2. 🔴 **AHORA: rehacer `.claude-notes/06_conclusiones.md`.** Sus cinco ideas y sus dos addendums
+   sostienen la tesis del **empate** y la de «el conjunto de prueba determina la conclusión», y
+   **las dos se han caído**. El fichero lleva un banner de obsoleto. Como el protocolo obliga a
+   leerlo antes de redactar cualquier capítulo, **rehacerlo es requisito previo al capítulo 7**.
+   Material: sesión 12 de la bitácora, «REEJECUCIÓN 17-09-2026» en `03_experimentos.md` y el
+   propio capítulo 6. Conservar de él la **estructura** y los **límites que el usuario fijó**
+   (la conjetura sobre la literatura va como teoría; la comparación centralizado/distribuido no se
+   mide aquí y se apoya en el paper del tutor sin cifras de pérdida ⇒ D-03).
+3. Después, el **capítulo 7** (`07_conclusiones_trabajo_futuro.tex`, etiqueta
+   `cap:conclusiones_trabajo_futuros`). Antes hay que decidir **D-03** (cómo citar el paper del
+   tutor; es estructural para ese capítulo), D-13 y D-14.
+4. Luego el **capítulo 1** y la **limpieza** (objetivo 3.1), que ahora incluye borrar
+   `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv` (decisión del usuario).
 
 `.claude-notes/` es el cuaderno de trabajo del asistente y **no forma parte de la entrega**.
 
@@ -48,23 +62,34 @@ tanda `logs/eval_catalogo_v3`. Batería escasa (capacidad 40) en todos los escen
 Regímenes: coste de un intento **fallido** 10 fijo en todos ellos (con éxito el consumo es
 proporcional a la duración real, esperanza 10) y σ de la duración 0/1/3/5.
 
+🔴 **Cifras de la REEJECUCIÓN de la sesión 12** (17-09-2026), tras corregir los dos defectos de
+batería del simulador. Las anteriores ya no valen.
+
 | Solver | global | det (ρ=1) | lev (ρ=.9) | est (ρ=.75) | fue (ρ=.5) |
 |---|---|---|---|---|---|
-| **dec-mcts-v4-g9999** | **0.502** | **0.585** | 0.510 | **0.444** | 0.278 |
-| cbba | 0.494 | 0.565 | **0.520** | 0.438 | **0.328** |
-| cbaa | 0.437 | 0.512 | 0.471 | 0.377 | 0.263 |
-| greedy | 0.354 | 0.403 | 0.340 | 0.324 | 0.207 |
-| random | 0.271 | 0.308 | 0.261 | 0.247 | 0.162 |
+| **dec-mcts-v4-g9999** | **0.502** | **0.586** | **0.495** | **0.443** | **0.282** |
+| cbba | 0.459 | 0.532 | 0.467 | 0.405 | 0.273 |
+| cbaa | 0.401 | 0.483 | 0.413 | 0.339 | 0.207 |
+| greedy | 0.346 | 0.396 | 0.338 | 0.313 | 0.198 |
+| random | 0.268 | 0.305 | 0.266 | 0.242 | 0.168 |
 
-⚠️ **El agregado sigue siendo un EMPATE**: Δ = +0.0086 ± 0.0040 y por recuento queda
-158 gana / 42 empata / 160 pierde de 360. **Nunca liderar con el agregado; reportar siempre por
-bloque y por régimen.**
+✅ **La hipótesis del TFM se cumple**: Δ = **+0.0431 ± 0.0039** (t = 10.9), recuento
+**244 gana / 33 empata / 83 pierde** de 360. Gana en los **cuatro regímenes** y en **cuatro de los
+cinco bloques** (en D gana cbaa, 0.418). Máxima recompensa en 190 de 360; arrepentimiento 0.018.
 
-Lo sólido: (a) en determinista Dec-MCTS **gana** (+0.020 ± 0.006); (b) bajo incertidumbre su
-pendiente frente al nº de robots es **+0.0040 (t = 1.5)**, indistinguible de cero, frente a
-**+0.0195 (t = 6.6)** de CBBA — convierte robots en rendimiento unas cinco veces peor;
-(c) en incertidumbre fuerte pierde con claridad (−0.050 ± 0.017); (d) **CBAA es el mejor solver
-del bloque de coaliciones**. Argumento completo en `.claude-notes/06_conclusiones.md` + addendums.
+Lo sólido: (a) la corrección **no beneficia a Dec-MCTS** —su recompensa no se mueve
+(−0.001 ± 0.002)—, son cbaa y cbba las que pierden 0.035 cada una; (b) la ventaja **se erosiona**
+con la incertidumbre (+0.054 det → +0.008 fue) y con el equipo: bajo incertidumbre la pendiente de
+Dec-MCTS frente al nº de robots es **+0.0016 (t = 0.7)**, nula, frente a **+0.0120 (t = 4.5)** de
+CBBA, y la Δ decrece −0.0104/robot (t = −3.5) cruzando el cero hacia los 4 robots; (c) su mejor
+terreno sigue siendo la **ventana escalonada** (+0.084, gana 12/12 en det); (d) **CBAA es el mejor
+solver del bloque de coaliciones**; (e) Dec-MCTS es el que **menos robots pierde** (1.48/escenario
+frente a 2.51 de cbba) y el que más distancia recorre (+53.8 %).
+
+⚠️ **El leave-one-block-out ya NO invierte el signo** (queda entre +0.031 y +0.051 quitando
+cualquier bloque) ⇒ **la lección metodológica de «el conjunto de prueba determina la conclusión» se
+cayó**, y con ella los dos addendums de `.claude-notes/06_conclusiones.md`, que están **obsoletos**.
+📌 **El usuario revisará el cap. 6 y decidirá el nuevo enfoque: no adelantarse.**
 
 ## Cómo se ejecuta
 
@@ -152,13 +177,18 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
   ⚠️ Dos correcciones señaladas y no aplicadas, de una línea cada una: «formato yaml» → «YAML»,
   y «$L$ representa el número de **tareas** por robot» → **plazas de trabajador** (con
   coaliciones no coinciden; es el motivo del reajuste $m=Ln/\bar q$).
-- **Cap. 6 (`06_experimentación_pruebas.tex`): borrador completo (sesión 10)**, pendiente de la
-  revisión del usuario. Estructura del cuaderno + §6.1 protocolo experimental (resuelve D-10).
-  7 tablas y 4 figuras (`memoria/figures/06_experimentación_pruebas/`). ⚠️ Notación: la memoria
-  usa **$n$ = robots** y $m$ = tareas; el cuaderno se corrigió para coincidir.
+- **Cap. 6 (`06_experimentación_pruebas.tex`): terminado por el usuario (sesión 11) y
+  ACTUALIZADO a la reejecución (sesión 12)**. 5 tablas y 7 figuras
+  (`memoria/figures/06_experimentación_pruebas/`). Resuelve D-10. ⚠️ Notación: la memoria usa
+  **$n$ = robots** y $m$ = tareas. ✅ **Cerrado por el usuario el 17-09-2026**, sin marcas `\red{}`.
+  ✅ **Enfoque decidido: conserva la Δ dec−cbba como hilo**, porque «establece la mejora introducida
+  por mi algoritmo», aunque ya no sea la comparación más reñida. **Sin pendientes.**
+  ⚠️ Las figuras de la memoria las exporta el propio cuaderno con
+  `guardar(fig, nombre, memoria='<fichero>')`, **sin `suptitle`**: al reejecutarlo se actualizan solas.
 - **Siguiente capítulo a escribir: el 7 (Conclusiones y trabajo futuro)**, etiqueta
-  `cap:conclusiones_trabajo_futuros`. Ideas 1, 2, 4 y 5 del **addendum 2** de
-  `.claude-notes/06_conclusiones.md`. Es donde van las valoraciones que el cap. 6 deja fuera.
+  `cap:conclusiones_trabajo_futuros`. Es donde van las valoraciones que el cap. 6 deja fuera.
+  🔴 **Antes hay que rehacer `.claude-notes/06_conclusiones.md`**: sus cinco ideas y su addendum 2
+  ya no describen el resultado medido.
 - ⚠️ **Registro OBJETIVO en el análisis de resultados** (exigido por el usuario, 2026-09-11):
   describir **qué se mide y cómo se obtiene**, no lo que se espera ver; nada de dar por supuesto
   que «queremos que gane Dec-MCTS»; las explicaciones mecanísticas se marcan como
@@ -177,23 +207,35 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
 ## Avisos importantes
 
 - ⚠️ **Los catálogos v1 (`scenarios/catalogo/`) y v2 (`scenarios/catalogo_v2/`) están
-  OBSOLETOS**; el vigente es el **v3**. Se conservan a propósito: la comparación v1↔v2 **es** la
-  lección metodológica del cap. 6. Pero **ninguna cifra del v1 ni del v2 debe presentarse como
-  resultado del trabajo**.
-- ⚠️ **El agregado global depende de la composición de bloques.** Auditoría hecha a
-  posteriori: los bloques B y C tienen 2 de sus 3 niveles en terreno favorable a Dec-MCTS
-  (B: ventanas `P` y `C` sí, `A` no; C: L=3 y L=4 sí, L=8 no); A, D y E le son adversos. No
-  está escorado a propósito, pero **hay que declararlo en la memoria**.
-- ⚠️ **Mortalidad de robots, y en el v3 es MAYOR que en el v2**: `random` pierde 1.9–2.3 robots
-  por ejecución y `greedy` 0.9–1.8, **también en régimen determinista** (65 % y 50 % de las
-  ejecuciones, donde en el v2 eran 0). `cbaa`, `cbba` y `dec-mcts`, **ninguno en 5400**.
-  Parte de la desventaja de los baselines es esto, no calidad de asignación. Reportarlo aparte.
+  OBSOLETOS**; el vigente es el **v3 reejecutado**. **Ninguna cifra del v1 ni del v2 debe
+  presentarse como resultado del trabajo.** ⚠️ La comparación v1↔v2 **ya no entra en el cap. 6**.
+- ⚠️ **Toda tanda anterior al 17-09-2026 se ejecutó con los dos defectos de batería** y sus cifras
+  de recompensa **no son comparables** con las actuales. `logs/eval_catalogo_v3_bug` y
+  `analisis/catalogo_v3_bug.csv` guardan la tanda anterior; **se borran en la limpieza**.
+- ⚠️ **La magnitud de la ventaja depende de la composición de bloques** (el signo ya no): va de
+  +0.012 en el bloque D a +0.090 en el C, y el *leave-one-block-out* la deja entre +0.031 y +0.051.
+  Declarado en §6.2.3.
+- ✅ **LOS DOS DEFECTOS DE BATERÍA ESTÁN CORREGIDOS (sesión 12).** Se conserva la descripción
+  porque explica la diferencia entre la tanda vieja y la nueva:
+  1. **Navegar no mataba**: `calculateBatteryConsumption` (`simulator.cpp:40-46`) saturaba en 0.
+     Corregido quitando el `std::max`; las tres ramas `finalBattery < 0` (293, 328, 390) ya se
+     activan.
+  2. **El intento truncado por batería se re-tarifaba**: `startTask` ya truncaba la duración a
+     `tFail`, pero `endTask` recalculaba el consumo desde el flag `success` y aplicaba la tarifa
+     del fracaso (10 planos), así que el robot **sobrevivía con batería de regalo**. Corregido con
+     dos bits en el `payload` del `TASK_END` (bit 0 = desenlace muestreado, bit 1 = interrumpido
+     por batería) y `endTask(TaskID, int)`; ver `BATTERY_EPS` en `definitions.hpp`.
+  Ambos replicados en **`solver_DecMCTS_v4.hpp`** (v1–v3 **no**: nueva divergencia a declarar).
+  ⇒ `failed_agents` **ya es válido**: random 2.79 · greedy 2.54 · cbba 2.51 · cbaa 1.83 ·
+  **dec-mcts 1.48**. En el bloque A, fracción de flota: **cbba 55 %** (el peor: sus paquetes no
+  presupuestan la vuelta a la estación), random 45 %, cbaa 37 %, greedy 35 %, **dec-mcts 30 %**.
+  Las tareas completadas por robots ya sin batería cayeron del 8.7–8.9 % (cbaa/cbba) al **0.01 %**.
 - ⚠️ **En determinista TAMBIÉN puede fracasar una tarea**, aunque ρ=1: si al arrancarla el robot
-  no tiene batería suficiente, `simulator.cpp:469-473` fuerza `success = false` y trunca la
-  ejecución; después `endTask` (`simulator.cpp:494-498`) le cobra `averageFailDemand` **entera**
-  porque `averageFailTime == 0`. Con el v3 eso son 10 y el robot muere. Es el mecanismo que
-  explica la mortalidad de los baselines en det y **por qué el det NO es un control invariante
-  entre catálogos** para `random` y `greedy` (sí lo es para cbaa, cbba y dec-mcts).
+  no tiene batería suficiente, `simulator.cpp:470-474` fuerza `success = false` y trunca la
+  ejecución en el instante en que se agota. Desde la sesión 12 el cargo es **proporcional al tiempo
+  ejecutado** (no los 10 planos), así que el robot acaba exactamente en 0 y **muere**. Explica la
+  mortalidad de los baselines en det. ⚠️ Con σ=0 y reserva de 10, cbaa/cbba/dec-mcts **nunca**
+  entran en esta rama en determinista: sus tasas de éxito en det valen exactamente 1.000.
 - ⚠️ **El segundo valor del campo `demand` del YAML NO es una desviación típica**: el simulador
   lo lee como `averageFailDemand`, la batería que cuesta un intento fallido
   (`src/scenario.cpp:63-64`). En el v3 vale 10 en todos los regímenes. ⚠️ Con **éxito** el

@@ -402,7 +402,22 @@ agregado — recomendada, no cuesta nada y es lo honesto; (b) añadir un nivel d
 a C para equilibrar (≈+48 esc., ~10 min de cómputo); (c) reportar un agregado ponderado que
 compense la composición — desaconsejada, es discutible y nadie lo hace.
 
-### D-16 · El fracaso por falta de batería cobra la demanda completa — `ABIERTA` (sesión 8)
+### D-16 · El fracaso por falta de batería cobra la demanda completa — ✅ `RESUELTA` (sesión 12)
+
+> 🔴 **RESUELTA EL 17-09-2026. Todo lo que sigue describe el estado ANTERIOR a la corrección y se
+> conserva como registro del diagnóstico.** Se corrigieron **las dos** cosas: (1) navegar ya puede
+> matar (`simulator.cpp:44`) y (2) el intento truncado por batería se cobra a la tasa del desenlace
+> **muestreado** y en proporción al tiempo ejecutado, de modo que el robot acaba exactamente en 0 y
+> muere, en vez de pagar los 10 planos y sobrevivir. Replicado en `solver_DecMCTS_v4.hpp`
+> (v1–v3 **no**, por decisión del usuario). Catálogo reejecutado y cap. 6 actualizado.
+> **La Δ pasó de +0.0086 (empate) a +0.0431, y Dec-MCTS gana en los 4 regímenes y en 4 de los 5
+> bloques.** Detalle completo en la sesión 12 de `04_bitacora.md`.
+> ⚠️ Respuesta a la «Pregunta para el usuario 1» del final de esta ficha: **NO era la semántica
+> deseada**; se adoptó justamente la alternativa que allí se apuntaba.
+> ⚠️ El plan de reejecución de más abajo **ya se ejecutó entero**; su tabla de riesgo por apartado
+> sirvió de checklist y acertó en los tres apartados de riesgo «muy alto».
+
+
 Descubierto al analizar el paso v2 → v3. `simulator.cpp:469-473`: si a un robot no le da la
 batería para arrancar una tarea, el simulador fuerza `success = false` y **trunca** la ejecución
 al tiempo que su batería le permite. Después, `endTask` (`simulator.cpp:494-498`) le cobra
@@ -414,6 +429,174 @@ muere.
 regímenes, **incluido el determinista**, donde con el v2 no perdían ninguno. `cbaa`, `cbba` y
 `dec-mcts` no entran nunca en esta rama porque comprueban la demanda de ejecución y no solo la
 del desplazamiento.
+
+🔴 **Mecanismo cerrado del todo (sesión 10, a raíz de una pregunta del usuario).** La explicación
+anterior era correcta pero incompleta; el criterio exacto es este:
+1. **Navegar no puede matar**: `calculateBatteryConsumption` (`simulator.cpp:40-46`) devuelve
+   `max(0, nivel − coste)`, así que las tres ramas `finalBattery < 0` de la navegación
+   (líneas 293, 328 y 390) son **código muerto**. La única operación letal es el cargo de
+   `endTask`.
+2. Ese cargo vale **exactamente 10 siempre que el intento acabe en fracaso** —por el sorteo de
+   ρ *o* por el truncamiento por batería— y la duración real cuando acaba en éxito (tasa 1). Si
+   la batería no cubre la duración muestreada, el truncamiento lo convierte en fracaso ⇒ 10.
+3. ⇒ **Un robot muere si y solo si emprende un intento con menos de 10 unidades de batería.**
+   El cargo tiene techo 10.
+4. `cbaa` (`solver_CBAA.hpp:105-111`) y `cbba` (`solver_CBBA.hpp:104-108`) exigen
+   `desplazamiento + demanda esperada ≤ batería`, y en el v3 esa demanda esperada es
+   **exactamente 10** para toda tarea, porque `demand: [10, 10]` hace que
+   ρ·10 + (1−ρ)·10 = 10 con independencia del régimen. Reservan justo el umbral.
+
+**Verificado sobre los 5 400 registros** (celda nueva en §3.1 del cuaderno): batería mínima con la
+que cada solver llega a pagar un fracaso — random **0.011**, greedy **0.013**, cbaa **10.668**,
+cbba **10.175**, dec-mcts **10.012**; cargos que dejan la batería en negativo — 2 143, 1 556, 0,
+0 y 0. Los coordinados rozan el umbral pero nunca lo cruzan.
+
+🔴🔴 **Y el hallazgo mayor (misma sesión): NAVEGAR NO PUEDE MATAR, y eso es un error.** El punto 1
+de arriba no es solo un detalle del mecanismo: es un **defecto del simulador**. Un robot al que no
+le da la batería para llegar a su destino se queda a cero y **sigue desplazándose sin coste** el
+resto del episodio. El usuario lo confirma como error, pero es tarde para corregir y reejecutar.
+**Decisión suya: se adopta como recuento de bajas el reconstruido de las trazas** (robot cuyo
+consumo de navegación termina exactamente en 0, unido a los que el simulador sí retira):
+
+| | random | greedy | cbaa | cbba | dec-mcts |
+|---|---|---|---|---|---|
+| bajas registradas (`failed_agents`) | 1.98 | 1.44 | 0 | 0 | 0 |
+| **robots que agotan la batería** | **2.80** | 2.53 | 1.78 | **2.48** | **1.39** |
+| % escenarios afectados | 94.4 | 88.1 | 87.8 | 88.9 | 77.5 |
+| fracción de flota (bloque A) | 45 % | 34 % | 36 % | **55 %** | **27 %** |
+
+⇒ **Todos pierden robots**, y el orden no es el del rendimiento. `cbba` es el que más apura entre
+los coordinados: sus paquetes comprometen una secuencia cuyo **tramo de vuelta a la estación no
+entra en la comprobación de factibilidad**.
+
+⚠️⚠️ **Exposición del resto del capítulo al defecto** (tareas completadas por robots ya sin
+batería): **cbaa 8.9 %, cbba 8.7 %**, dec-mcts 1.2 %, random 1.2 %, greedy 1.3 %. Es **siete veces
+mayor en las subastas**. No permite corregir las recompensas (con la física arreglada el episodio
+divergiría desde la primera baja), pero sí acota la sensibilidad: una corrección tendería a mover
+la Δ **a favor de dec-mcts**. Declarado en §6.4.1 y en las condiciones de la síntesis del cap. 6.
+📌 Si algún día se corrige el simulador, **esta es la reejecución que más cambiaría los resultados**.
+
+---
+
+## 🔧 PLAN DE CORRECCIÓN Y REEJECUCIÓN — acordado con el usuario (16-sep-2026)
+
+**Cuándo**: cuando el usuario dé por cerrados el cap. 6 (lo está terminando él) y el cap. 7 (lo
+escribirá él y me lo pasará). **Ahora no se toca nada**: él termina de escribir el capítulo *como
+si el error no existiera*.
+
+### Paso 1 · La corrección: UNA LÍNEA (verificado)
+`src/simulator.cpp:44`
+```cpp
+BatteryLevel finalLvl = std::max(0.0, initLvl - cost);   // ANTES
+BatteryLevel finalLvl = initLvl - cost;                  // DESPUÉS
+```
+Y nada más. Comprobado en la sesión 10:
+- Los **tres únicos** puntos de llamada (`simulator.cpp:291`, `328`, `388`) ya tienen escrita la
+  rama `if (finalBattery < 0.0)` completa —tiempo de fallo, `logRobotFailed`, `status = FAILED`,
+  `batteryLevel = 0`—, hoy inalcanzable. Con la línea corregida **se activan solas**.
+- **Ningún solver hay que tocarlo.** `solver_DecMCTS_v4.hpp:274-280` (`batteryAfterNav`) **no
+  satura**, y `physicsTask`, `physicsRecharge` y `physicsFinish` ya matan al robot con
+  `if (bat < 0.0)`. Es decir: **Dec-MCTS lleva todo el trabajo planificando contra la física
+  correcta mientras se le evaluaba en la incorrecta.** Corregir el simulador lo alinea con ella.
+- ⚠️ Revisar solo una cosa al recompilar: que una tarea con coalición a medias cuyo miembro muere
+  de camino no deje a los demás esperando indefinidamente. Debería resolverlo el evento de
+  caducidad, pero conviene comprobarlo en un escenario suelto antes de lanzar la tanda.
+
+### Paso 2 · Reejecución
+⚠️ **El ejecutor es idempotente: si los `.log` viejos siguen ahí, NO reejecuta nada.** Por tanto:
+```bash
+mv logs/eval_catalogo_v3     logs/eval_catalogo_v3_bug     # conservar la tanda actual
+mv analisis/catalogo_v3.csv  analisis/catalogo_v3_bug.csv
+cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make     # Release importa (×3)
+scripts/run_catalog.sh 6 scenarios/catalogo_v3 logs/eval_catalogo_v3 \
+        scenarios/catalogo_v3/experiment_config.yaml        # ~35 min
+python3 scripts/extract_metrics.py logs/eval_catalogo_v3 -o analisis/catalogo_v3.csv
+```
+**Conservar los mismos nombres de destino** (`logs/eval_catalogo_v3`, `analisis/catalogo_v3.csv`)
+es lo que permite cumplir el encargo del usuario de **no tocar el código del cuaderno**: sus dos
+rutas (`RUTA` y `LOGS` en §3.1) quedan válidas.
+
+### Paso 3 · Cuaderno
+Reejecutarlo entero, sin editar nada:
+```bash
+.venv/bin/python -m jupyter nbconvert --to notebook --execute --inplace analisis/evaluacion_final.ipynb
+```
+Se regeneran las 14 figuras y, con ellas, las 6 versiones `memoria/figures/06_experimentación_pruebas/*.pdf`
+(las escribe `guardar(..., memoria=...)` automáticamente).
+
+### Paso 4 · Memoria: SOLO el capítulo 6
+Encargo explícito del usuario: **actualizar los valores numéricos y recargar los gráficos, nada
+más**. No reescribir el capítulo ni tocar los caps. 2-5 ni el 7.
+
+### Paso 4-bis · Las TRES marcas `\red{}` que el usuario dejó en el capítulo
+El cap. 6 está **terminado y cerrado por el usuario** (sesión 11) salvo tres puntos que dependen
+de este defecto y que él mismo marcó. Son el primer objetivo tras la reejecución:
+
+1. **§6.4.1 «Robots que agotan la batería»** — `\red{SECCION PENDIENTE DE ACTUALIZACION}`.
+   Es el apartado entero. Hoy dice: «Los cinco algoritmos sufren pérdidas. Random pierde 2.80…,
+   Greedy 2.53, CBBA 2.48, CBAA 1.78 y Dec-MCTS 1.39» y «Sobre el bloque A… CBBA el 55 %, Random
+   el 45 %, CBAA el 36 %, Greedy el 34 % y Dec-MCTS el 27 %». **Todas esas cifras son la
+   reconstrucción desde las trazas y hay que sustituirlas por las que dé `failed_agents` ya
+   válido.** Hay que borrar además la frase «El orden no es el que sugería el contador del
+   simulador», que dejará de tener sentido, y decidir si se conserva la explicación del tramo de
+   vuelta a la estación (que sí seguirá siendo cierta y es un buen hallazgo sobre CBBA).
+2. **§6.4.2, última frase** — `\red{PENDIENTE DE ACTUALIZACION}`: «…lo que concuerda con la
+   ausencia de bajas **durante la ejecución** del apartado anterior». Con el simulador corregido
+   habrá que comprobar si las tasas de éxito en determinista siguen valiendo exactamente 1.
+3. **§6.4.3, párrafo «Uso del horizonte»** — `\red{PENDIENTE DE ACTUALIZACIÓN}`: «Dado que CBAA
+   no pierde robots por batería, su retirada temprana solo puede deberse a…». Tras la corrección
+   los robots **sí** se retiran al agotarse, así que el instante medio de retirada cambia de
+   significado y el razonamiento hay que rehacerlo entero.
+
+### Paso 5 · Releer el capítulo entero y cazar lo que se haya quedado obsoleto
+Es el paso que el usuario pidió anotar expresamente. Lista de lo que hay que revisar **sí o sí**,
+por orden de riesgo:
+
+| Riesgo | Qué revisar |
+|---|---|
+| 🔴 **muy alto** | **§6.4.1 completa**: desaparece su razón de ser. Con la física corregida `failed_agents` ya es válido, sobra la reconstrucción desde las trazas, y sobra el párrafo de «alcance del defecto» (8.9 % / 8.7 % / 1.2 %). El apartado pasa a ser una medida normal. |
+| 🔴 **muy alto** | **El agregado y su signo (§6.2).** Cbaa y cbba completaban un ~8.7-8.9 % de sus tareas con robots ya secos, frente al 1.2 % de dec-mcts. Al corregir, **las subastas pierden más que Dec-MCTS** ⇒ la Δ se mueve a su favor y **puede dejar de ser un empate**. Hay que rehacer: Tabla 6.1, Tabla 6.3, Fig. 1 y 2, §6.2.1-6.2.4 y el *leave-one-block-out*. ⚠️ Si el empate desaparece, **la lección metodológica del cap. 6 y las ideas 1 y 4 del cap. 7 se resienten**: avisar al usuario antes de tocar el 7. |
+| 🟠 alto | **§6.3.1, pendientes del bloque A.** La de cbba (+0.0195, t=6.6) se apoya en equipos grandes que hoy sobreviven sin batería. Rehacer las seis pendientes y la de la Δ (−0.0155). |
+| 🟠 alto | **§6.4.3 distancia.** Un robot seco seguía recorriendo distancia **gratis**: el +25 % de Dec-MCTS y los 16.44 de Random están contaminados en distinta medida. |
+| 🟠 alto | **§6.4.4 instante de retirada.** Cambia por definición: ahora los robots se retiran al agotarse. La lectura sobre cbaa («abandona pronto») hay que rehacerla. |
+| 🟡 medio | **§6.4.2 intento × éxito**: la tasa de intento de cbba (0.615 / 0.679) caerá más que la de dec-mcts. El argumento («la brecha vive en la cobertura») puede reforzarse o debilitarse. |
+| 🟡 medio | **§6.3.3 bloque C** (rejilla y Fig. 4) y **§6.3.5 bloque E** (Fig. 6): saturación y equipos grandes son justo donde más se apuraba la batería. |
+| 🟡 medio | **Síntesis §6.5**: los 8 puntos y las 4 condiciones. La condición sobre el defecto **desaparece**; el punto 8 sobre bajas se reescribe. |
+| 🟢 bajo | §6.1 protocolo (solo el tiempo de la tanda) y §6.3.2 bloque B (ventanas, menos ligado a la batería). |
+
+**Frases concretas del texto FINAL del usuario que pueden volverse falsas** (además de las tres
+marcas `\red{}`):
+- §6.4.3, Distancia: «Dec-MCTS cubre más ventanas a costa de desplazarse más, resultado que
+  demuestra que el algoritmo es capaz de **identificar y aprovechar el bajo coste que navegar
+  conlleva**». ⚠️ Con la corrección **navegar deja de ser barato: puede matar**. Esta
+  interpretación puede invertirse por completo; es la frase de mayor riesgo del capítulo.
+- §6.4.3, Uso del horizonte: la enumeración de causas de retirada («…o por quedarse sin batería»)
+  pasa de ser teórica a ser real y frecuente.
+- §6.5, punto 1: «Dec-MCTS supera a Random en 358 de 360 escenarios y a Greedy en 333; CBBA supera
+  a CBAA en 209» — recuentos a rehacer.
+- §6.5, puntos 2-5: todos citan cifras que cambiarán (Δ por régimen, pendientes del bloque A,
+  tasas de intento/éxito, y los +0.078 / +0.038 / +0.208 / +0.023 de los terrenos favorables).
+
+**Erratas del texto final**: avisadas al usuario y **ya corregidas por él** (16-sep-2026).
+
+✅ **Contenido que el usuario retiró del borrador — DECISIÓN CERRADA, no reponerlo.** Preguntado
+expresamente, respondió que *«lo demás que he eliminado es porque no es necesario en la memoria»*.
+Afecta a: la irreproducibilidad por `std::random_device`, la idempotencia del ejecutor y las cuatro
+«condiciones que deben acompañar a la lectura» del cierre (composición del catálogo, `lev`/`fue`
+procedentes solo del bloque E, tiempos medidos en paralelo y el defecto de navegación).
+⚠️ **No proponer su reincorporación** al releer el capítulo tras la reejecución: lo que quitó está
+quitado a propósito. La única excepción legítima sería que la corrección del simulador hiciera
+*falsa* alguna afirmación que quedó en el texto, que es distinto de que falte contexto.
+
+⚠️ **Fuera del cap. 6, pero hay que decírselo al usuario cuando pase**: quedarán desalineados
+`.claude-notes/06_conclusiones.md` (addendum 2, que sostiene las cinco ideas), este fichero,
+`01_contexto.md` y `CLAUDE.md`. Y la **calibración del catálogo** (L=6 como punto de
+iso-dificultad) se validó con la física defectuosa: con las bajas activas la dificultad efectiva
+sube. No se va a recalibrar —sería rehacer el catálogo— pero conviene declararlo.
+
+⚠️ **La inmunidad no es una propiedad general de esos tres algoritmos**, sino de la relación entre
+lo que reservan (la esperanza) y el coste del fracaso (10). Si fracasar costase más que la demanda
+esperada, también morirían. Declararlo así en la memoria (ya está en §6.4.1).
 
 **Preguntas para el usuario**:
 1. ¿Es la semántica deseada? Alternativa razonable: cobrar solo la parte proporcional al tiempo
