@@ -8,11 +8,11 @@ al empezar, leer `.claude-notes/01_contexto.md`, las últimas entradas de
 
 📌 **La fase actual es la REDACCIÓN DE LA MEMORIA.** Antes de escribir cualquier capítulo es
 obligatorio leer **`.claude-notes/06_conclusiones.md`**, que contiene las ideas que sostienen el
-trabajo. 🔴 **PERO ESTÁ OBSOLETO desde el 17-09-2026** y lleva un banner que lo dice: sus cinco
-ideas y sus dos addendums defienden el **empate** frente a CBBA, que la reejecución del catálogo
-deshizo. **Rehacerlo es la primera tarea pendiente** y requisito previo al capítulo 7. Mientras
-tanto, la fuente de verdad de las cifras son este fichero, «REEJECUCIÓN 17-09-2026» en
-`.claude-notes/03_experimentos.md` y el capítulo 6 ya cerrado.
+trabajo. ✅ **REHECHO el 24-09-2026 (sesión 13)** sobre la tanda reejecutada: fija la tesis —**la
+hipótesis se cumple, Dec-MCTS gana**—, el peso de cada idea y lo que se cayó, y **remite** al
+cap. 6 para las cifras en vez de duplicarlas. La fuente de verdad de los números sigue siendo el
+**capítulo 6 ya cerrado**, «REEJECUCIÓN 17-09-2026» en `.claude-notes/03_experimentos.md` y este
+fichero.
 
 📌 **Capítulo 5 CERRADO** (sesión 8): introducción + §5.1 configuración común + §5.2 los cinco
 bloques, uno por subapartado. Sus dos figuras existen. ⚠️ El usuario **eliminó la
@@ -30,18 +30,22 @@ bloque · magnitudes secundarias) + §6.1 protocolo experimental, que **resuelve
 1. ✅ **Sesión 12 cerrada**: simulador corregido (dos defectos de batería), catálogo reejecutado,
    cuaderno reejecutado y **capítulo 6 CERRADO por el usuario** sobre los datos nuevos.
    Detalle completo en la sesión 12 de `.claude-notes/04_bitacora.md`.
-2. 🔴 **AHORA: rehacer `.claude-notes/06_conclusiones.md`.** Sus cinco ideas y sus dos addendums
-   sostienen la tesis del **empate** y la de «el conjunto de prueba determina la conclusión», y
-   **las dos se han caído**. El fichero lleva un banner de obsoleto. Como el protocolo obliga a
-   leerlo antes de redactar cualquier capítulo, **rehacerlo es requisito previo al capítulo 7**.
-   Material: sesión 12 de la bitácora, «REEJECUCIÓN 17-09-2026» en `03_experimentos.md` y el
-   propio capítulo 6. Conservar de él la **estructura** y los **límites que el usuario fijó**
-   (la conjetura sobre la literatura va como teoría; la comparación centralizado/distribuido no se
-   mide aquí y se apoya en el paper del tutor sin cifras de pérdida ⇒ D-03).
-3. Después, el **capítulo 7** (`07_conclusiones_trabajo_futuro.tex`, etiqueta
-   `cap:conclusiones_trabajo_futuros`). Antes hay que decidir **D-03** (cómo citar el paper del
-   tutor; es estructural para ese capítulo), D-13 y D-14.
-4. Luego el **capítulo 1** y la **limpieza** (objetivo 3.1), que ahora incluye borrar
+2. ✅ **Sesión 13: `.claude-notes/06_conclusiones.md` REHECHO** (24-09-2026) sobre la tanda
+   reejecutada. Ya no es un archivo de cifras —remite al cap. 6 y a «REEJECUCIÓN 17-09-2026»—,
+   sino la **tesis y su reparto**: 6 ideas con su peso, los límites vigentes y una lista explícita
+   de lo que se cayó. ✅ **D-13 resuelta por el usuario: salida (c)** — la experimentación está
+   cerrada, no se lanza ninguna tanda nueva y lo que no sostenga la tanda vigente se declara como
+   interpretación o no se escribe.
+3. ✅ **Sesión 14 (29-09-2026): CAPÍTULO 7 ESCRITO Y CERRADO por el usuario.** Tres apartados
+   —Logros y aportaciones · **Limitaciones** (sin «y dificultades encontradas»: las dificultades
+   del desarrollo quedan fuera por decisión suya) · Trabajo futuro (tres líneas)— más una apertura
+   recapitulativa. 1 782 palabras. Detalle en la sesión 14 de `.claude-notes/04_bitacora.md`.
+4. 🔴 **AHORA: el capítulo 1 (Introducción) y el Resumen/Abstract** (es/en), acordado con el
+   usuario al cerrar la sesión 14. Se escriben con la hipótesis ya confirmada, así que pueden
+   anunciar el resultado sin condicionales. **Proponerle el índice y la extensión antes de
+   escribir**, como en los capítulos anteriores.
+5. Luego los **preliminares de `TFE.tex`** (título, autor, fecha, agradecimientos, listas de
+   figuras y tablas) y la **limpieza** (objetivo 3.1), que ahora incluye borrar
    `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv` (decisión del usuario).
 
 `.claude-notes/` es el cuaderno de trabajo del asistente y **no forma parte de la entrega**.
@@ -152,7 +156,7 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
 | `scripts/` | Generadores, `run_catalog.sh`, `extract_metrics.py`, `analyze_catalog_v3.py`, `compare_catalogos.py`, `analyze_probe.py`, `figura_geometria_cap5.jl` |
 | `logs/` | Tandas de experimentos (⚠️ no todas son válidas, ver notas) |
 | `analisis/` | ⭐ `evaluacion_final.ipynb` + `figuras/p1_*,p2_*,p3_*` y `catalogo_v3.csv` (**vigentes**); `evaluacion_v1_obsoleto.ipynb` + `figuras/01_*…08_*`, `catalogo_v2.csv`, `probe.csv`, `resultados.csv` (histórico) |
-| `memoria/` | Proyecto LaTeX. Caps. 2, 3, 4 y 5 completos; 1, 6 y 7 pendientes |
+| `memoria/` | Proyecto LaTeX. Caps. 2–7 completos y cerrados; **pendientes el cap. 1, el resumen/abstract y los preliminares** |
 
 ## Reglas de trabajo (impuestas por el usuario)
 
@@ -185,10 +189,32 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
   por mi algoritmo», aunque ya no sea la comparación más reñida. **Sin pendientes.**
   ⚠️ Las figuras de la memoria las exporta el propio cuaderno con
   `guardar(fig, nombre, memoria='<fichero>')`, **sin `suptitle`**: al reejecutarlo se actualizan solas.
-- **Siguiente capítulo a escribir: el 7 (Conclusiones y trabajo futuro)**, etiqueta
-  `cap:conclusiones_trabajo_futuros`. Es donde van las valoraciones que el cap. 6 deja fuera.
-  🔴 **Antes hay que rehacer `.claude-notes/06_conclusiones.md`**: sus cinco ideas y su addendum 2
-  ya no describen el resultado medido.
+- **Cap. 7 (`07_conclusiones_trabajo_futuro.tex`): CERRADO por el usuario (sesión 14,
+  29-09-2026)**, etiqueta `cap:conclusiones_trabajo_futuros`. Apertura recapitulativa + §7.1
+  Logros y aportaciones + §7.2 **Limitaciones** + §7.3 Trabajo futuro (tres líneas: refinar la
+  comunicación y el criterio de decisión de Dec-MCTS · cuantificar la pérdida frente al
+  planificador centralizado · validación externa sobre Solomon). Dos `\red{CITA AL TUTOR}`.
+  ⚠️ **Erratas señaladas y NO aplicadas**: «esta algoritmo», «ha desmostrado», «en si mismo»,
+  «evaluar cúal», «capaz asignar», y una **frase incompleta** en §7.2 (la pendiente de Dec-MCTS
+  $+0{,}0016$ se quedó sin predicado).
+  🔴 **Material que el usuario eliminó y que hoy NO está en ninguna parte de la memoria**: los
+  **planes comunicados de longitud 1.58** (con ello se cayó «explotar la profundidad de los
+  planes» del trabajo futuro), la **semilla no configurable** (D-05) y las **dificultades del
+  desarrollo**. No reponerlos en el cap. 1 sin preguntar.
+- **Autoría de los algoritmos (corrección del usuario, 29-09-2026)**: los *baselines*, CBAA y CBBA
+  **no son implementaciones propias** —son métodos establecidos (`choi2009consensus`), y lo propio
+  es la función de puja y algún detalle—; **Dec-MCTS sí lo es**, partiendo de Best et al.
+  (problema distinto) con muchas modificaciones y pruebas. **El logro central del TFM es haber
+  construido ese algoritmo**, no que la hipótesis se cumpla; que además gane lo refrenda.
+- **Siguiente: el cap. 1 (Introducción) y el Resumen/Abstract.** Se escriben al final, con la
+  hipótesis ya confirmada.
+- ⚠️ **Estilo: prosa continua.** El usuario rechazó el uso de `\paragraph{}` para encabezar cada
+  párrafo («parece indicar la limitación de no saber escribir de manera continua»). Donde haga
+  falta estructura explícita, **lista**, no títulos de párrafo.
+- ⚠️ **Extensión**: `TFE.tex` es 12 pt con `\setstretch{1.4}` ⇒ **~350–400 palabras por página**.
+  Estimar páginas contando líneas del `.tex` induce a error.
+- ⚠️ **Experimentación CERRADA** (D-13, salida (c)): nada de tandas nuevas; lo que no sostenga la
+  tanda vigente se declara como interpretación o no se escribe.
 - ⚠️ **Registro OBJETIVO en el análisis de resultados** (exigido por el usuario, 2026-09-11):
   describir **qué se mide y cómo se obtiene**, no lo que se espera ver; nada de dar por supuesto
   que «queremos que gane Dec-MCTS»; las explicaciones mecanísticas se marcan como

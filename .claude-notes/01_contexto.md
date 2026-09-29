@@ -95,7 +95,14 @@ crecientes de coordinación:
 | 4. Materiales y métodos | `04_materiales_y_metodos.tex` | **completo y CERRADO (sesión 5)** — NO modificar salvo necesidad estricta |
 | 5. Casos de estudio | `05_casos_de_estudio.tex` | **completo y CERRADO (sesión 8)** |
 | 6. Experimentación | `06_experimentación_pruebas.tex` | ✅ **CERRADO por el usuario (sesión 12)**, sobre la tanda reejecutada — 7 figuras, 5 tablas, ninguna marca `\red{}`, sin pendientes |
-| 7. Conclusiones | `07_conclusiones_trabajo_futuro.tex` | vacío |
+| 7. Conclusiones | `07_conclusiones_trabajo_futuro.tex` | ✅ **CERRADO por el usuario (sesión 14, 29-09-2026)** — 1 782 palabras, tres apartados (Logros · Limitaciones · Trabajo futuro), dos `\red{CITA AL TUTOR}` |
+
+🔴 **SIGUIENTE (sesión 15): el capítulo 1 (Introducción) y el Resumen/Abstract**, acordado con el usuario.
+El cap. 1 se escribe ya con la hipótesis confirmada, así que puede anunciar el resultado sin condicionales.
+
+⚠️ **Material del guion que el usuario descartó al cerrar el cap. 7 y que hoy NO está en ninguna parte de la
+memoria**: los **planes comunicados de longitud 1.58** (L1), la **semilla no configurable** (D-05) y las
+**dificultades del desarrollo** (los dos defectos de batería). No reponerlos en el cap. 1 sin preguntar.
 
 Pendientes marcados dentro del cap. 2/3: varios `\red{CITA AL TUTOR}` (el paper no está
 publicado; hay que decidir cómo citarlo) y un `% _________ SEGUIR AQUI ____` en el cap. 2
@@ -149,9 +156,12 @@ citas adecuadas. El usuario no compila LaTeX localmente: importa el contenido, n
   perfil por familia → equipo × incertidumbre → mecanismo → refutaciones → coste → síntesis.
 
 ### Bloque 2 — Escritura de la memoria ⏭️ **FASE ACTUAL**
-📌 Antes de redactar nada, leer **`06_conclusiones.md`**: las cinco ideas del trabajo con sus
-cifras y con los avisos sobre qué **no** puede afirmarse (conjetura sobre la literatura,
-comparación centralizado/distribuido no medida → D-09).
+📌 Antes de redactar nada, leer **`06_conclusiones.md`**, **rehecho el 24-09-2026**: la tesis
+(«la hipótesis se cumple, Dec-MCTS gana»), **seis ideas con su peso**, la estructura del cap. 7, el
+material de limitaciones y la lista de lo que se cayó. Remite al cap. 6 para las cifras.
+⚠️ **La conjetura sobre la escasez de literatura está ELIMINADA** (decisión del usuario,
+24-09-2026). La comparación centralizado/distribuido sigue sin medirse: cualitativa y sin cifras
+de pérdida (→ D-09, D-03).
 - **2.1 ✅ CERRADO (sesión 5).** Cap. 4 redactado, revisado y reescrito por el usuario a partir
   del borrador del asistente. ~3 700 palabras (≈9-10 págs.), 3 tablas y 1 figura
   (`memoria/figures/04_materiales_y_metodos/arquitectura_simulador.pdf`, creada por el usuario).
@@ -183,14 +193,22 @@ comparación centralizado/distribuido no medida → D-09).
   el **addendum 2** de
   `06_conclusiones.md`. Abrirlo con la recapitulación del catálogo que el usuario quitó del
   cap. 5. Ver la sección «PARA LA PRÓXIMA SESIÓN» de la bitácora (sesión 8).
-- **2.4** Cap. 7 Conclusiones y trabajo futuro → ideas 1, 2, 4 y 5 de `06_conclusiones.md`.
+- **2.4** ⏭️ **SIGUIENTE TAREA.** Cap. 7 Conclusiones y trabajo futuro
+  (`07_conclusiones_trabajo_futuro.tex`, etiqueta `cap:conclusiones_trabajo_futuros`), con
+  `06_conclusiones.md` como guion. **Estructura fijada por el usuario (24-09-2026)**: varias
+  partes, dos de ellas obligatorias — **«Logros y aportaciones principales»** (ideas 1 y 2) y
+  **«Limitaciones y dificultades encontradas»** (L1–L5, encabezadas por los planes comunicados de
+  longitud media 1.58) —, más trabajo futuro (idea 6). **Proponerle el índice y la extensión por
+  apartado antes de escribir.** D-03 no bloquea: se deja la marca `\red{CITA AL TUTOR}`.
 - **2.5** Cap. 1 Introducción (al final).
 - **2.6** Resumen/abstract, título, pulido final.
 
 ### Bloque 3 — Limpieza del repositorio (se sube a GitHub, lo evalúa el tribunal)
 - **3.1** Eliminar logs de prueba, vídeos `.mp4`, temporales, `copy/`, scripts auxiliares,
   esta misma carpeta `.claude-notes/`, y las versiones anteriores del catálogo (v1 y v2, ver
-  D-15). 📌 **Incluye el renombrado de los escenarios (D-17)**: la memoria los llama
+  D-15). 📌 **Incluye D-18** (sesión 13): `data/` y `logs/` **sí** se suben, depurados; `CLAUDE.md`
+  y `.claude-notes/` **no**; y hay que sacar del índice de git los 8 085 logs y los 40 ficheros de
+  `build/` que quedaron versionados antes del `.gitignore`. 📌 **Incluye el renombrado de los escenarios (D-17)**: la memoria los llama
   `esc_{bloque}_r{robots}_n{tareas}_{ventana}_{régimen}_{coalición}_i{instancia}` y en el
   repositorio son `cv3_..._bnd_...`. Afecta a 360 escenarios, 5 400 logs, el CSV, el generador
   y la expresión regular de `extract_metrics.py`. **Hacerlo después del cap. 6.**

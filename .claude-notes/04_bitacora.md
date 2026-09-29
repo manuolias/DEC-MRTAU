@@ -4,6 +4,176 @@ Entrada más reciente arriba. Formato: fecha · objetivo · qué se hizo · qué
 
 ---
 
+## 2026-09-29 — Sesión 14: CAPÍTULO 7 ESCRITO y CERRADO por el usuario
+
+**Objetivo**: redactar `07_conclusiones_trabajo_futuro.tex` con `06_conclusiones.md` como guion.
+**Resultado**: capítulo terminado, reescrito por el usuario y **cerrado**. No se tocó el código ni
+ningún otro capítulo.
+
+### Índice propuesto y tres decisiones del usuario
+
+Antes de escribir se le propuso el índice y la extensión por apartado. Decidió:
+1. **Las «dificultades del desarrollo» quedan FUERA** (los dos defectos de batería, la trampa del
+   diseño iso-dificultad, la réplica del simulador dentro de Dec-MCTS). En consecuencia el
+   apartado se tituló **«Limitaciones»**, no «Limitaciones y dificultades encontradas».
+2. Extensión objetivo **≈5 páginas**.
+3. Apertura con **recapitulación del trabajo realizado**, capítulo a capítulo.
+
+### Cuatro iteraciones del borrador (todas con corrección del usuario)
+
+1. **Borrador con `\paragraph{}`** → rechazado: *«parece indicar la limitación de no saber
+   escribir de manera continua»*. ⇒ **prosa corrida**; listas solo donde la enumeración sea el
+   recurso natural. 📌 Criterio de estilo permanente.
+2. **Atribución mal planteada en «Logros»** → corrección de fondo del usuario:
+   - Los *baselines*, CBAA y CBBA **NO son implementaciones propias**, salvo la función de puja y
+     algún detalle. Son métodos establecidos (`choi2009consensus`) implementados desde su
+     formulación original.
+   - **Dec-MCTS sí es construcción propia**: parte de Best et al. (percepción activa, problema
+     distinto) y exigió muchas modificaciones y pruebas. **Su definición es aportación clave
+     aunque no hubiera ganado.**
+   - **El logro central NO es que la hipótesis se cumpla**, sino *haber construido* la variante
+     descentralizada de MCTS para este problema **y además** que gane.
+3. **Trabajo futuro demasiado específico** (eran 5 líneas) → reducido a **tres**: mejora del
+   algoritmo, medir la pérdida frente al centralizado, validación externa. Las ideas concretas
+   (coaliciones parciales, criterio marginal) entran *brevísimamente* y **sin prometer mejora**.
+4. **Títulos de esos tres ítems** reescritos a forma nominal paralela y descriptiva.
+
+### La versión final es del usuario
+
+**1 782 palabras (~4,8 págs)**. Estructura: apertura (3 párrafos) · §7.1 Logros · §7.2 Limitaciones
+· §7.3 Trabajo futuro. Qué hizo con el borrador entregado:
+- **Reordenó §7.1**: formalización → lectura unificada → el sistema entregado → **el logro central
+  (la construcción de Dec-MCTS)** → robustez → cierre. Quitó casi todas las cifras de la robustez
+  (deja la conclusión, no el *leave-one-block-out*).
+- 🔴 **ELIMINÓ L1 por completo**: los **planes comunicados de longitud 1.58** y el 68.7 % de
+  cadenas cortadas en `FINISH` **no aparecen en ninguna parte de la memoria**. Con ello se cayó
+  también la idea de «explotar la profundidad de los planes» del trabajo futuro.
+- **Eliminó el apartado «Consideraciones finales»**: el capítulo termina en la lista de trabajo
+  futuro.
+- **Reescribió la explicación del bloque D**: ahora dice que CBAA forma parejas de dos robots y
+  las mantiene durante toda la ejecución, mientras que Dec-MCTS no aprovecha esa estrategia
+  (antes era el matiz uniforme/mixta).
+- Dejó **dos marcas `\red{CITA AL TUTOR}`** (apertura y trabajo futuro), como en los caps. 2 y 3.
+- Redujo la lista de «alcance de lo afirmable» de cuatro ítems a **tres**: quitó el de la
+  **semilla no configurable** (D-05), que ya no está declarado en ninguna parte de la memoria.
+
+### Cambio fuera del capítulo
+
+**`memoria/TFE.bib`**: añadida la entrada `solomon1987algorithms` (Solomon, *Operations Research*
+35(2):254–265, 1987) para citar el banco VRPTW en el trabajo futuro. ⚠️ El directorio
+`scenarios/salomon/` tiene el nombre mal escrito; lo correcto es **Solomon**.
+
+### Erratas detectadas en la versión final — SEÑALADAS, NO APLICADAS
+
+Pendientes del visto bueno del usuario: «esta algoritmo» → *este*; «ha desmostrado» →
+*demostrado*; «en si mismo» → *sí*; «evaluar cúal» → *cuál*; «capaz asignar» → *capaz de
+asignar*; y una **frase incompleta** en §7.2: «mientras que la pendiente de Dec-MCTS,
+$+0{,}0016$ ($t=0{,}7$)» se quedó sin predicado (falta *no se distingue de cero*).
+
+### Calibración útil para próximos capítulos
+
+`TFE.tex` usa **12 pt con `\setstretch{1.4}`** ⇒ **~350–400 palabras por página**. Estimar por
+líneas de `.tex` induce a error: dos pasadas de compresión se gastaron por calcular mal esto.
+
+### Qué queda
+
+1. 🔴 **Capítulo 1 (Introducción) y el Resumen/Abstract** — acordado como siguiente sesión.
+2. Preliminares de `TFE.tex` (título, autor, fecha, agradecimientos, listas de figuras/tablas).
+3. **D-03 sigue abierta** (cómo citar al tutor): ya son **ocho** marcas `\red{CITA AL TUTOR}`
+   contando las dos del cap. 7.
+4. Limpieza del repositorio (D-15, D-17, D-18).
+
+---
+
+## 2026-09-24 — Sesión 13: `06_conclusiones.md` REHECHO y estructura del capítulo 7 fijada
+
+Sesión de repaso y de preparación del capítulo 7. **No se ha tocado la memoria ni el código.**
+
+### Repaso del estado del proyecto
+
+Inventario de lo que queda para terminar: caps. **7 y 1** por escribir; **preliminares** de
+`TFE.tex` sin tocar desde la plantilla (título en dos sitios, autor, fecha, Resumen es/en,
+Agradecimientos, `\listoffigures`/`\listoftables` comentados); flecos menores en capítulos
+cerrados; y la **limpieza del repositorio** (bloque 3), que se hará **al terminar la memoria**.
+
+**Prioridades que fijó el usuario**: de los flecos, solo importan las marcas
+`\red{PENDIENTE: URL del repositorio…}` (cap. 4) y las seis `\red{CITA AL TUTOR}` (caps. 2 y 3);
+el resto es irrelevante y no prioritario.
+
+**Hallazgos del repaso, que el usuario deja pendientes para la limpieza** (ver **D-18**):
+- `logs/` (8 085 ficheros) y `build/` (40) siguen **versionados en git** pese a estar en
+  `.gitignore`; los sacó temporalmente porque estaban llenos de material obsoleto, pero
+  **quiere que `data/` y `logs/` acaben subidos a GitHub** una vez depurados.
+- **No quiere que `CLAUDE.md` ni `.claude-notes/` aparezcan en GitHub**, y al meterlos en
+  `.gitignore` creyó perder el acceso del asistente. Aclarado: `.gitignore` **no** impide leer
+  por ruta directa, solo los oculta de las búsquedas por patrón.
+
+### Un log de 156 GiB borrado
+
+`copy/prueba3/scenario_4A_20t_3r_cbaa_reward00_001.log` ocupaba **155,72 GiB** (167 204 876 288 B).
+Analizado sin cargarlo en memoria (lecturas en flujo con `dd`/`skip` y búsqueda binaria byte a
+byte) y borrado por orden del usuario. Estructura: **124 líneas** de traza legítima, luego
+**1 778 563 228 repeticiones** de una sola línea —
+`event: recharge; timestamp: 69.8264; robot: 2; recharging_station: 1; pos: (0, 0); level: 100` —
+una línea cortada de 54 B y **19 MiB de relleno NUL** (el proceso murió a media escritura).
+**Total 1 778 563 353 líneas.** Causa: el evento de recarga se redispara en el mismo instante sin
+avanzar el reloj; el robot 2 llega con batería 6,35, recarga a 100 y el planificador se queda en un
+punto fijo. Es de la tanda `logs/prueba`, anterior al commit `466190a` y ya declarada inválida.
+⚠️ **No se ha comprobado si esa condición sigue viva en el simulador actual** — el usuario no lo
+pidió; queda ofrecido.
+
+**Efecto colateral en WSL**: el `.vhdx` de Ubuntu sigue ocupando **174 GiB** en un C: de 476 GB con
+solo 35 GB libres, porque Linux liberó los bloques pero el disco virtual **no es disperso** y no
+encoge solo. `wsl --manage Ubuntu --set-sparse true` **falla**: Microsoft ha deshabilitado el VHD
+disperso por riesgo de corrupción y exige `--allow-unsafe`, que se desaconsejó. Vía segura
+pendiente, a ejecutar por el usuario desde Windows: `wsl --shutdown` + `diskpart` con
+`attach vdisk readonly` / `compact vdisk`. Verificado de paso que **no hay daño**: ningún error de
+ext4 en el log del kernel y el sistema de ficheros nunca se remontó en solo lectura.
+
+### ✅ D-13 RESUELTA — salida (c): la experimentación queda cerrada
+
+Palabras del usuario: *«la experimentación está ya cerrada y todas las conclusiones deben
+obtenerse a partir de la experimentación ya realizada»*. En consecuencia, **no se re-mide nada**:
+las cuatro refutaciones y la ablación del canal (C1), medidas con batería 100 y el simulador
+anterior, **no se citan como resultado**. El capítulo 7 se queda con la erosión tal como el
+capítulo 6 la mide, y la interpretación mecanística se declara como hipótesis compatible con los
+datos.
+
+### `06_conclusiones.md` rehecho: 452 → 237 líneas
+
+Decisión de enfoque, acordada con el usuario: **no rehacer el fichero, sustituirlo**. El anterior
+tenía **tres estratos de cifras muertas** (cuerpo v1, addendum v2, addendum v3-con-defecto); el
+nuevo **no repite ninguna cifra del capítulo 6**, solo las de titular, y **remite** al cap. 6
+cerrado y a «REEJECUCIÓN 17-09-2026». Contenido: la tesis en una frase, **seis ideas con su peso
+declarado**, la transición centralizado→distribuido reformulada y una **lista explícita de lo que
+se cayó**.
+
+**Hallazgo nuevo de esta sesión, verificado en el código**: el solver evaluado
+`dec-mcts-v4-g9999` se construye con **`deepBundle = false`** (`src/main.cpp:184-186`), luego
+**no lleva la corrección D-08**. Es decir, **Dec-MCTS gana el catálogo comunicando planes de
+longitud media 1.58**, con el 68.7 % de las cadenas cortadas en `FINISH`, sin ejercer su
+diferencia conceptual frente a las subastas.
+
+### Estructura del capítulo 7, fijada por el usuario
+
+Debe incluir **varias partes**, dos de ellas obligatorias: **«Logros y aportaciones principales»**
+y **«Limitaciones y dificultades encontradas»**. 📌 **El hallazgo de los planes cortos (1.58) va en
+LIMITACIONES**, no en trabajo futuro. 📌 **La conjetura sobre la escasez de literatura en MCTS
+descentralizado se ELIMINA POR COMPLETO**: ni atenuada ni invertida.
+`06_conclusiones.md` recoge ya la estructura y una sección propia de material para el apartado de
+limitaciones (**L1–L5** + las dificultades del desarrollo, estas últimas a confirmar con él).
+
+### Qué queda
+
+1. 🔴 **Escribir el capítulo 7** en la próxima sesión, con `06_conclusiones.md` como guion.
+   **Proponerle antes el índice y la extensión por apartado.**
+2. **D-03 sigue abierta** (cómo citar el paper del tutor). **No bloquea**: se redacta dejando la
+   marca `\red{CITA AL TUTOR}` como en los caps. 2 y 3. El usuario lo consultará con el tutor.
+3. Después, capítulo 1, preliminares de `TFE.tex` y la limpieza del repositorio (**D-15, D-17,
+   D-18**).
+
+---
+
 ## 2026-09-17 — Sesión 12: CORRECCIÓN DEL SIMULADOR, REEJECUCIÓN Y ACTUALIZACIÓN DEL CAP. 6
 
 🔴🔴 **El resultado central del trabajo ha cambiado: Dec-MCTS ya no empata, GANA.**

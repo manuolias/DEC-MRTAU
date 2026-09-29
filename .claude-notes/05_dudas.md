@@ -275,6 +275,9 @@ arreglarlo antes de defender el trabajo.
 ### D-03 · Cómo citar el paper del tutor — `ABIERTA`
 Hay varios `\red{CITA AL TUTOR}` en los caps. 2 y 3. El paper no está publicado.
 ¿Se cita como preprint/comunicación personal? ¿Se pide un identificador al tutor?
+⚠️ **Sesión 14**: el cap. 7 añade **dos marcas más** (apertura y trabajo futuro, esta última en la
+línea de «cuantificar la pérdida frente al planificador centralizado»), de modo que ya son **ocho** en
+total. **No bloquea la redacción** (decisión del usuario, sesión 13): se redacta con la marca puesta.
 
 ### D-04 · ¿Se conservan v1, v2 y v3? — `RESUELTA` (sesión 4, revisada)
 **Sesión 3**: se conservaban las cuatro para elegir la definitiva sobre el catálogo final.
@@ -324,9 +327,9 @@ paper del tutor no son los de este catálogo, así que no se puede decir «se pi
 La afirmación debe quedarse en **cualitativa** («la reducción observada es mayor de lo que cabría
 esperar del mero paso a un esquema distribuido»).
 
-⚠️ **Dependencia con D-03**: este argumento se apoya en un paper **aún no publicado**. Eso hace
-que la decisión sobre cómo citarlo pase de ser un detalle de formato a ser **estructural** para
-el cap. 7. Resolver D-03 antes de redactarlo.
+⚠️ **Dependencia con D-03**: este argumento se apoya en un paper **aún no publicado**.
+✅ **Resuelto en la práctica (sesión 14)**: el cap. 7 se escribió y cerró dejando la marca
+`\red{CITA AL TUTOR}`, como los caps. 2 y 3. D-03 sigue abierta, pero ya no bloquea nada.
 
 ### D-10 · Dónde va el protocolo experimental y cuántas réplicas — `RESUELTA` (sesión 6, revisada en la 7)
 ⚠️ **Revisión (sesión 7, al escribir el cap. 5)**: el usuario recortó el guion del capítulo y el
@@ -367,7 +370,16 @@ no se han aplicado. Decide el usuario si merecen abrir el fichero:
 4. Opcional: §4.4 abre dos párrafos seguidos con «El simulador es…», y alterna «reloj virtual»
    (§4.4) con «reloj global» (§4.4.1); el cap. 2 usa «reloj global $t$».
 
-### D-13 · Las cuatro refutaciones se midieron sobre el catálogo v1 — `ABIERTA` ⚠️ (sesión 6, agravada en la 8)
+### D-13 · Las cuatro refutaciones se midieron sobre el catálogo v1 — ✅ `RESUELTA` (sesión 13)
+
+> ✅ **DECISIÓN DEL USUARIO (24-09-2026): salida (c).** La experimentación queda **cerrada**: no se
+> re-mide nada y todas las conclusiones salen de la tanda vigente. En consecuencia, **las cuatro
+> refutaciones y la ablación del canal (C1) NO se citan como resultado** en la memoria. El
+> capítulo 7 se queda con la erosión de la ventaja tal como el capítulo 6 la mide, y la
+> interpretación mecanística (deconflicción excesiva, H-07) se declara explícitamente como
+> hipótesis compatible con los datos. Registrado en `06_conclusiones.md`, idea 3.
+> Lo que sigue se conserva como registro del diagnóstico.
+
 > ⚠️ **Actualización (sesión 8)**: ahora la distancia es de **dos** catálogos, no de uno. Las
 > cuatro intervenciones se midieron con batería 100 **y** con los regímenes antiguos
 > (σ = 10, coste de fracaso variable). Si se quieren re-medir, hágase ya sobre el **v3**:
@@ -644,6 +656,23 @@ Alcance del renombrado:
 ⚠️ **No renombrar antes de terminar el cap. 6**: las figuras y tablas del análisis se generan
 desde el CSV y cualquier renombrado a medias deja los logs huérfanos de sus escenarios.
 Es mecánico y scriptable, pero toca ~5 760 ficheros: hacerlo de una vez y regenerar el CSV.
+
+### D-18 · Qué se publica en GitHub y qué se oculta — `PENDIENTE` (sesión 13)
+**Situación (24-09-2026)**: `logs/` (8 085 ficheros) y `build/` (40) están **versionados** pese a
+figurar en `.gitignore`; se añadieron antes de que existiera el fichero, así que este solo evita
+que entren más. El usuario es consciente y lo resolverá en la limpieza.
+
+**Lo que quiere**, dicho por él:
+1. **`data/` y `logs/` SÍ deben acabar en GitHub**, pero depurados: hoy están llenos de material
+   obsoleto y ocupan demasiado, y por eso los sacó temporalmente.
+2. **`CLAUDE.md` y `.claude-notes/` NO deben aparecer en GitHub.** Su duda era que al meterlos en
+   `.gitignore` el asistente perdiera el acceso.
+   ✅ **Aclarado**: `.gitignore` **no** impide leer un fichero por ruta directa; solo lo oculta de
+   las búsquedas por patrón, que es lo que él observó. La exclusión es viable sin perder acceso.
+   Vía: `git rm -r --cached` + entrada en `.gitignore` (deja el árbol limpio; la historia ya
+   publicada es otro asunto, a decidir si importa).
+
+**Cuándo**: fase de limpieza (objetivo 3.1), junto con D-15 (jubilar v1 y v2) y D-17 (renombrado).
 
 ### D-05 · Semilla y reproducibilidad — `ABIERTA`
 Todo usa `std::random_device`. ¿Se añade una semilla configurable por experimento para que
