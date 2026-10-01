@@ -579,11 +579,11 @@ valor que luego se emplea en el cálculo de los tiempos de viaje, espera y, en �
 \State para cada $T_j\in\mathcal{P}$ alcanzable: calcular $\nu_{ij}$ según~\eqref{eq:puja}
 \State ordenar las tareas con $\nu_{ij}>0$ por puja decreciente
 \For{$T_j$ en orden de preferencia}
-    \State \textsc{ComunicateBid}$(\nu_{ij})$
+    \State \textsc{CommunicateBid}$(\nu_{ij})$
     \State $\{\nu_{kj}\}_{k\neq i} \gets$ \textsc{ReceiveBid}() \Comment{pujas de los vecinos por $T_j$}
     \State $n_{\mathrm{sup}} \gets \big|\{\,k\neq i : \nu_{kj}>\nu_{ij}\,\}\big|$ \Comment{vecinos que nos superan}
-    \State $\text{plazas} \gets q_j - a_j$
-    \If{$\text{plazas}>0$ \textbf{y} $n_{\mathrm{sup}}<\text{plazas}$}
+    \State $\textit{plazas} \gets q_j - a_j$
+    \If{$\textit{plazas}>0$ \textbf{y} $n_{\mathrm{sup}}<\textit{plazas}$}
         \State \Return $\textsc{ExecuteTask}(T_j)$ \Comment{entramos entre los mejores postores}
     \EndIf
 \EndFor
@@ -612,8 +612,8 @@ valor que luego se emplea en el cálculo de los tiempos de viaje, espera y, en �
     \State \textsc{CommunicateBundleBid}(paquete $\mathcal{B}$ y sus pujas)
     \State $\{\mathcal{B}_k\}_{k\neq i} \gets$ \textsc{ReceiveBundleBid}() \Comment{paquetes de los vecinos}
     \State $n_{\mathrm{sup}} \gets \big|\{\,k\neq i : T^{*}\in\mathcal{B}_k \text{ con puja marginal} > \nu^{*}\,\}\big|$
-    \State $\text{plazas} \gets q_{T^{*}} - a_{T^{*}}$
-    \If{$\text{plazas}>0$ \textbf{y} $n_{\mathrm{sup}}<\text{plazas}$}
+    \State $\textit{plazas} \gets q_{T^{*}} - a_{T^{*}}$
+    \If{$\textit{plazas}>0$ \textbf{y} $n_{\mathrm{sup}}<\textit{plazas}$}
         \State \Return $\textsc{ExecuteTask}(T^{*})$
     \Else
         \State $\mathcal{N} \gets \mathcal{N}\cup\{T^{*}\}$ \Comment{perdemos la plaza; reintentar}
@@ -679,7 +679,7 @@ donde $\bar{X}_j$ es la recompensa media del brazo $j$, $n_j$ su número de visi
 
 % _________ SEGUIR AQUI _______________________
 
-Al trasladar UCB1 a la fase de selección de MCTS (tratando cada nodo como un bandido cuyos brazos son sus hijos) se obtiene el algoritmo \textbf{UCT} (\emph{UCB applied to Trees})~\cite{kocsis2006bandit}, la variante de MCTS más difundida. En UCT, la cota de la Ecuación~\eqref{eq:ucb1} se aplica recursivamente en cada nivel del árbol, balanceando exploración y explotación de forma local en cada nodo.
+Al trasladar UCB1 a la fase de selección de MCTS (tratando cada nodo como una tragaperras cuyos brazos son sus hijos) se obtiene el algoritmo \textbf{UCT} (\emph{UCB applied to Trees})~\cite{kocsis2006bandit}, la variante de MCTS más difundida. En UCT, la cota de la Ecuación~\eqref{eq:ucb1} se aplica recursivamente en cada nivel del árbol, balanceando exploración y explotación de forma local en cada nodo.
 
 % ---------------------------------------------------------------------------
 \paragraph{De MCTS a Dec-MCTS: aportaciones de Best et al.}
@@ -690,7 +690,7 @@ El algoritmo de Best et al.~\cite{best2019decmcts} adapta MCTS al contexto multi
 
     \item \textbf{Distribución de probabilidad sobre planes y comunicación.} Cada robot resume su árbol en una distribución de probabilidad $\psi^{i}$ sobre un subconjunto reducido de sus secuencias de acciones más prometedoras, y la comunica periódicamente a sus vecinos. La coordinación ocurre en la fase de simulación: durante los rollouts, el robot $R_i$ muestrea los planes de los demás $\mathcal{B}^{k} \sim \psi^{k}$ a partir de las distribuciones recibidas, de modo que la simulación avanza utilizando la información muestreada para determinar las preferencias de los demás robots. Esta representación probabilística de los planes ajenos contrasta con la representación determinista (una sola tarea o paquete) de los algoritmos de pujas y constituye la principal aportación conceptual del método.
 
-    \item \textbf{Selección por UCT descontado (D-UCT).} Como las distribuciones de los vecinos cambian entre rondas de comunicación, la recompensa observada en cada nodo del árbol puede variar: una misma secuencia de acciones puede valer mucho o poco según lo que se asuma que harán los demás. Best et al. denominan \emph{breakpoints} a estos cambios abruptos en la distribución de recompensa. Para que la búsqueda se adapte a ellos, sustituyen UCT por una variante descontada, \textbf{D-UCT}, que pondera cada simulación pasada por un factor de descuento $\gamma_D$ que decae con su antigüedad, otorgando así más peso a las simulaciones recientes (obtenidas con las distribuciones de vecinos más actualizadas). D-UCT generaliza al D-UCB para aplicado al problema de la tragaperras no estacionario de Garivier y Moulines~\cite{garivier2011ducb}.
+    \item \textbf{Selección por UCT descontado (D-UCT).} Como las distribuciones de los vecinos cambian entre rondas de comunicación, la recompensa observada en cada nodo del árbol puede variar: una misma secuencia de acciones puede valer mucho o poco según lo que se asuma que harán los demás. Best et al. denominan \emph{breakpoints} a estos cambios abruptos en la distribución de recompensa. Para que la búsqueda se adapte a ellos, sustituyen UCT por una variante descontada, \textbf{D-UCT}, que pondera cada simulación pasada por un factor de descuento $\gamma_D$ que decae con su antigüedad, otorgando así más peso a las simulaciones recientes (obtenidas con las distribuciones de vecinos más actualizadas). D-UCT generaliza al D-UCB aplicado al problema de la tragaperras no estacionario de Garivier y Moulines~\cite{garivier2011ducb}.
 
     \item \textbf{Optimización de la distribución y utilidad local.} El algoritmo original incorpora otras dos modificaciones que en este trabajo se han adoptado solo parcialmente. Por un lado, una fase explícita de optimización de la distribución mediante descenso de gradiente, inspirada en métodos variacionales y en la teoría de \emph{probability collectives}, que minimiza la divergencia de Kullback--Leibler entre la distribución producto de los robots y la distribución conjunta óptima. Por otro, el empleo de una \emph{utilidad local} $f^{i}$ que mide la contribución \emph{marginal} del robot $R_i$ al objetivo global (la diferencia entre la utilidad del equipo con y sin la participación de $R_i$), más sensible al plan propio que el objetivo global $g$. Como se detalla a continuación, la implementación de este trabajo prescinde de ambas en favor de alternativas más simples que, en las pruebas realizadas, resultaron más eficaces para el problema MRTAU.
 \end{enumerate}
@@ -770,7 +770,7 @@ La estructura global del algoritmo se resume en el Algoritmo~\ref{alg:decmcts-lo
 \begin{algorithmic}[1]
 \Statex \textbf{Planificación de fondo} (se invoca de forma continua en segundo plano)
 \Function{PerformBackgroundPlanning}{observación $o_i$}
-    \State $\psi^{(-i)} \gets$ \Call{ReceiveDistributions}{}
+    \State $\psi^{(-i)} \gets$ \textproc{ReceiveDistributions}()
     \Comment{actualiza distribuciones conocidas}
     \If{el árbol $\mathcal{T}^{i}$ no existe} 
     \State inicializar $\mathcal{T}^{i}$ con raíz en el estado actual 
@@ -784,7 +784,7 @@ La estructura global del algoritmo se resume en el Algoritmo~\ref{alg:decmcts-lo
 \Statex
 \Statex \textbf{Decisión} (se invoca solo en los instantes de decisión)
 \Function{DecideNextAction}{observación $o_i$}
-    \State $\psi^{(-i)} \gets$ \Call{ReceiveDistributions}{}
+    \State $\psi^{(-i)} \gets$ \textproc{ReceiveDistributions}()
     \If{$\mathcal{T}^{i}$ vacío} \For{$\textit{ITER}_{\mathrm{emerg}}$ iteraciones} 
     \Comment{iteraciones de emergencia}
     \State \Call{Iteration}{$o_i, \mathcal{T}^{i}, \psi^{(-i)}$} 
@@ -805,29 +805,28 @@ La estructura global del algoritmo se resume en el Algoritmo~\ref{alg:decmcts-lo
 \Require observación $o_i$, distribuciones de vecinos $\psi^{(-i)}$, árbol $\mathcal{T}^{i}$
 \State $\mathcal{B}^{(-i)} \gets$ \Call{SampleBundles}{$\psi^{(-i)}$} \Comment{muestrea un plan por vecino}
 \State $p^{\mathrm{blq}} \gets$ \Call{BlockProbability}{$\mathcal{B}^{(-i)}$} \Comment{coaliciones $q_j$ de los vecinos}
-\State $s \gets$ estado inicial a partir de $o_i$; 
-\State $Q \gets$ cola de eventos inicial; \quad camino $\gets [\text{raíz}]$
-\State $\textit{enArbol} \gets \textbf{true}$; \quad nodo $\gets$ raíz
+\State $s \gets$ estado inicial a partir de $o_i$
+\State $Q \gets$ cola de eventos inicial; \quad $\textit{camino} \gets [\text{raíz}]$
+\State $\textit{enArbol} \gets \textbf{true}$; \quad $\textit{nodo} \gets \text{raíz}$
 \While{$Q\neq\varnothing$ \textbf{y} $s$ no es final}
     \State $e \gets$ extraer de $Q$ el evento de menor instante; avanzar el reloj de $s$
     \If{$e$ es \textsc{RobotDecision} de $R_i$}
         \If{$\textit{enArbol}$ \textbf{y} hay acción no expandida}
-            \State expandir nodo con esa acción
-            \State camino $\gets \text{camino} + [\text{nodo}]$;
-            $\textit{enArbol}\gets\textbf{false}$
+            \State expandir $\textit{nodo}$ con esa acción
+            \State $\textit{camino} \gets \textit{camino} + [\textit{nodo}]$; \quad $\textit{enArbol} \gets \textbf{false}$
         \ElsIf{$\textit{enArbol}$}
-            \State nodo $\gets$ \Call{SelectD-UCT}{nodo} \Comment{Ec.~\eqref{eq:duct}}
-            \State camino $\gets \text{camino} + [\text{nodo}]$ 
-        \Else{} \quad acción $\gets$ 
-        \State \Call{RolloutPolicy}{$R_i,s,p^{\mathrm{blq}}$} \Comment{Ec.~\eqref{eq:rollout-score}}
+            \State $\textit{nodo} \gets$ \Call{SelectD-UCT}{$\textit{nodo}$} \Comment{Ec.~\eqref{eq:duct}}
+            \State $\textit{camino} \gets \textit{camino} + [\textit{nodo}]$
+        \Else
+            \State $\textit{acción} \gets$ \Call{RolloutPolicy}{$R_i,s,p^{\mathrm{blq}}$} \Comment{Ec.~\eqref{eq:rollout-score}}
         \EndIf
     \ElsIf{$e$ es \textsc{RobotDecision} de un vecino $R_k$}
-        \State acción $\gets$ siguiente tarea de $\mathcal{B}^{k}$ (o \Call{RolloutSimulator} si $\mathcal{B}^{k}$ no se puede seguir)
+        \State $\textit{acción} \gets$ siguiente tarea de $\mathcal{B}^{k}$ (o \textproc{RolloutPolicy}() si $\mathcal{B}^{k}$ no se puede seguir)
     \EndIf
-    \State aplicar la acción y procesar otros eventos de tarea
+    \State aplicar la $\textit{acción}$ y procesar otros eventos de tarea
 \EndWhile
 \State $g \gets$ puntuación del estado final $s$ \Comment{recompensa del rollout}
-\State retropropagar $g$ por \emph{camino}: $N_j^{\gamma_D}\!\mathrel{+}=\!1$, $Q_j^{\gamma_D}\!\mathrel{+}=\!g$ (con descuento)
+\State retropropagar $g$ por \textit{camino}: $N_j^{\gamma_D}\!\mathrel{+}=\!1$, $Q_j^{\gamma_D}\!\mathrel{+}=\!g$ (con descuento)
 \end{algorithmic}
 \end{algorithm}
 

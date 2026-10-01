@@ -6,6 +6,11 @@ Lee `.claude-notes/README.md` y sigue el protocolo de sesión que describe. En r
 al empezar, leer `.claude-notes/01_contexto.md`, las últimas entradas de
 `.claude-notes/04_bitacora.md` y `.claude-notes/05_dudas.md`; al terminar, actualizarlos.
 
+🔴 **LA COPIA DE REFERENCIA DE LA MEMORIA ES OVERLEAF, NO `memoria/`.** Desde la sesión 15 el
+usuario aplica allí sus correcciones; en local están el cap. 1, el resumen/abstract, el título y los
+arreglos de los algoritmos, pero **no** las erratas que él corrigió. **Resincronizar antes de tocar
+nada.** El directorio `TFM_Manuel_Olias/` (descarga de Overleaf para comparar) ya no existe.
+
 📌 **La fase actual es la REDACCIÓN DE LA MEMORIA.** Antes de escribir cualquier capítulo es
 obligatorio leer **`.claude-notes/06_conclusiones.md`**, que contiene las ideas que sostienen el
 trabajo. ✅ **REHECHO el 24-09-2026 (sesión 13)** sobre la tanda reejecutada: fija la tesis —**la
@@ -40,13 +45,16 @@ bloque · magnitudes secundarias) + §6.1 protocolo experimental, que **resuelve
    —Logros y aportaciones · **Limitaciones** (sin «y dificultades encontradas»: las dificultades
    del desarrollo quedan fuera por decisión suya) · Trabajo futuro (tres líneas)— más una apertura
    recapitulativa. 1 782 palabras. Detalle en la sesión 14 de `.claude-notes/04_bitacora.md`.
-4. 🔴 **AHORA: el capítulo 1 (Introducción) y el Resumen/Abstract** (es/en), acordado con el
-   usuario al cerrar la sesión 14. Se escriben con la hipótesis ya confirmada, así que pueden
-   anunciar el resultado sin condicionales. **Proponerle el índice y la extensión antes de
-   escribir**, como en los capítulos anteriores.
-5. Luego los **preliminares de `TFE.tex`** (título, autor, fecha, agradecimientos, listas de
-   figuras y tablas) y la **limpieza** (objetivo 3.1), que ahora incluye borrar
-   `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv` (decisión del usuario).
+4. ✅ **Sesión 15 (01-10-2026): CAPÍTULO 1, RESUMEN/ABSTRACT y TÍTULO.** Los tres escritos y
+   revisados por el usuario. Además: repaso ortográfico completo de los siete capítulos
+   (~40 puntos) y corrección de tres defectos reales en los algoritmos del cap. 2. Detalle en la
+   sesión 15 de `.claude-notes/04_bitacora.md`.
+5. 🔴 **AHORA: la LIMPIEZA del repositorio** (objetivo 3.1 + D-15, D-17, D-18), que incluye borrar
+   `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv`. De la memoria solo quedan los
+   **tres pendientes que el usuario aparcó a propósito**: la **fecha de presentación**, las **nueve
+   marcas `\red{CITA AL TUTOR}`** (D-03) y la **URL del repositorio** del cap. 4. Los
+   **agradecimientos** siguen con el texto de la plantilla.
+   ✅ **Decidido: NO habrá índice de figuras ni de tablas.**
 
 `.claude-notes/` es el cuaderno de trabajo del asistente y **no forma parte de la entrega**.
 
@@ -156,7 +164,7 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
 | `scripts/` | Generadores, `run_catalog.sh`, `extract_metrics.py`, `analyze_catalog_v3.py`, `compare_catalogos.py`, `analyze_probe.py`, `figura_geometria_cap5.jl` |
 | `logs/` | Tandas de experimentos (⚠️ no todas son válidas, ver notas) |
 | `analisis/` | ⭐ `evaluacion_final.ipynb` + `figuras/p1_*,p2_*,p3_*` y `catalogo_v3.csv` (**vigentes**); `evaluacion_v1_obsoleto.ipynb` + `figuras/01_*…08_*`, `catalogo_v2.csv`, `probe.csv`, `resultados.csv` (histórico) |
-| `memoria/` | Proyecto LaTeX. Caps. 2–7 completos y cerrados; **pendientes el cap. 1, el resumen/abstract y los preliminares** |
+| `memoria/` | Proyecto LaTeX. **Caps. 1–7, resumen, abstract y título completos.** Pendientes solo fecha, agradecimientos, `CITA AL TUTOR` y URL del repositorio |
 
 ## Reglas de trabajo (impuestas por el usuario)
 
@@ -206,8 +214,28 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
   es la función de puja y algún detalle—; **Dec-MCTS sí lo es**, partiendo de Best et al.
   (problema distinto) con muchas modificaciones y pruebas. **El logro central del TFM es haber
   construido ese algoritmo**, no que la hipótesis se cumpla; que además gane lo refrenda.
-- **Siguiente: el cap. 1 (Introducción) y el Resumen/Abstract.** Se escriben al final, con la
-  hipótesis ya confirmada.
+- **Cap. 1 (`01_introducción.tex`): ESCRITO y revisado por el usuario (sesión 15, 01-10-2026)**,
+  etiqueta `cap:introduccion`. ~1 441 palabras: apertura con la motivación (3 párrafos, contexto
+  aplicado **sin citas** en el primero) + §1.1 Objetivos + §1.2 Aportaciones + §1.3 Estructura.
+  ⚠️ **El resultado se anuncia en CUALITATIVO, sin cifras**: las cifras viven en los caps. 6 y 7.
+  ⚠️ Al editarlo el usuario **quitó la heterogeneidad** de la enumeración inicial ⇒ `Cap(i,j)` es la
+  única particularidad del problema que el cap. 1 no anuncia. Una marca `\red{CITA AL TUTOR}` nueva.
+- **Resumen y Abstract: ESCRITOS (sesión 15)** en `TFE.tex`. ⚠️ Son **dos capítulos de *frontmatter*
+  independientes**, cada uno con su `\paragraph{Palabras Clave:}` / `\paragraph{Keywords:}`.
+  ~290 / ~275 palabras, **traducción literal frase a frase**, con mención explícita a **MRTA** y
+  **MRTAU** en el primer párrafo. Solo cifras de tamaño del estudio (360 escenarios, 5 400
+  ejecuciones); el resultado, en cualitativo.
+- **Título (sesión 15)**: *Búsqueda en árbol de Monte Carlo descentralizada para la asignación de
+  tareas multi-robot bajo incertidumbre*, en `TFE.tex`:149. ⚠️ El `\title{}` de la línea 134 se deja
+  vacío **a propósito**: el documento no llama a `\maketitle`, así que no imprime nada. Criterio
+  fijado: si se nombra el **algoritmo**, «descentralizada»; si la **asignación o el esquema**,
+  «distribuida».
+- ⚠️ **Los algoritmos del cap. 2 se revisaron compilando (sesión 15)** y se corrigieron tres
+  defectos del preámbulo y del código: `\algorithmicelse` valía «else if» (imprimía «else if if» en
+  los `\ElsIf`, 5 algoritmos), `\algorithmicfor` valía «for each» (imprimía «end for each»,
+  3 sitios) y un `\Call` sin su segundo grupo se comía una letra del texto. **`\Call{X}{}` omite los
+  paréntesis a propósito**: una llamada sin argumentos se escribe `\textproc{X}()`. Las variables
+  con nombre de palabra van en `\textit{}`.
 - ⚠️ **Estilo: prosa continua.** El usuario rechazó el uso de `\paragraph{}` para encabezar cada
   párrafo («parece indicar la limitación de no saber escribir de manera continua»). Donde haga
   falta estructura explícita, **lista**, no títulos de párrafo.
@@ -224,7 +252,12 @@ banner de obsoleto): es la única versión ejecutable de las **cuatro refutacion
   presentan como fijados empíricamente durante el desarrollo.
 - Redacción en **LaTeX y español**, registro académico formal y riguroso, reutilizando los
   nombres de variables ya definidos, con `\ref{}` a las secciones previas y citas adecuadas.
-- El usuario no compila LaTeX localmente: importa el contenido, no que compile.
+- El usuario no compila LaTeX localmente: importa el contenido, no que compile. ⚠️ **Desde la
+  sesión 15 SÍ hay `pdflatex` en este equipo** (`texlive-latex-base`, `texlive-science`,
+  `texlive-lang-spanish`), suficiente para compilar fragmentos como los algoritmos. **La memoria
+  entera todavía no compila**: faltan `newtxtext`, `enumitem`, `setspace` y `mathtools`
+  (`texlive-fonts-extra` + `texlive-latex-extra`). Para leer el PDF resultante hay `mutool`
+  (`mutool draw -F txt` da el texto y `-F stext` las fuentes por fragmento); **no** hay `poppler`.
 - Reparto: cap. 4 = materiales/arquitectura/framework · cap. 5 = escenarios · cap. 6 =
   resultados · cap. 7 = conclusiones y trabajo futuro. Hay un briefing detallado para el cap. 4
   en `memoria/notas_cap4_materiales_y_metodos.md`, y el material de los caps. 6 y 7 en

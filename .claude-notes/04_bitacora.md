@@ -4,6 +4,142 @@ Entrada más reciente arriba. Formato: fecha · objetivo · qué se hizo · qué
 
 ---
 
+## 2026-10-01 — Sesión 15: CAPÍTULO 1, RESUMEN/ABSTRACT y TÍTULO + repaso ortográfico
+
+**Objetivo**: escribir el cap. 1 y el resumen/abstract y repasar el texto completo.
+**Resultado**: los tres escritos y revisados por el usuario, título elegido, repaso ortográfico de
+los siete capítulos y corrección de tres defectos reales en los algoritmos del cap. 2.
+**No se tocó el código ni la experimentación.**
+
+### 1. Capítulo 1 (`01_introducción.tex`) — ESCRITO y revisado por el usuario
+
+Índice propuesto y aceptado antes de escribir: apertura con la motivación (3 párrafos) + §1.1
+Objetivos + §1.2 Aportaciones + §1.3 Estructura de la memoria. Tres decisiones del usuario:
+1. **El resultado se anuncia en CUALITATIVO, sin cifras** («el que mejor resuelve el problema, por
+   delante de los cuatro algoritmos de referencia»). Las cifras siguen viviendo en los caps. 6 y 7.
+2. **Apertura con contexto aplicado y SIN citas** en el primer párrafo, para no añadir entradas
+   nuevas al `.bib` (no hay referencias de aplicaciones robóticas en `TFE.bib`).
+3. Extensión objetivo ~1 300 palabras. El borrador salió en 1 449 y el usuario lo dejó en ~1 441.
+
+Etiquetas nuevas: `cap:introduccion`, `sec:intro-objetivos`, `sec:intro-aportaciones`,
+`sec:intro-estructura`. Todos los `\ref{}` y `\cite{}` resuelven. Estilo: prosa corrida, lista solo
+en los objetivos secundarios.
+
+🔴 **No se repuso** nada del material que el usuario eliminó al cerrar el cap. 7 (planes comunicados
+de longitud 1.58, semilla no configurable, dificultades del desarrollo).
+**Cambios del usuario sobre el borrador**: el invernadero pasa a «una red de camiones», «robots» →
+«agentes», y **desaparece la heterogeneidad** de la enumeración ⇒ `Cap(i,j)` es la única de las
+cinco particularidades del problema que el cap. 1 ya no anuncia (señalado y aceptado).
+Una marca `\red{CITA AL TUTOR}` nueva, en el párrafo del modelo centralizado de partida.
+
+### 2. Resumen y Abstract (`TFE.tex`) — ESCRITOS
+
+⚠️ La plantilla había cambiado respecto a la versión original: ya **no** es un bloque único, sino
+**dos capítulos de *frontmatter* independientes** (`\chapter{Resumen}` y `\chapter{Abstract}`), cada
+uno con su línea `\paragraph{Palabras Clave:}` / `\paragraph{Keywords:}`. Se rellenaron los cuatro.
+
+Decisiones del usuario: **solo cifras de tamaño del estudio** (360 escenarios, 5 400 ejecuciones) y
+resultado en cualitativo; extensión ~250 palabras (quedaron ~290 es / ~275 en); registro
+deliberadamente «llamativo», porque «esto es lo que usamos para vender el trabajo».
+Estructura en tres párrafos que se corresponden **frase a frase** entre idiomas: el abstract es
+traducción literal del resumen. En una segunda pasada el usuario pidió **mención explícita al
+nombre del problema**, así que el primer párrafo nombra ahora **MRTA** (*Multi-Robot Task
+Allocation*) y **MRTAU** (*MRTA under Uncertainty*), y el segundo reutiliza el acrónimo
+(«Formaliza primero el MRTAU distribuido como un DEC-POGSMDP»).
+Las palabras clave son propuesta del asistente; el usuario las redujo a cinco por idioma.
+
+### 3. Título — ELEGIDO
+
+> **Búsqueda en árbol de Monte Carlo descentralizada para la asignación de tareas multi-robot bajo incertidumbre**
+
+Puesto en la portada (`TFE.tex`, línea 149). ⚠️ El `\title{}` de la línea 134 **no se rellena a
+propósito**: el documento no llama a `\maketitle` (construye la portada a mano con `titlepage`), de
+modo que esa declaración no imprime nada. Solo serviría para los metadatos del PDF si algún día se
+añade `pdfusetitle` a `hyperref`.
+Se descartaron «Algoritmos distribuidos para…» (no nombra la aportación y pierde la incertidumbre) y
+la variante sin «bajo incertidumbre». Criterio fijado: si el título nombra el **algoritmo**,
+«descentralizada»; si nombra la **asignación o el esquema**, «distribuida».
+
+### 4. Comparación con la copia de Overleaf
+
+El usuario descargó Overleaf en `TFM_Manuel_Olias/` y pidió localizar divergencias con impacto en el
+PDF. Se encontraron **siete**, todas resueltas por él: `geometria_escenario.pdf` faltaba en local;
+dos correcciones del cap. 2 solo en Overleaf («tragaperras», D-UCB); dos espaciados de la portada;
+`solomon1987algorithms` faltaba en el `.bib` de Overleaf (¡y se cita en el cap. 7!); la mención a
+MRTA del resumen solo en local; y una cláusula de más en el abstract inglés que rompía la traducción
+literal. **Las cuatro figuras del cap. 6 que `diff` marcaba como distintas solo difieren en el
+`/CreationDate` interno**: mismo tamaño, 5 bytes, contenido idéntico.
+⚠️ **El directorio `TFM_Manuel_Olias/` ya no existe** (borrado por el usuario al terminar).
+
+### 5. Repaso ortográfico y gramatical de los siete capítulos
+
+Se entregó un inventario de ~40 puntos con fichero y línea, separando error de preferencia:
+erratas claras (`sigle-task`, `represenra`, `espisodio`, `ComunicateBid`, «(MT)» donde debe decir
+«(MR)», «cúal», «de pueden», «una primer acción», «su plano», «Merece señalar»…), concordancias
+(«modela»→«modelan», «podrían»→«podría», «depende»→«dependen», «se resumen»→«se resume»),
+**siete comas de empalme**, notación visible en el PDF (`\ref` en vez de `\eqref` en 2:215,
+$t^{llegada}$ vs $t^{lleg}$, paréntesis fuera de modo matemático) y tres cifras a verificar
+(«cuatro etapas» con cinco capítulos en 7:5, «cinco magnitudes» en 6:238, «dos órdenes de magnitud»
+en 6:305). Patrón de estilo señalado: **«Es por eso que» aparece siete veces**.
+⚠️ **El usuario aplicó las que consideró oportunas EN OVERLEAF**, no en la copia local.
+
+### 6. Los algoritmos del cap. 2 — tres defectos reales, corregidos
+
+Al revisar el bloque `alg:decmcts-sim` aparecieron tres fallos, los dos primeros con impacto en
+**cinco y tres algoritmos** respectivamente:
+1. **`TFE.tex`:72** — `\algrenewcommand\algorithmicelse{\textbf{else if}}`. Como `algpseudocode`
+   construye `\ElsIf` = «else» + «if», esto imprimía **«else if if … then»** en los `\ElsIf` y
+   «else if» en los `\Else`. Afectaba a los algoritmos 1, 2, 3, 4 y 6. ⇒ `\textbf{else}`.
+2. **`TFE.tex`:73** — `\algorithmicfor{\textbf{for each}}` hacía que `\EndFor` imprimiera
+   **«end for each»** (algoritmos 3 y 5). ⇒ `\textbf{for}`.
+3. **`\Call{RolloutSimulator}`** sin el segundo grupo: `\Call` lleva **dos** argumentos
+   obligatorios, así que se comía la «s» de «si» y se leía `RolloutSimulator(s)i`. Además
+   `RolloutSimulator` no existía en ninguna otra parte ⇒ renombrado a `RolloutPolicy`.
+Y el que motivó todo: un `\State` a mitad de la rama `\Else` partía la asignación en dos líneas.
+
+**Variables en cursiva** (petición del usuario): estaban en redonda `plazas` (`\text{plazas}`, algs.
+3 y 4, 3 apariciones cada uno) y `camino`, `nodo`, `acción` (alg. 6, 9 apariciones). Ya estaban bien
+`enArbol` e `ITER`. Criterio aplicado: cursiva solo cuando es **la variable**; «acción local» de la
+línea `Salida:` y «hay acción no expandida» siguen en redonda por ser prosa.
+
+**Llamadas sin argumentos** (petición del usuario): `\Call{X}{}` **omite los paréntesis a propósito**
+(está definido como `\textproc{#1}` + `(#2)` solo si `#2` no está vacío), así que no hay forma de
+forzarlos sin tocar el paquete. Solución: escribirlas `\textproc{X}()`. Eran tres sitios
+(`ReceiveDistributions` ×2 en el alg. 5 y `RolloutPolicy` en el 6). `ReceiveBid()` y
+`ReceiveBundleBid()` ya los tenían por estar escritos a mano.
+⚠️ **Decisión tomada y comunicada**: `Finish`, `Recharge` y `RobotDecision` **no** llevan paréntesis
+por ser acciones, valores de retorno y tipos de evento, no llamadas.
+
+### 7. Entorno: ya se puede compilar LaTeX en local
+
+El usuario instaló `texlive-latex-base`, `texlive-science` y `texlive-lang-spanish`. **`pdflatex`
+funciona** y están `algorithm.sty` y `algpseudocode.sty`. ⚠️ **Faltan** `newtxtext`, `enumitem`,
+`setspace`, `mathtools`… ⇒ **la memoria completa todavía NO compila**; haría falta
+`texlive-fonts-extra` y `texlive-latex-extra`.
+Procedimiento usado para verificar los algoritmos, reutilizable: extraer los seis entornos
+`algorithm` del cap. 2 a un documento mínimo con el preámbulo de `algorithmicx` de `TFE.tex` y
+ecuaciones ficticias con las etiquetas que citan, compilar dos pasadas y **leer el PDF resultante
+con `mutool draw -F txt`** (no hay `poppler`, pero sí `mutool`). Con `-F stext` se obtienen las
+fuentes por fragmento, que es como se comprobó que las cursivas se aplicaban de verdad.
+Resultado final: **0 errores, 0 referencias sin resolver, 0 cajas desbordadas** en los 6 algoritmos.
+
+### Qué queda
+
+1. 🔴 **La copia de referencia es OVERLEAF**, no `memoria/`. El usuario aplicó allí las erratas del
+   repaso; en local están el cap. 1, el resumen/abstract, el título y los arreglos de los algoritmos.
+   **Antes de tocar nada, resincronizar.**
+2. **Pendientes que el usuario dejó explícitamente aparcados**: la **fecha de presentación**, las
+   **nueve marcas `\red{CITA AL TUTOR}`** (D-03) y la **URL del repositorio** del cap. 4.
+3. ✅ **Decidido: NO habrá índice de figuras ni de tablas** (`\listoffigures`/`\listoftables` se
+   quedan comentados).
+4. **Agradecimientos** sin escribir (sigue el texto de la plantilla).
+5. **Limpieza del repositorio** (bloque 3: D-15, D-17, D-18), incluido borrar
+   `logs/eval_catalogo_v3_bug` y `analisis/catalogo_v3_bug.csv`.
+6. Si se instalan `texlive-fonts-extra` y `texlive-latex-extra`, se puede compilar la memoria entera
+   y revisar márgenes, flotantes y referencias sobre el documento real.
+
+---
+
 ## 2026-09-29 — Sesión 14: CAPÍTULO 7 ESCRITO y CERRADO por el usuario
 
 **Objetivo**: redactar `07_conclusiones_trabajo_futuro.tex` con `06_conclusiones.md` como guion.

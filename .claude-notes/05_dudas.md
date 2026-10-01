@@ -278,6 +278,10 @@ Hay varios `\red{CITA AL TUTOR}` en los caps. 2 y 3. El paper no está publicado
 ⚠️ **Sesión 14**: el cap. 7 añade **dos marcas más** (apertura y trabajo futuro, esta última en la
 línea de «cuantificar la pérdida frente al planificador centralizado»), de modo que ya son **ocho** en
 total. **No bloquea la redacción** (decisión del usuario, sesión 13): se redacta con la marca puesta.
+⚠️ **Sesión 15**: el cap. 1 añade una más, en el párrafo del modelo centralizado de partida ⇒ **nueve
+marcas** en los caps. 1, 2, 3 y 7. El usuario la dejó **explícitamente aparcada** junto con la fecha
+de presentación y la URL del repositorio del cap. 4: son los tres pendientes declarados al cerrar la
+memoria. Sigue sin bloquear nada, pero ya es el único fleco de contenido que queda.
 
 ### D-04 · ¿Se conservan v1, v2 y v3? — `RESUELTA` (sesión 4, revisada)
 **Sesión 3**: se conservaban las cuatro para elegir la definitiva sobre el catálogo final.
@@ -692,3 +696,21 @@ para la defensa, pero invalida la comparabilidad con los logs ya generados.
 - `definitions.hpp`: horizonte de makespan *hardcodeado* (`1080.0`) y distancia máxima
   `10000·nº_robots`. Inactivos con $k_1=1$, pero conviene documentarlos o parametrizarlos.
 - `build/` versionado en git (binarios); `copy/` ya está en `.gitignore`.
+
+**Memoria (sesión 15, repaso ortográfico).** Se entregó al usuario un inventario de ~40 puntos con
+fichero y línea; él aplicó **en Overleaf** los que consideró oportunos, así que **la copia local no
+es fiel**. Lo que quedó señalado y pendiente de su criterio, por si hay que retomarlo:
+- **Tres cifras a verificar**: «las **cuatro** etapas» seguidas de cinco capítulos (7:5); «esta
+  sección examina **cinco** magnitudes adicionales» cuando se examinan seis o siete (6:238); y «los
+  tiempos de ejecución separan a los algoritmos **en dos órdenes de magnitud**» cuando la cifra
+  citada es $1\,900\times$, más de tres órdenes (6:305) — probablemente quería decir «en dos grupos».
+- **2:595**: CBBA actualiza su estado virtual «de manera **estocástica**», pero §2.4.2 insiste en que
+  el *score* es una aproximación **determinista**.
+- **5:55**: «Esta cantidad representa el número de **tareas** que corresponden a cada robot» → son
+  **plazas de trabajador** (con coaliciones no coinciden; es el motivo del reajuste $m=Ln/\bar q$).
+  Señalada desde la sesión 8 y aún sin aplicar en local.
+- **2:215** usa `\ref{eq:bellman}` en vez de `\eqref`: la única de toda la memoria.
+- **Estilo**: «Es por eso que» aparece **siete veces** (2:167, 2:197, 2:365, 4:36, 4:156 y dos en
+  6:65); es un calco del francés que la RAE desaconseja.
+- **2:680** conserva el comentario de edición `% ___ SEGUIR AQUI ___`, y 2:721-729 y 2:853-870 son
+  bloques comentados ya superados.

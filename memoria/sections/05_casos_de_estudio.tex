@@ -159,14 +159,3 @@ Las tareas de un solo trabajador se sustituyen aquí por tareas \emph{multi-robo
 % ---------------------------------------------------------------------------
 El nivel completo de incertidumbre se recorre sobre los cuatro regímenes descritos en la Tabla~\ref{tab:regimenes}, desde el determinista hasta la incertidumbre fuerte con $\rho_j=0{,}5$, para tres tamaños de equipo. Mientras que el resto de bloques contrasta dos regímenes extremos, este permite observar la \emph{transición}: cómo se degrada el rendimiento de cada algoritmo conforme la incertidumbre crece de forma gradual y si esa degradación depende del tamaño del equipo.
 
-% ===========================================================================
-%\section{Recapitulación} \label{sec:casos-recap}
-% ===========================================================================
-
-%El catálogo resultante reúne \textbf{360 escenarios} que suman $10\,896$ tareas y $12\,264$ plazas de trabajador, con equipos de $2$ a $10$ robots y escenarios de entre $6$ y $80$ tareas. Todos ellos comparten la misma geometría en racimos, la misma cinemática, la misma restricción de batería y el mismo horizonte, y se reparten en cinco bloques de igual tamaño que aíslan, respectivamente, el tamaño del equipo, la forma de la ventana de ejecución, la carga por robot, el tamaño de las coaliciones y el grado de incertidumbre.
-
-%Cada escenario se resuelve con los \textbf{cinco algoritmos} presentados en la Sección~\ref{sec:algoritmos} y, dado que tanto el entorno como los propios algoritmos son estocásticos, cada combinación de escenario y algoritmo se repite en \textbf{tres réplicas} independientes cuyo resultado se promedia. El número de réplicas es moderado a propósito: al disponer de varias instancias distintas por celda del diseño, la variabilidad dominante es la que existe \emph{entre instancias} y no la que existe entre réplicas de una misma instancia, de modo que el esfuerzo de cómputo rinde más repartido en escenarios distintos que en repeticiones del mismo. La unidad de análisis del capítulo siguiente es, en consecuencia, el escenario, entendido como la media de sus réplicas. La evaluación completa asciende por tanto a
-%\begin{equation} \label{eq:ejecuciones}
-%    360 \;\text{escenarios} \;\times\; 5 \;\text{algoritmos} \;\times\; 3 \;\text{réplicas} \;=\; 5\,400 \;\text{ejecuciones},
-%\end{equation}
-%cada una de las cuales produce un registro completo de su traza de eventos (Sección~\ref{subsec:mat-logger}). El Capítulo~\ref{cap:experimentacion_pruebas} analiza sus resultados.

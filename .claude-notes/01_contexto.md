@@ -89,7 +89,7 @@ crecientes de coordinación:
 
 | Capítulo | Fichero | Estado |
 |---|---|---|
-| 1. Introducción | `01_introducción.tex` | **vacío** (se deja para el final) |
+| 1. Introducción | `01_introducción.tex` | ✅ **ESCRITO y revisado por el usuario (sesión 15, 01-10-2026)** — ~1 441 palabras, motivación + §1.1 Objetivos + §1.2 Aportaciones + §1.3 Estructura. Resultado en cualitativo, sin cifras |
 | 2. Marco teórico | `02_marco_teórico.tex` | **completo** — NO modificar sin preguntar |
 | 3. Estado del arte | `03_estado_del_arte.tex` | **completo** — NO modificar sin preguntar |
 | 4. Materiales y métodos | `04_materiales_y_metodos.tex` | **completo y CERRADO (sesión 5)** — NO modificar salvo necesidad estricta |
@@ -97,8 +97,24 @@ crecientes de coordinación:
 | 6. Experimentación | `06_experimentación_pruebas.tex` | ✅ **CERRADO por el usuario (sesión 12)**, sobre la tanda reejecutada — 7 figuras, 5 tablas, ninguna marca `\red{}`, sin pendientes |
 | 7. Conclusiones | `07_conclusiones_trabajo_futuro.tex` | ✅ **CERRADO por el usuario (sesión 14, 29-09-2026)** — 1 782 palabras, tres apartados (Logros · Limitaciones · Trabajo futuro), dos `\red{CITA AL TUTOR}` |
 
-🔴 **SIGUIENTE (sesión 15): el capítulo 1 (Introducción) y el Resumen/Abstract**, acordado con el usuario.
-El cap. 1 se escribe ya con la hipótesis confirmada, así que puede anunciar el resultado sin condicionales.
+✅ **Resumen y Abstract ESCRITOS** (sesión 15) en `TFE.tex`: son **dos capítulos de *frontmatter*
+independientes**, cada uno con su línea de palabras clave. ~290 / ~275 palabras, traducción literal
+frase a frase, con mención explícita a **MRTA** y **MRTAU** en el primer párrafo. Solo llevan cifras
+de tamaño del estudio (360 escenarios, 5 400 ejecuciones); el resultado va en cualitativo.
+
+✅ **TÍTULO ELEGIDO** (sesión 15): *Búsqueda en árbol de Monte Carlo descentralizada para la
+asignación de tareas multi-robot bajo incertidumbre*, puesto en la portada (`TFE.tex`:149). El
+`\title{}` de la línea 134 se deja vacío a propósito: no hay `\maketitle`, así que no imprime nada.
+
+🔴 **LA COPIA DE REFERENCIA ES AHORA OVERLEAF, NO `memoria/`.** En la sesión 15 el usuario aplicó
+allí las erratas del repaso ortográfico y en local quedaron el cap. 1, el resumen/abstract, el
+título y los arreglos de los algoritmos. **Resincronizar antes de tocar nada.** El directorio
+`TFM_Manuel_Olias/` (descarga de Overleaf que se usó para comparar) ya no existe.
+
+🔴 **SIGUIENTE: los pendientes de los preliminares y la limpieza del repositorio.** El usuario dejó
+explícitamente aparcados la **fecha de presentación**, las **nueve marcas `\red{CITA AL TUTOR}`**
+(D-03) y la **URL del repositorio** del cap. 4; los **agradecimientos** siguen con el texto de la
+plantilla. ✅ **Decidido: no habrá índice de figuras ni de tablas.**
 
 ⚠️ **Material del guion que el usuario descartó al cerrar el cap. 7 y que hoy NO está en ninguna parte de la
 memoria**: los **planes comunicados de longitud 1.58** (L1), la **semilla no configurable** (D-05) y las
@@ -200,8 +216,11 @@ de pérdida (→ D-09, D-03).
   **«Limitaciones y dificultades encontradas»** (L1–L5, encabezadas por los planes comunicados de
   longitud media 1.58) —, más trabajo futuro (idea 6). **Proponerle el índice y la extensión por
   apartado antes de escribir.** D-03 no bloquea: se deja la marca `\red{CITA AL TUTOR}`.
-- **2.5** Cap. 1 Introducción (al final).
-- **2.6** Resumen/abstract, título, pulido final.
+- **2.5 ✅ CERRADO (sesión 15).** Cap. 1 Introducción, escrito con el índice acordado de antemano y
+  revisado por el usuario. Decisiones: resultado en cualitativo sin cifras, apertura aplicada sin
+  citas (no se añadió nada al `.bib`) y ~1 300 palabras de objetivo (quedó en ~1 441).
+- **2.6 ✅ CERRADO en lo esencial (sesión 15).** Resumen, abstract y título. Queda solo lo que el
+  usuario aparcó: fecha de presentación, agradecimientos, `CITA AL TUTOR` y URL del repositorio.
 
 ### Bloque 3 — Limpieza del repositorio (se sube a GitHub, lo evalúa el tribunal)
 - **3.1** Eliminar logs de prueba, vídeos `.mp4`, temporales, `copy/`, scripts auxiliares,
