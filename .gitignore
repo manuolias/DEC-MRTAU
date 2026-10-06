@@ -1,7 +1,20 @@
-copy/
-dec-mcts.pdf
-.venv/
-analisis/.ipynb_checkpoints/
-__pycache__/
+# Entorno y artefactos de compilación
 build/
+.venv/
+__pycache__/
+*.pyc
+
+# Material de trabajo local, fuera de la entrega
+copy/
+CLAUDE.md
+.claude-notes/
+memoria/
+informacion.txt
+dec-mcts.pdf
+
+# Registros de ejecución (pesados; se regeneran con scripts/run_catalog.sh)
 logs/
+
+# Basura de WSL/Windows
+*:Zone.Identifier
+analisis/.ipynb_checkpoints/
