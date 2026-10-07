@@ -1,0 +1,78 @@
+info: solver_name; value: random
+info: reward_function; value: reward00
+info: replica; value: 3
+info: filename; value: logs/eval_catalogo/esc_D_r03_n009_E_est_q2_i6_random_reward00_003.log
+info: scenario_name; value: esc_D_r03_n009_E_est_q2_i6
+info: scenario_name; value: esc_D_r03_n009_E_est_q2_i6
+info: number_of_tasks; value: 9
+info: number_of_robots; value: 3
+info: number_of_recharging_stations; value: 1
+info: scenario_size; value: (15,15)
+event: recharging_station_spawn; timestamp: 0; recharging_station: 1; pos: (0, 0)
+event: task_spawn; timestamp: 0; task: 1; pos: (0, 5); earliest_start: 38; latest_start: 49.74; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 2; pos: (0.87, 3.5); earliest_start: 31; latest_start: 42.91; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 3; pos: (-0.87, 3.5); earliest_start: 8; latest_start: 21.97; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 4; pos: (4, 1); earliest_start: 17; latest_start: 26.46; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 5; pos: (4, -1); earliest_start: 23; latest_start: 32.63; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 6; pos: (0, -3); earliest_start: 1; latest_start: 17.55; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 7; pos: (0, -5); earliest_start: 37; latest_start: 46.2; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 8; pos: (-4, 1); earliest_start: 40; latest_start: 51.44; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: task_spawn; timestamp: 0; task: 9; pos: (-4, -1); earliest_start: 9; latest_start: 18.64; state: PENDING; required_workers: 2; success_prob: 0.75; max_attempts: 1
+event: robot_spawn; timestamp: 0; robot: 1; pos: (0, 0); state: AVAILABLE; battery_level: 40; battery_capacity: 40; velocity: 1; battery_rate_nav: 1
+event: robot_spawn; timestamp: 0; robot: 2; pos: (0, 0); state: AVAILABLE; battery_level: 40; battery_capacity: 40; velocity: 1; battery_rate_nav: 1
+event: robot_spawn; timestamp: 0; robot: 3; pos: (0, 0); state: AVAILABLE; battery_level: 40; battery_capacity: 40; velocity: 1; battery_rate_nav: 1
+event: battery_consumption; timestamp: 0; robot: 1; time: 4.12311; initial_level: 40; final_level: 35.8769
+event: navigation; timestamp: 0; robot: 1; time: 4.12311; src: (0, 0); dst: (4, 1)
+event: battery_consumption; timestamp: 0; robot: 3; time: 4.12311; initial_level: 40; final_level: 35.8769
+event: navigation; timestamp: 0; robot: 3; time: 4.12311; src: (0, 0); dst: (4, 1)
+event: battery_consumption; timestamp: 0; robot: 2; time: 3.60651; initial_level: 40; final_level: 36.3935
+event: navigation; timestamp: 0; robot: 2; time: 3.60651; src: (0, 0); dst: (-0.87, 3.5)
+event: battery_consumption; timestamp: 21.97; robot: 2; time: 6.63075; initial_level: 36.3935; final_level: 29.7627
+event: navigation; timestamp: 21.97; robot: 2; time: 6.63075; src: (-0.87, 3.5); dst: (4, -1)
+event: task_execution; timestamp: 17; task: 4; robot: 1; pos: (4, 1); time: 11.5487
+event: battery_consumption; timestamp: 17; robot: 1; time: 11.5487; initial_level: 35.8769; final_level: 24.3282
+event: task_execution; timestamp: 17; task: 4; robot: 3; pos: (4, 1); time: 11.5487
+event: battery_consumption; timestamp: 17; robot: 3; time: 11.5487; initial_level: 35.8769; final_level: 24.3282
+event: task_resolution; timestamp: 28.5487; task: 4; pos: (4, 1); status: COMPLETED; attempt: 1
+event: battery_consumption; timestamp: 28.5487; robot: 1; time: 4.00586; initial_level: 24.3282; final_level: 20.3223
+event: navigation; timestamp: 28.5487; robot: 1; time: 4.00586; src: (4, 1); dst: (0.87, 3.5)
+event: battery_consumption; timestamp: 28.5487; robot: 3; time: 7.2111; initial_level: 24.3282; final_level: 17.1171
+event: navigation; timestamp: 28.5487; robot: 3; time: 7.2111; src: (4, 1); dst: (0, -5)
+event: battery_consumption; timestamp: 32.63; robot: 2; time: 5.65685; initial_level: 29.7627; final_level: 24.1059
+event: navigation; timestamp: 32.63; robot: 2; time: 5.65685; src: (4, -1); dst: (0, -5)
+event: battery_consumption; timestamp: 42.91; robot: 1; time: 5.4742; initial_level: 20.3223; final_level: 14.8481
+event: navigation; timestamp: 42.91; robot: 1; time: 5.4742; src: (0.87, 3.5); dst: (-4, 1)
+event: battery_consumption; timestamp: 51.44; robot: 1; time: 4.12311; initial_level: 14.8481; final_level: 10.725
+event: navigation; timestamp: 51.44; robot: 1; time: 4.12311; src: (-4, 1); dst: (0, 0)
+event: robot_finished; timestamp: 55.5631; robot: 1; pos: (0, 0); battery: 10.725
+event: task_execution; timestamp: 38.2869; task: 7; robot: 2; pos: (0, -5); time: 14.5774
+event: battery_consumption; timestamp: 38.2869; robot: 2; time: 14.5774; initial_level: 24.1059; final_level: 9.52845
+event: task_execution; timestamp: 38.2869; task: 7; robot: 3; pos: (0, -5); time: 14.5774
+event: battery_consumption; timestamp: 38.2869; robot: 3; time: 14.5774; initial_level: 17.1171; final_level: 2.53963
+event: task_resolution; timestamp: 52.8643; task: 7; pos: (0, -5); status: COMPLETED; attempt: 1
+event: battery_consumption; timestamp: 52.8643; robot: 2; time: 5; initial_level: 9.52845; final_level: 4.52845
+event: navigation; timestamp: 52.8643; robot: 2; time: 5; src: (0, -5); dst: (0, 0)
+event: robot_finished; timestamp: 57.8643; robot: 2; pos: (0, 0); battery: 4.52845
+event: battery_consumption; timestamp: 52.8643; robot: 3; time: 2.53963; initial_level: 2.53963; final_level: 0
+event: robot_failed; timestamp: 55.4039; robot: 3; pos: (0, 0)
+metric: available_agents; value: 0
+metric: failed_agents; value: 1
+metric: finished_agents; value: 2
+metric: completed_tasks; value: 2
+metric: pending_tasks; value: 0
+metric: failed_tasks; value: 7
+metric: average_robot_makespan; value: 56.2771
+metric: sd_robot_makespan; value: 1.37684
+metric: max_robot_makespan; value: 57.8643
+metric: min_robot_makespan; value: 55.4039
+metric: average_robot_travel_distance; value: 16.6515
+metric: sd_robot_travel_distance; value: 4.86973
+metric: max_robot_travel_distance; value: 20.8941
+metric: min_robot_travel_distance; value: 11.3342
+metric: sum_robot_travel_distance; value: 49.9546
+metric: average_completed_tasks_by_robot; value: 0
+metric: sd_completed_tasks_by_robot; value: 0
+metric: max_completed_tasks_by_robot; value: 0
+metric: min_completed_tasks_by_robot; value: 0
+metric: final_reward; value: 0.222222
+metric: computing_time; value: 0.000161909
