@@ -16,10 +16,7 @@
 #include "tau/solver_random.hpp"
 #include "tau/solver_CBAA.hpp"
 #include "tau/solver_CBBA.hpp"
-#include "tau/solver_DecMCTS_v1.hpp"
-#include "tau/solver_DecMCTS_v2.hpp"
-#include "tau/solver_DecMCTS_v3.hpp"
-#include "tau/solver_DecMCTS_v4.hpp"
+#include "tau/solver_DecMCTS.hpp"
 #include "tau/reward_00.hpp"
 
 namespace fs = std::filesystem;
@@ -67,9 +64,9 @@ int main(int argc, char** argv) {
     try {
         // Rutas de entrada y salida. Pueden pasarse por argumentos para no
         // recompilar entre tandas:  ./simulador <scenariosPath> <logsDir> [configPath]
-        std::string configPath    = (argc > 3) ? argv[3] : "../data/experiment_config.yaml";
-        std::string scenariosPath = (argc > 1) ? argv[1] : "../data/";
-        std::string logsDir       = (argc > 2) ? argv[2] : "../logs/fixed_sim";
+        std::string configPath    = (argc > 3) ? argv[3] : "../scenarios/catalogo/experiment_config.yaml";
+        std::string scenariosPath = (argc > 1) ? argv[1] : "../scenarios/catalogo/";
+        std::string logsDir       = (argc > 2) ? argv[2] : "../logs/salida";
 
         // Asegurarnos de que el directorio de logs existe
         if (!fs::exists(logsDir)) {
@@ -157,66 +154,13 @@ int main(int argc, char** argv) {
                                 solver = std::make_shared<tau::CBAASolver>(robotID);
                             } else if (solverName == "cbba") {
                                 solver = std::make_shared<tau::CBBASolver>(robotID);
-                            } else if (solverName == "dec-mcts-v1") {
-                                solver = std::make_shared<tau::DecMCTSSolverV1>(robotID);
-                            } else if (solverName == "dec-mcts-v2") {
-                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID); // gamma=0.999, useDiffReward=false
-                            } else if (solverName == "dec-mcts-nodiff") {
-                                // Ablación H1: sin doble rollout (usa reward_with directo)
-                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID, 0.999, false);
-                            } else if (solverName == "dec-mcts-gamma99") {
-                                // Ablación H4: GAMMA=0.99 (descuento más agresivo)
-                                solver = std::make_shared<tau::DecMCTSSolverV2>(robotID, 0.99, true);
-                            } else if (solverName == "dec-mcts-v3") {
-                                // V3: chance nodes + estadística doble n_disc/n_avail_disc
-                                solver = std::make_shared<tau::DecMCTSSolverV3>(robotID);
-                            } else if (solverName == "dec-mcts-v3.2") {
-                                // V3: chance nodes + estadística doble n_disc/n_avail_disc
-                                solver = std::make_shared<tau::DecMCTSSolverV3>(robotID, 0.999, true);
-                            } else if (solverName == "dec-mcts-v4") {
-                                // V4: rollout consciente de ventanas (urgencia), widening progresivo
-                                // + expansión ordenada por heurística, selección filtrada por
-                                // factibilidad, poda de hijos stale y tie-break de earliness
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID);
-                            } else if (solverName == "dec-mcts-v4-c035") {
-                                // Ablación V4: exploración más explotadora (C=0.35)
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.999, false, 0.35);
-                            } else if (solverName == "dec-mcts-v4-g9999") {
-                                // Ablación V4: descuento más lento (gamma=0.9999, más memoria)
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false);
-                            } else if (solverName == "dec-mcts-v4-nocomm") {
-                                // Ablación C1: idéntico a dec-mcts-v4-g9999 pero IGNORANDO las
-                                // distribuciones comunicadas por los vecinos. Mide cuánto aporta
-                                // realmente el canal de comunicación de Dec-MCTS.
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
-                                                                                0.7, 30, 300, false);
-                            } else if (solverName == "dec-mcts-v4-b4") {
-                                // Mejora B4: idéntico a dec-mcts-v4-g9999 pero con blockingProb
-                                // PROBABILÍSTICA en vez de binaria — descuenta una tarea según la
-                                // probabilidad de que los vecinos lleguen realmente a cubrirla,
-                                // atendiendo a su posición en el bundle y a la varianza acumulada.
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
-                                                                                0.7, 30, 300, true, true);
-                            } else if (solverName == "dec-mcts-v4-d8") {
-                                // D-08: bundle comunicado construido siguiendo la cadena más
-                                // visitada RESTRINGIDA a EXECUTE_TASK. Corrige que el 69% de
-                                // las cadenas se cortaran en un nodo FINISH, dejando los planes
-                                // comunicados con longitud media 1.25.
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
-                                                                                0.7, 30, 300, true, false, true);
-                            } else if (solverName == "dec-mcts-v4-d8b4") {
-                                // D-08 + B4 combinadas: con bundles profundos, la blockingProb
-                                // probabilística sí tiene profundidad sobre la que operar.
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false,
-                                                                                0.7, 30, 300, true, true, true);
-                            } else if (solverName == "dec-mcts-v4-g9999-hc") {
-                                // V4 g9999 con ALTO CÓMPUTO. iteraciones por latido y de
-                                // emergencia configurables vía env DECMCTS_ITERS / DECMCTS_EMERG
-                                // (por defecto 1200 / 12000) para calibrar ~5 min/run.
-                                int iters = 1200, emerg = 12000;
-                                if (const char* e = std::getenv("DECMCTS_ITERS"))  iters = std::atoi(e);
-                                if (const char* e = std::getenv("DECMCTS_EMERG")) emerg = std::atoi(e);
-                                solver = std::make_shared<tau::DecMCTSSolverV4>(robotID, 0.9999, false, 0.7, iters, emerg);
+                            } else if (solverName == "dec-mcts") {
+                                // Dec-MCTS: rollout consciente de ventanas (urgencia), widening
+                                // progresivo + expansión ordenada por heurística, selección
+                                // filtrada por factibilidad, poda de hijos obsoletos y tie-break
+                                // de earliness. gamma=0.9999 y useDiffReward=false son los
+                                // valores con los que se ejecutó el catálogo.
+                                solver = std::make_shared<tau::DecMCTSSolver>(robotID, 0.9999, false);
                             } else {
                                 throw std::runtime_error("Solver no reconocido: " + solverName);
                             }

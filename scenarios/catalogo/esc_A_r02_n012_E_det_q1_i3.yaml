@@ -1,0 +1,191 @@
+name: "esc_A_r02_n012_E_det_q1_i3"
+height: 15
+width: 15
+initial_time: 0
+
+graph:
+  - node: 1
+    description: "Node 1"
+    coords: [0,0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 2
+    description: "Node 2"
+    coords: [0.0,5.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 3
+    description: "Node 3"
+    coords: [0.87,3.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 4
+    description: "Node 4"
+    coords: [-0.87,3.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 5
+    description: "Node 5"
+    coords: [4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 6
+    description: "Node 6"
+    coords: [4.87,-0.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 7
+    description: "Node 7"
+    coords: [3.13,-0.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 8
+    description: "Node 8"
+    coords: [0.0,-3.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 9
+    description: "Node 9"
+    coords: [0.87,-4.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 10
+    description: "Node 10"
+    coords: [-0.87,-4.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 11
+    description: "Node 11"
+    coords: [-4.0,1.0]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 12
+    description: "Node 12"
+    coords: [-3.13,-0.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+  - node: 13
+    description: "Node 13"
+    coords: [-4.87,-0.5]
+    neighbors: [1,2,3,4,5,6,7,8,9,10,11,12,13]
+
+tasks:
+  - id: 1
+    node: 2
+    description: "Task 1"
+    time_window: [13.0,19.17]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 2
+    node: 3
+    description: "Task 2"
+    time_window: [4.0,13.3]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 3
+    node: 4
+    description: "Task 3"
+    time_window: [7.0,22.36]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 4
+    node: 5
+    description: "Task 4"
+    time_window: [40.0,47.76]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 5
+    node: 6
+    description: "Task 5"
+    time_window: [30.0,44.67]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 6
+    node: 7
+    description: "Task 6"
+    time_window: [32.0,43.14]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 7
+    node: 8
+    description: "Task 7"
+    time_window: [15.0,28.52]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 8
+    node: 9
+    description: "Task 8"
+    time_window: [1.0,8.04]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 9
+    node: 10
+    description: "Task 9"
+    time_window: [32.0,39.36]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 10
+    node: 11
+    description: "Task 10"
+    time_window: [15.0,26.42]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 11
+    node: 12
+    description: "Task 11"
+    time_window: [13.0,19.56]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+  - id: 12
+    node: 13
+    description: "Task 12"
+    time_window: [26.0,35.26]
+    success_prob: 1.0
+    success_time: [10,0.0]
+    fail_time: [0,0]
+    demand: [10,10.0]
+    required_workers: 1
+
+robots:
+  - id: 1
+    initial_node: 1
+    description: "Robot 1"
+    initial_battery_level: 40.0
+    battery_capacity: 40.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12]
+  - id: 2
+    initial_node: 1
+    description: "Robot 2"
+    initial_battery_level: 40.0
+    battery_capacity: 40.0
+    navigation_velocity: 1.0
+    battery_rate_while_navigating: 1.0
+    capabilities: [1,2,3,4,5,6,7,8,9,10,11,12]
+
+recharging_stations:
+  - id: 1
+    node: 1
+    description: "Station 1"

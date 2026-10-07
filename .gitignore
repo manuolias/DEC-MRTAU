@@ -5,32 +5,18 @@ __pycache__/
 *.pyc
 
 # Material de trabajo local, fuera de la entrega
-copy/
 CLAUDE.md
 .claude-notes/
 memoria/
-informacion.txt
 dec-mcts.pdf
 
-# Registros de ejecución (pesados; se regeneran con scripts/run_catalog.sh)
-logs/
+# Registros de ejecución: se publica SOLO la tanda del catálogo, que es la evidencia
+# de las cifras del cap. 6 (no hay semilla configurable, así que no son reproducibles)
+logs/*
+!logs/eval_catalogo/
+logs/eval_catalogo/.shards/
+logs/eval_catalogo/.worker_*.out
 
-# Basura de WSL/Windows
+# Basura de WSL/Windows y de Jupyter
 *:Zone.Identifier
-analisis/.ipynb_checkpoints/
-
-# Catálogos obsoletos (v1, v2) y conjuntos exploratorios: solo local
-scenarios/catalogo/
-scenarios/catalogo_v2/
-scenarios/probe/
-scenarios/bundles/
-scenarios/random/
-scenarios/salomon/
-
-# Análisis histórico (v1, v2 y la tanda con los defectos de batería): solo local
-analisis/catalogo_v2.csv
-analisis/catalogo_v3_bug.csv
-analisis/probe.csv
-analisis/resultados.csv
-analisis/evaluacion_v1_obsoleto.ipynb
-analisis/figuras/0*
+.ipynb_checkpoints/
