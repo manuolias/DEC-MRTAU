@@ -1,8 +1,7 @@
 # Búsqueda en árbol de Monte Carlo descentralizada para la asignación de tareas multi-robot bajo incertidumbre
 
 **Trabajo de Fin de Máster** · Máster Universitario en Lógica, Computación e Inteligencia Artificial
-**Universidad de Sevilla** — Escuela Técnica Superior de Ingeniería Informática
-Departamento de Ciencias de la Computación e Inteligencia Artificial
+**Universidad de Sevilla**.
 
 |  |  |
 |---|---|
@@ -19,22 +18,25 @@ Departamento de Ciencias de la Computación e Inteligencia Artificial
 Cinco robots resolviendo quince tareas bajo incertidumbre ([vídeo en calidad
 completa](docs/demo.mp4)). Es una ejecución real del catálogo evaluado —escenario
 `esc_C_r05_n015_E_est_q1_i4`, régimen estocástico— en la que Dec-MCTS completa **catorce de las
-quince tareas sin perder ningún robot**. La visualización la genera `mrtau video`, del repositorio
-del tutor, a partir del fichero de registro de la ejecución.
+quince tareas sin perder ningún robot**. La visualización la genera `mrtau video`, del repositorio del tutor, a partir del fichero de registro de la ejecución.
 
 Cómo se lee:
 
 - El punto **amarillo** del centro es la **estación de recarga**; los demás son las **tareas**,
   repartidas en racimos.
 - Una tarea está **gris** mientras su ventana no se ha abierto, **verde claro** cuando se puede
-  ejecutar, **roja** si su plazo venció sin que nadie llegase, **verde** cuando se completa y
-  **negra** si el intento fracasó.
+  ejecutar, **roja** si su plazo venció, **verde** cuando se completa y **negra** si el intento
+  fracasó.
 - Los puntos pequeños **azules** son los robots. Al pie se lee lo que hace cada uno y **cuánta
   batería le queda**; arriba, el instante de simulación.
 
 Obsérvese lo que hace difícil el problema: las tareas no están disponibles desde el principio ni
 para siempre, la batería se agota y obliga a volver al centro, y ningún robot ve el plan de los
 demás —solo lo que le comunican.
+
+> **Nota sobre los colores.** Ninguno indica que una tarea se esté ejecutando, de modo que a veces
+> se ve una tarea roja (plazo vencido) mientras un robot sigue trabajando en ella. No es un error:
+> el robot la empezó dentro de plazo, pero no logró terminarla a tiempo.
 
 ## El problema
 
@@ -70,15 +72,20 @@ DEC-POGSMDP.
 ## Resultados
 
 Evaluación sobre **360 escenarios × 5 algoritmos × 3 réplicas = 5 400 ejecuciones**. La métrica es
-la **fracción de tareas completadas**.
+la **fracción de tareas completadas**. Las columnas recorren los cuatro regímenes de incertidumbre,
+del determinista al más severo: **ρ** es la probabilidad de éxito de una tarea y **σ** la
+desviación típica de su duración.
 
-| Solver | Global | Determinista | σ=1 | σ=3 | σ=5 |
+| Solver | Global | Determinista<br>ρ=1 · σ=0 | Leve<br>ρ=0.9 · σ=1 | Media<br>ρ=0.75 · σ=3 | Fuerte<br>ρ=0.5 · σ=5 |
 |---|---|---|---|---|---|
 | **dec-mcts** | **0.502** | **0.586** | **0.495** | **0.443** | **0.282** |
 | cbba | 0.459 | 0.532 | 0.467 | 0.405 | 0.273 |
 | cbaa | 0.401 | 0.483 | 0.413 | 0.339 | 0.207 |
 | greedy | 0.346 | 0.396 | 0.338 | 0.313 | 0.198 |
 | random | 0.268 | 0.305 | 0.266 | 0.242 | 0.168 |
+
+Los regímenes determinista y medio están repartidos entre los cinco bloques (162 escenarios cada
+uno); el leve y el fuerte proceden del bloque que barre la incertidumbre (18 cada uno).
 
 Dec-MCTS obtiene la mejor recompensa media en los cuatro regímenes de incertidumbre y en cuatro de
 los cinco bloques del catálogo. Frente a CBBA, el más cercano, la diferencia pareada es de
